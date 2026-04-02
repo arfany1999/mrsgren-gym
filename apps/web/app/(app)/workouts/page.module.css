@@ -6,9 +6,7 @@
   padding: var(--sp-12) 0;
 }
 
-.content {
-  padding: var(--sp-4);
-}
+.content { padding: var(--sp-4); }
 
 .count {
   font-size: var(--text-sm);
@@ -32,12 +30,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
   padding: var(--sp-12) var(--sp-6);
   text-align: center;
 }
 
-.emptyIcon { font-size: 40px; }
+.emptyIconWrap {
+  width: 64px;
+  height: 64px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--sp-1);
+}
 
 .emptyTitle {
   font-size: var(--text-md);
@@ -48,4 +55,6 @@
 .emptySub {
   font-size: var(--text-sm);
   color: var(--text-secondary);
+  max-width: 220px;
+  line-height: 1.4;
 }

@@ -13,6 +13,12 @@ import type { Workout } from "@/types/api";
 import { formatDate } from "@/lib/formatters";
 import styles from "./page.module.css";
 
+function greeting(name: string) {
+  const h = new Date().getHours();
+  const time = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  return `${time}, ${name}`;
+}
+
 export default function DashboardPage() {
   const { profile, supabase } = useAuth();
   const { activeWorkout, startWorkout } = useWorkout();
@@ -57,7 +63,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className={styles.header}>
         <div>
-          <p className={styles.greeting}>Good day, {firstName} 👋</p>
+          <p className={styles.greeting}>{greeting(firstName)}</p>
           <p className={styles.date}>{today}</p>
         </div>
         <Link href="/profile" className={styles.avatarLink}>
@@ -81,22 +87,64 @@ export default function DashboardPage() {
         </Link>
       )}
 
-      {/* Start Workout */}
-      {!activeWorkout && (
-        <div className={styles.startSection}>
-          <Button fullWidth size="lg" onClick={handleStartWorkout} loading={starting}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="#000" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-            Start Workout
-          </Button>
+      {/* Quick Actions */}
+      <div className={styles.quickActions}>
+        {!activeWorkout ? (
+          <button
+            className={styles.startCard}
+            onClick={handleStartWorkout}
+            disabled={starting}
+            type="button"
+          >
+            <div className={styles.startCardIcon}>
+              {starting ? (
+                <span className={styles.startSpinner} />
+              ) : (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 5v14M5 12h14" stroke="#000" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              )}
+            </div>
+            <span className={styles.startCardText}>Start an Empty Workout</span>
+          </button>
+        ) : (
+          <Link href="/active" className={styles.startCard}>
+            <div className={styles.startCardIcon}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M10 8l6 4-6 4V8z" fill="#000" />
+              </svg>
+            </div>
+            <span className={styles.startCardText}>Resume Workout</span>
+          </Link>
+        )}
+
+        <div className={styles.quickRow}>
+          <Link href="/routines/new" className={styles.quickCard}>
+            <div className={styles.quickCardIcon}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <rect x="4" y="3" width="16" height="18" rx="2" stroke="var(--accent)" strokeWidth="1.7" />
+                <path d="M12 9v6M9 12h6" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </div>
+            <span className={styles.quickCardText}>New Routine</span>
+          </Link>
+
+          <Link href="/routines" className={styles.quickCard}>
+            <div className={styles.quickCardIcon}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <rect x="4" y="3" width="16" height="18" rx="2" stroke="var(--accent)" strokeWidth="1.7" />
+                <path d="M8 8h8M8 12h8M8 16h5" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </div>
+            <span className={styles.quickCardText}>My Routines</span>
+          </Link>
         </div>
-      )}
+      </div>
 
       {/* Recent Workouts */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Recent Workouts</h2>
+          <h2 className={styles.sectionTitle}>History</h2>
           <Link href="/workouts" className={styles.seeAll}>See All</Link>
         </div>
 
@@ -104,9 +152,13 @@ export default function DashboardPage() {
           <div className={styles.loadingCenter}><Spinner size={28} /></div>
         ) : recentWorkouts.length === 0 ? (
           <div className={styles.emptyState}>
-            <p className={styles.emptyIcon}>🏋️‍♀️</p>
+            <div className={styles.emptyIconWrap}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <path d="M6 12h2v-4h8v4h2M8 12v6h8v-6" stroke="var(--text-tertiary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             <p className={styles.emptyTitle}>No workouts yet</p>
-            <p className={styles.emptySub}>Start your first workout above!</p>
+            <p className={styles.emptySub}>Complete your first workout to see it here</p>
           </div>
         ) : (
           <div className={styles.workoutList}>
@@ -120,7 +172,6 @@ export default function DashboardPage() {
   );
 }
 
-// Map Supabase snake_case to the Workout type the UI expects
 function mapWorkout(row: Record<string, unknown>): Workout {
   const wes = (row.workout_exercises as Record<string, unknown>[]) ?? [];
   return {

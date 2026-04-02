@@ -1,5 +1,6 @@
 .page { padding-bottom: var(--sp-8); }
 
+/* ── Header ──────────────────────────────────────────────── */
 .header {
   display: flex;
   align-items: center;
@@ -11,37 +12,39 @@
   font-size: var(--text-xl);
   font-weight: var(--fw-bold);
   color: var(--text-primary);
+  letter-spacing: -0.3px;
 }
 
 .date {
   font-size: var(--text-sm);
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .avatarLink { text-decoration: none; }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-full);
   background: var(--accent);
   color: #000;
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* ── Resume Banner ───────────────────────────────────────── */
 .resumeBanner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin: 0 var(--sp-4) var(--sp-4);
-  padding: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
   background: var(--accent-dim);
-  border: 1px solid var(--accent);
+  border: 1px solid rgba(48, 209, 88, 0.4);
   border-radius: var(--radius-md);
   text-decoration: none;
 }
@@ -53,15 +56,16 @@
 }
 
 .resumeDot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: var(--radius-full);
   background: var(--accent);
   animation: pulse 1.5s ease infinite;
+  flex-shrink: 0;
 }
 
 .resumeTitle {
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   font-weight: var(--fw-semibold);
   color: var(--text-primary);
 }
@@ -69,18 +73,115 @@
 .resumeSub {
   font-size: var(--text-xs);
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.6; transform: scale(0.85); }
+  50%       { opacity: 0.55; transform: scale(0.82); }
 }
 
-.startSection {
+/* ── Quick Actions ───────────────────────────────────────── */
+.quickActions {
   padding: 0 var(--sp-4) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 
+/* Primary CTA — Start an Empty Workout */
+.startCard {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.startCard:active {
+  opacity: 0.88;
+  transform: scale(0.985);
+}
+
+.startCard:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.startCardIcon {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.startCardText {
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  color: #000;
+}
+
+.startSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  border-top-color: #000;
+  border-radius: var(--radius-full);
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Two small quick cards side-by-side */
+.quickRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+.quickCard {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-3);
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  border: 1px solid var(--border-color);
+  transition: background var(--transition-fast);
+}
+
+.quickCard:active { background: var(--bg-elevated); }
+
+.quickCardIcon {
+  width: 30px;
+  height: 30px;
+  background: var(--accent-dim);
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.quickCardText {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+}
+
+/* ── Section ─────────────────────────────────────────────── */
 .section { padding: 0 var(--sp-4); }
 
 .sectionHeader {
@@ -114,6 +215,7 @@
   padding: var(--sp-8) 0;
 }
 
+/* ── Empty State ─────────────────────────────────────────── */
 .emptyState {
   display: flex;
   flex-direction: column;
@@ -123,7 +225,16 @@
   text-align: center;
 }
 
-.emptyIcon { font-size: 40px; margin-bottom: var(--sp-2); }
+.emptyIconWrap {
+  width: 64px;
+  height: 64px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--sp-1);
+}
 
 .emptyTitle {
   font-size: var(--text-md);
@@ -134,4 +245,6 @@
 .emptySub {
   font-size: var(--text-sm);
   color: var(--text-secondary);
+  max-width: 220px;
+  line-height: 1.4;
 }

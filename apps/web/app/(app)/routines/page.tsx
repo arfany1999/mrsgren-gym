@@ -144,9 +144,17 @@ export default function RoutinesPage() {
         <div className={styles.loadingCenter}><Spinner size={28} /></div>
       ) : displayed.length === 0 ? (
         <div className={styles.empty}>
-          <p className={styles.emptyIcon}>{tab === "mine" ? "📋" : "🏋️"}</p>
+          <div className={styles.emptyIconWrap}>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="3" width="16" height="18" rx="2" stroke="var(--text-tertiary)" strokeWidth="1.6" />
+              <path d="M8 8h8M8 12h8M8 16h5" stroke="var(--text-tertiary)" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </div>
           <p className={styles.emptyTitle}>
             {tab === "mine" ? "No routines yet" : "No routines in library"}
+          </p>
+          <p className={styles.emptySub}>
+            {tab === "mine" ? "Create a routine to plan your workouts" : "No public routines available"}
           </p>
           {tab === "mine" && (
             <Link href="/routines/new">

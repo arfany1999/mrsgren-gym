@@ -47,21 +47,25 @@
 /* Sizes */
 .sm {
   height: 34px;
-  padding: 0 var(--sp-3);
+  padding: 0 var(--sp-4);
   font-size: var(--text-sm);
   border-radius: var(--radius-sm);
 }
 
 .md {
-  height: 44px;
+  height: 46px;
   padding: 0 var(--sp-5);
   font-size: var(--text-base);
+  border-radius: var(--radius-md);
 }
 
 .lg {
-  height: 52px;
+  height: 54px;
   padding: 0 var(--sp-6);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  border-radius: var(--radius-lg);
+  letter-spacing: -0.1px;
 }
 
 .fullWidth {

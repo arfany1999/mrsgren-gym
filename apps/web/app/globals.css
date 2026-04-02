@@ -17,7 +17,7 @@ html {
 }
 
 body {
-  background: #000;
+  background: #0a0a0a;
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
     "Helvetica Neue", Arial, sans-serif;
@@ -36,8 +36,8 @@ body {
   --bg-overlay:     #3a3a3c;
 
   /* Accent Colors */
-  --accent:         #30d158;
-  --accent-dim:     rgba(48, 209, 88, 0.15);
+  --accent:         #ffffff;
+  --accent-dim:     rgba(255, 255, 255, 0.10);
   --accent-red:     #ff453a;
   --accent-red-dim: rgba(255, 69, 58, 0.15);
   --accent-orange:  #ff9f0a;

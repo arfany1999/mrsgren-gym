@@ -43,12 +43,12 @@ export default function LoginPage() {
         {/* Logo / Title */}
         <div className={styles.header}>
           <div className={styles.logo}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <rect width="40" height="40" rx="10" fill="var(--accent)" />
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <rect width="48" height="48" rx="12" fill="#ffffff" />
               <path
-                d="M8 20h4v-6h4v6h8v-6h4v6h4"
+                d="M8 24h5v-7h5v7h12v-7h5v7h5"
                 stroke="#000"
-                strokeWidth="3"
+                strokeWidth="3.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -89,6 +89,13 @@ export default function LoginPage() {
           <Link href="/register">Sign up</Link>
         </p>
       </div>
+
+      <p className={styles.signature}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }}>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+        Secured by Arfany
+      </p>
     </div>
   );
 }

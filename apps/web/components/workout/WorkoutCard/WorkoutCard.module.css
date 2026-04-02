@@ -4,32 +4,40 @@
   border-radius: var(--radius-md);
   padding: var(--sp-4);
   text-decoration: none;
-  position: relative;
   transition: background var(--transition-fast);
 }
 
-.card:active {
-  background: var(--bg-elevated);
-}
+.card:active { background: var(--bg-elevated); }
 
 .header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--sp-3);
-  margin-bottom: var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 1;
+  min-width: 0;
 }
 
 .title {
   font-size: var(--text-base);
   font-weight: var(--fw-semibold);
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .date {
   font-size: var(--text-xs);
   color: var(--text-tertiary);
-  margin-top: 2px;
+  margin-bottom: var(--sp-2);
 }
 
 .activeBadge {
@@ -37,16 +45,23 @@
   font-weight: var(--fw-semibold);
   color: var(--accent);
   background: var(--accent-dim);
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .exercises {
   font-size: var(--text-sm);
   color: var(--text-secondary);
   margin-bottom: var(--sp-3);
-  line-height: 1.4;
+  line-height: 1.45;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .stats {
@@ -64,8 +79,7 @@
 }
 
 .chevron {
-  position: absolute;
-  right: var(--sp-4);
-  top: 50%;
-  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  opacity: 0.5;
 }

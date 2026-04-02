@@ -5,20 +5,21 @@ import { usePathname, useRouter } from "next/navigation";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import styles from "./BottomNav.module.css";
 
-function IconDashboard({ active }: { active: boolean }) {
+function IconHome({ active }: { active: boolean }) {
+  const c = active ? "var(--accent)" : "var(--text-tertiary)";
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
       <path
-        d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
-        stroke={active ? "var(--accent)" : "var(--text-tertiary)"}
-        strokeWidth="1.8"
+        d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1v-9.5z"
+        stroke={c}
+        strokeWidth="1.7"
         strokeLinejoin="round"
         fill={active ? "var(--accent-dim)" : "none"}
       />
       <path
-        d="M9 21V12h6v9"
-        stroke={active ? "var(--accent)" : "var(--text-tertiary)"}
-        strokeWidth="1.8"
+        d="M9 21V13h6v8"
+        stroke={c}
+        strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -30,8 +31,20 @@ function IconHistory({ active }: { active: boolean }) {
   const c = active ? "var(--accent)" : "var(--text-tertiary)";
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="4" width="18" height="16" rx="2" stroke={c} strokeWidth="1.8" />
-      <path d="M7 8h10M7 12h10M7 16h6" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M12 8v4l2.5 2.5"
+        stroke={c}
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.05 11a9 9 0 101.42-4.65L2 4v4h4l-1.37-1.37A7 7 0 103.05 11z"
+        stroke={c}
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -40,9 +53,8 @@ function IconRoutines({ active }: { active: boolean }) {
   const c = active ? "var(--accent)" : "var(--text-tertiary)";
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke={c} strokeWidth="1.8" />
-      <rect x="9" y="3" width="6" height="4" rx="1" stroke={c} strokeWidth="1.8" />
-      <path d="M9 12h6M9 16h4" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+      <rect x="4" y="3" width="16" height="18" rx="2" stroke={c} strokeWidth="1.7" />
+      <path d="M8 8h8M8 12h8M8 16h5" stroke={c} strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }
@@ -51,17 +63,17 @@ function IconProfile({ active }: { active: boolean }) {
   const c = active ? "var(--accent)" : "var(--text-tertiary)";
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="8" r="4" stroke={c} strokeWidth="1.8" />
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="12" cy="7.5" r="3.5" stroke={c} strokeWidth="1.7" />
+      <path d="M3.5 20.5c0-4.14 3.81-7.5 8.5-7.5s8.5 3.36 8.5 7.5" stroke={c} strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }
 
 const TABS = [
-  { href: "/dashboard", label: "Home",     Icon: IconDashboard },
-  { href: "/workouts",  label: "History",  Icon: IconHistory   },
-  { href: "/routines",  label: "Routines", Icon: IconRoutines  },
-  { href: "/profile",   label: "Profile",  Icon: IconProfile   },
+  { href: "/dashboard", label: "Home",     Icon: IconHome     },
+  { href: "/workouts",  label: "History",  Icon: IconHistory  },
+  { href: "/routines",  label: "Routines", Icon: IconRoutines },
+  { href: "/profile",   label: "Profile",  Icon: IconProfile  },
 ];
 
 export function BottomNav() {
@@ -101,11 +113,11 @@ export function BottomNav() {
         type="button"
       >
         {activeWorkout ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M10 8l6 4-6 4V8z" fill="#000" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M8 5.5l10 6.5-10 6.5V5.5z" fill="#000" />
           </svg>
         ) : (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12h14" stroke="#000" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         )}

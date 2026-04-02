@@ -63,9 +63,14 @@ export default function WorkoutsPage() {
         </div>
       ) : workouts.length === 0 ? (
         <div className={styles.empty}>
-          <p className={styles.emptyIcon}>📋</p>
+          <div className={styles.emptyIconWrap}>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+              <path d="M12 8v4l2.5 2.5" stroke="var(--text-tertiary)" strokeWidth="1.7" strokeLinecap="round" />
+              <circle cx="12" cy="12" r="9" stroke="var(--text-tertiary)" strokeWidth="1.7" />
+            </svg>
+          </div>
           <p className={styles.emptyTitle}>No workouts yet</p>
-          <p className={styles.emptySub}>Start a workout from the home tab</p>
+          <p className={styles.emptySub}>Start a workout from the home tab to see your history here</p>
         </div>
       ) : (
         <div className={styles.content}>

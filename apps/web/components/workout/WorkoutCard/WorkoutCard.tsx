@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Workout } from "@/types/api";
-import { formatRelativeDate, formatDate, workoutDuration, calcVolume } from "@/lib/formatters";
+import { formatRelativeDate, workoutDuration, calcVolume } from "@/lib/formatters";
 import styles from "./WorkoutCard.module.css";
 
 interface WorkoutCardProps {
@@ -17,12 +17,13 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
   return (
     <Link href={`/workouts/${workout.id}`} className={styles.card}>
       <div className={styles.header}>
-        <div>
+        <div className={styles.titleRow}>
           <h3 className={styles.title}>{workout.title}</h3>
-          <p className={styles.date}>{formatRelativeDate(workout.startedAt)}</p>
+          {!isFinished && <span className={styles.activeBadge}>In Progress</span>}
         </div>
-        {!isFinished && <span className={styles.activeBadge}>In Progress</span>}
       </div>
+
+      <p className={styles.date}>{formatRelativeDate(workout.startedAt)}</p>
 
       {exerciseNames.length > 0 && (
         <p className={styles.exercises}>
@@ -31,32 +32,36 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
         </p>
       )}
 
-      <div className={styles.stats}>
-        {isFinished && (
-          <div className={styles.stat}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="var(--text-tertiary)" strokeWidth="1.8" />
-              <path d="M12 6v6l4 2" stroke="var(--text-tertiary)" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-            <span>{duration}</span>
-          </div>
-        )}
-        {volume > 0 && (
-          <div className={styles.stat}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M6 12h2v-2h8v2h2M8 12v4h8v-4" stroke="var(--text-tertiary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span>{volume.toLocaleString()} kg</span>
-          </div>
-        )}
-        <div className={styles.stat}>
-          <span>{allSets.length} sets</span>
+      <div className={styles.footer}>
+        <div className={styles.stats}>
+          {isFinished && duration && (
+            <div className={styles.stat}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <span>{duration}</span>
+            </div>
+          )}
+          {volume > 0 && (
+            <div className={styles.stat}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M6 12h2V9h8v3h2M8 12v5h8v-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>{volume.toLocaleString()} kg</span>
+            </div>
+          )}
+          {allSets.length > 0 && (
+            <div className={styles.stat}>
+              <span>{allSets.length} sets</span>
+            </div>
+          )}
         </div>
-      </div>
 
-      <svg className={styles.chevron} width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M9 18l6-6-6-6" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+        <svg className={styles.chevron} width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
     </Link>
   );
 }
