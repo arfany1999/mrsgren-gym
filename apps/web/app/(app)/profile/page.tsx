@@ -39,6 +39,18 @@ export default function ProfilePage() {
   }
 
   const joinDate = user?.created_at ? formatDateFull(user.created_at) : "—";
+  const displayName =
+    profile?.name ||
+    (user?.user_metadata?.name as string) ||
+    (user?.user_metadata?.full_name as string) ||
+    user?.email?.split("@")[0] ||
+    "Athlete";
+  const displayUsername =
+    profile?.username ||
+    (user?.user_metadata?.username as string) ||
+    user?.email?.split("@")[0] ||
+    null;
+  const displayEmail = profile?.email || user?.email || "—";
 
   return (
     <div className={styles.page}>
@@ -47,11 +59,11 @@ export default function ProfilePage() {
       {/* Avatar & Name */}
       <div className={styles.hero}>
         <div className={styles.avatar}>
-          {(profile?.name?.[0] ?? "U").toUpperCase()}
+          {(displayName[0] ?? "U").toUpperCase()}
         </div>
-        <h1 className={styles.name}>{profile?.name}</h1>
-        <p className={styles.username}>@{profile?.username}</p>
-        <p className={styles.email}>{profile?.email}</p>
+        <h1 className={styles.name}>{displayName}</h1>
+        {displayUsername && <p className={styles.username}>@{displayUsername}</p>}
+        <p className={styles.email}>{displayEmail}</p>
       </div>
 
       {/* Stats */}
@@ -77,17 +89,17 @@ export default function ProfilePage() {
         <div className={styles.card}>
           <div className={styles.row}>
             <span className={styles.rowLabel}>Name</span>
-            <span className={styles.rowValue}>{profile?.name}</span>
+            <span className={styles.rowValue}>{displayName}</span>
           </div>
           <div className={styles.separator} />
           <div className={styles.row}>
             <span className={styles.rowLabel}>Username</span>
-            <span className={styles.rowValue}>@{profile?.username}</span>
+            <span className={styles.rowValue}>{displayUsername ? `@${displayUsername}` : "—"}</span>
           </div>
           <div className={styles.separator} />
           <div className={styles.row}>
             <span className={styles.rowLabel}>Email</span>
-            <span className={styles.rowValue}>{profile?.email}</span>
+            <span className={styles.rowValue}>{displayEmail}</span>
           </div>
         </div>
       </div>

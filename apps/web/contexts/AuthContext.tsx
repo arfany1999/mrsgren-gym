@@ -16,9 +16,9 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 interface Profile {
   id: string;
-  email: string;
+  email: string | null;
   name: string;
-  username: string;
+  username: string | null;
   avatar_url: string | null;
   created_at: string;
 }
@@ -58,13 +58,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
 
   const fetchProfile = useCallback(
-    async (userId: string) => {
+    async (authUser: User) => {
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", userId)
-        .single();
-      setProfile(data);
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      const meta = (authUser.user_metadata ?? {}) as Record<string, unknown>;
+      const fallbackName =
+        (meta.name as string) ||
+        (meta.full_name as string) ||
+        (meta.display_name as string) ||
+        authUser.email?.split("@")[0] ||
+        "Athlete";
+      const fallbackUsername =
+        (meta.username as string) ||
+        authUser.email?.split("@")[0] ||
+        null;
+
+      setProfile({
+        id: authUser.id,
+        email: (data?.email as string) ?? authUser.email ?? null,
+        name: (data?.name as string) ?? fallbackName,
+        username: (data?.username as string) ?? fallbackUsername,
+        avatar_url:
+          (data?.avatar_url as string | null) ??
+          (meta.avatar_url as string | null) ??
+          null,
+        created_at:
+          (data?.created_at as string) ??
+          authUser.created_at ??
+          new Date().toISOString(),
+      });
     },
     [supabase]
   );
@@ -75,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         setUser(session.user);
         setStatus("authenticated");
-        fetchProfile(session.user.id);
+        fetchProfile(session.user);
       } else {
         setStatus("unauthenticated");
       }
@@ -87,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         setUser(session.user);
         setStatus("authenticated");
-        fetchProfile(session.user.id);
+        fetchProfile(session.user);
       } else {
         setUser(null);
         setProfile(null);
