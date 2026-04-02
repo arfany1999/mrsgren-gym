@@ -1,4 +1,7 @@
-.page { padding-bottom: var(--sp-8); }
+.page {
+  padding-bottom: var(--sp-8);
+  animation: pageIn 0.2s ease both;
+}
 
 .addBtn {
   display: flex;
@@ -68,8 +71,14 @@
   border: 1px solid var(--border-color);
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
+
+.filterChip:active { transform: scale(0.98); }
 
 .activeChip {
   background: var(--accent);
@@ -97,9 +106,16 @@
   padding: var(--sp-3) 0;
   border-bottom: 1px solid var(--separator);
   gap: var(--sp-3);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  border-radius: var(--radius-sm);
 }
 
 .item:last-child { border-bottom: none; }
+
+.item:active {
+  background: var(--bg-elevated);
+  transform: scale(0.995);
+}
 
 .itemInfo { flex: 1; min-width: 0; }
 
@@ -173,10 +189,14 @@
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  transition: border-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .loadMoreBtn:hover { border-color: var(--accent); color: var(--accent); }
+.loadMoreBtn:active { transform: scale(0.985); }
 .loadMoreBtn:disabled { opacity: 0.6; cursor: default; }
 
 /* ── Loading / Empty ─────────────────────────────────────────── */
@@ -195,4 +215,14 @@
 .emptyText {
   font-size: var(--text-sm);
   color: var(--text-tertiary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .filterChip,
+  .item,
+  .loadMoreBtn {
+    animation: none;
+    transition: none;
+  }
 }

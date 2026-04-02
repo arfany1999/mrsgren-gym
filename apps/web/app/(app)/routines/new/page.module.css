@@ -168,3 +168,14 @@
   background: var(--accent-red-dim);
   border-radius: var(--radius-sm);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .exRow,
+  .setsBtn,
+  .removeBtn,
+  .addExBtn {
+    animation: none;
+    transition: none;
+  }
+}
