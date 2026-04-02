@@ -8,11 +8,10 @@ export function HALogo() {
 
   function triggerLift() {
     setIsLifting(false);
-    requestAnimationFrame(() => setIsLifting(true));
-  }
-
-  function handleAnimationEnd() {
-    setIsLifting(false);
+    requestAnimationFrame(() => {
+      setIsLifting(true);
+      window.setTimeout(() => setIsLifting(false), 820);
+    });
   }
 
   return (
@@ -24,15 +23,17 @@ export function HALogo() {
       onFocus={triggerLift}
       onTouchStart={triggerLift}
       onClick={triggerLift}
-      onAnimationEnd={handleAnimationEnd}
     >
-      <span className={styles.letter}>H</span>
+      <span className={styles.word} aria-hidden="true">
+        <span className={styles.letter}>H</span>
+        <span className={styles.joiner} />
+        <span className={styles.letter}>A</span>
+      </span>
       <span className={styles.barbell} aria-hidden="true">
         <span className={styles.plate} />
         <span className={styles.bar} />
         <span className={styles.plate} />
       </span>
-      <span className={styles.letter}>A</span>
     </button>
   );
 }
