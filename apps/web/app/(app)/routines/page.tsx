@@ -94,56 +94,11 @@ export default function RoutinesPage() {
       // Create a copy
       const baseTitle = (src.title as string) ?? (src.name as string) ?? "Routine";
       const candidateUserIds = await resolveCandidateUserIds();
-      let newRoutine: { id: string } | null = null;
-      let lastErr: string | null = null;
-
-      for (const candidateUserId of candidateUserIds) {
-        const { data: byTitle, error: byTitleErr } = await supabase
-          .from("routines")
-          .insert({
-            user_id: candidateUserId,
-            title: baseTitle,
-            description: src.description,
-          })
-          .select()
-          .single();
-
-        if (byTitle?.id) {
-          newRoutine = byTitle;
-          break;
-        }
-
-        const missingTitleColumn = Boolean(
-          byTitleErr?.message?.includes("title") && byTitleErr?.message?.includes("schema cache")
-        );
-        const userFkError = Boolean(byTitleErr?.message?.includes("routines_user_id_fkey"));
-        lastErr = byTitleErr?.message ?? lastErr;
-
-        if (missingTitleColumn) {
-          const { data: byName, error: byNameErr } = await supabase
-            .from("routines")
-            .insert({
-              user_id: candidateUserId,
-              name: baseTitle,
-              description: src.description,
-            })
-            .select()
-            .single();
-
-          if (byName?.id) {
-            newRoutine = byName;
-            break;
-          }
-
-          const userFkErrorOnName = Boolean(byNameErr?.message?.includes("routines_user_id_fkey"));
-          lastErr = byNameErr?.message ?? lastErr;
-          if (userFkError || userFkErrorOnName) {
-            continue;
-          }
-        } else if (userFkError) {
-          continue;
-        }
-      }
+      const { routine: newRoutine, lastErr } = await createRoutineWithFallbacks(
+        baseTitle,
+        (src.description as string) ?? null,
+        candidateUserIds
+      );
 
       if (!newRoutine) {
         throw new Error(lastErr ?? "Failed to copy routine");
@@ -224,6 +179,95 @@ export default function RoutinesPage() {
         },
         { onConflict: "id" }
       );
+  }
+
+  async function createRoutineWithFallbacks(
+    routineTitle: string,
+    routineDescription: string | null,
+    candidateUserIds: string[]
+  ) {
+    let routine: { id: string } | null = null;
+    let lastErr: string | null = null;
+
+    for (const candidateUserId of candidateUserIds) {
+      const byTitle = await supabase
+        .from("routines")
+        .insert({
+          user_id: candidateUserId,
+          title: routineTitle,
+          description: routineDescription,
+        })
+        .select()
+        .single();
+      if (byTitle.data?.id) {
+        routine = byTitle.data;
+        break;
+      }
+
+      const missingTitleColumn = Boolean(
+        byTitle.error?.message?.includes("title") && byTitle.error?.message?.includes("schema cache")
+      );
+      const userFkError = Boolean(byTitle.error?.message?.includes("routines_user_id_fkey"));
+      lastErr = byTitle.error?.message ?? lastErr;
+
+      if (missingTitleColumn) {
+        const byName = await supabase
+          .from("routines")
+          .insert({
+            user_id: candidateUserId,
+            name: routineTitle,
+            description: routineDescription,
+          })
+          .select()
+          .single();
+        if (byName.data?.id) {
+          routine = byName.data;
+          break;
+        }
+        lastErr = byName.error?.message ?? lastErr;
+        if (userFkError || byName.error?.message?.includes("routines_user_id_fkey")) continue;
+      } else if (userFkError) {
+        continue;
+      }
+    }
+
+    if (!routine) {
+      const byTitleNoOwner = await supabase
+        .from("routines")
+        .insert({
+          title: routineTitle,
+          description: routineDescription,
+        })
+        .select()
+        .single();
+
+      if (byTitleNoOwner.data?.id) {
+        routine = byTitleNoOwner.data;
+      } else {
+        const missingTitleColumn = Boolean(
+          byTitleNoOwner.error?.message?.includes("title") &&
+          byTitleNoOwner.error?.message?.includes("schema cache")
+        );
+        lastErr = byTitleNoOwner.error?.message ?? lastErr;
+        if (missingTitleColumn) {
+          const byNameNoOwner = await supabase
+            .from("routines")
+            .insert({
+              name: routineTitle,
+              description: routineDescription,
+            })
+            .select()
+            .single();
+          if (byNameNoOwner.data?.id) {
+            routine = byNameNoOwner.data;
+          } else {
+            lastErr = byNameNoOwner.error?.message ?? lastErr;
+          }
+        }
+      }
+    }
+
+    return { routine, lastErr };
   }
 
   return (
