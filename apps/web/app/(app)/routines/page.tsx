@@ -28,17 +28,22 @@ export default function RoutinesPage() {
     async function load() {
       setLoading(true);
       try {
+        const ownerIds = await resolveCandidateUserIds();
+        const mineFilterIds = ownerIds.length > 0 ? ownerIds : [user?.id ?? ""];
         const mine = await supabase
           .from("routines")
           .select("*, routine_exercises(*, exercises(*))")
-          .eq("user_id", user?.id ?? "")
+          .in("user_id", mineFilterIds)
           .order("created_at", { ascending: false });
 
-        const lib = await supabase
+        const mineExclusion = mineFilterIds.filter(Boolean);
+        const libQuery = supabase
           .from("routines")
           .select("*, routine_exercises(*, exercises(*))")
-          .eq("is_public", true)
-          .neq("user_id", user?.id ?? "");
+          .eq("is_public", true);
+        const lib = mineExclusion.length
+          ? await libQuery.not("user_id", "in", `(${mineExclusion.map((id) => `"${id}"`).join(",")})`)
+          : await libQuery;
 
         const missingPublicColumn = Boolean(
           lib.error?.message?.includes("is_public") || lib.error?.message?.includes("schema cache")
@@ -87,9 +92,7 @@ export default function RoutinesPage() {
 
       // Create a copy
       const baseTitle = (src.title as string) ?? (src.name as string) ?? "Routine";
-      const candidateUserIds = [profile?.id, user?.id].filter(
-        (v, i, arr): v is string => Boolean(v) && arr.indexOf(v) === i
-      );
+      const candidateUserIds = await resolveCandidateUserIds();
       let newRoutine: { id: string } | null = null;
       let lastErr: string | null = null;
 
@@ -160,7 +163,7 @@ export default function RoutinesPage() {
       const { data: refreshed } = await supabase
         .from("routines")
         .select("*, routine_exercises(*, exercises(*))")
-        .eq("user_id", user?.id ?? "")
+        .in("user_id", candidateUserIds.length ? candidateUserIds : [user?.id ?? ""])
         .order("created_at", { ascending: false });
       setMyRoutines((refreshed ?? []).map(mapRoutine));
       setTab("mine");
@@ -170,6 +173,37 @@ export default function RoutinesPage() {
   }
 
   const displayed = tab === "mine" ? myRoutines : library;
+
+  async function resolveCandidateUserIds() {
+    const ids = new Set<string>();
+    if (profile?.id) ids.add(profile.id);
+    if (user?.id) ids.add(user.id);
+
+    const email = user?.email ?? null;
+    const username =
+      profile?.username ??
+      ((user?.user_metadata?.username as string | undefined) ?? null);
+
+    if (email) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .limit(5);
+      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
+    }
+
+    if (username) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .limit(5);
+      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
+    }
+
+    return Array.from(ids);
+  }
 
   return (
     <div className={styles.page}>

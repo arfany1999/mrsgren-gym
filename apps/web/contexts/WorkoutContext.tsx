@@ -191,18 +191,36 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     async (routineId?: string) => {
       if (!user) return;
       const now = new Date().toISOString();
-      const { data: workout, error } = await supabase
-        .from("workouts")
-        .insert({
-          user_id: user.id,
-          routine_id: routineId ?? null,
-          title: "Workout",
-          started_at: now,
-        })
-        .select()
-        .single();
+      const candidateUserIds = await resolveCandidateUserIds();
+      let workout: { id: string; title: string; started_at: string } | null = null;
+      let lastErr: string | null = null;
 
-      if (error || !workout) throw new Error(error?.message ?? "Failed to create workout");
+      for (const candidateUserId of candidateUserIds) {
+        const { data, error } = await supabase
+          .from("workouts")
+          .insert({
+            user_id: candidateUserId,
+            routine_id: routineId ?? null,
+            title: "Workout",
+            started_at: now,
+          })
+          .select()
+          .single();
+
+        if (data?.id) {
+          workout = data;
+          break;
+        }
+
+        lastErr = error?.message ?? lastErr;
+        if (error?.message?.includes("workouts_user_id_fkey")) {
+          continue;
+        }
+      }
+
+      if (!workout) {
+        throw new Error(lastErr ?? "Failed to create workout");
+      }
 
       // If starting from a routine, copy routine exercises
       if (routineId) {
@@ -235,6 +253,31 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     },
     [supabase, user] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  const resolveCandidateUserIds = useCallback(async () => {
+    const ids = new Set<string>();
+    if (user?.id) ids.add(user.id);
+
+    const username = (user?.user_metadata?.username as string | undefined) ?? null;
+    if (user?.email) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", user.email)
+        .limit(5);
+      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
+    }
+    if (username) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .limit(5);
+      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
+    }
+
+    return Array.from(ids);
+  }, [supabase, user]);
 
   const finishWorkout = useCallback(async () => {
     if (!activeWorkout) return;

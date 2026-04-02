@@ -116,9 +116,7 @@ export default function NewRoutinePage() {
 
     setLoading(true);
     try {
-      const candidateUserIds = [profile?.id, user.id].filter(
-        (v, i, arr): v is string => Boolean(v) && arr.indexOf(v) === i
-      );
+      const candidateUserIds = await resolveCandidateUserIds();
       let routine: { id: string } | null = null;
       let lastErr: string | null = null;
 
@@ -200,6 +198,37 @@ export default function NewRoutinePage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function resolveCandidateUserIds() {
+    const ids = new Set<string>();
+    if (profile?.id) ids.add(profile.id);
+    if (user?.id) ids.add(user.id);
+
+    const email = user?.email ?? profile?.email ?? null;
+    const username =
+      profile?.username ??
+      ((user?.user_metadata?.username as string | undefined) ?? null);
+
+    if (email) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .limit(5);
+      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
+    }
+
+    if (username) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .limit(5);
+      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
+    }
+
+    return Array.from(ids);
   }
 
   return (
