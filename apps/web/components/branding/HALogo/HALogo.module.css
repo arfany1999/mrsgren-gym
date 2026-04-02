@@ -1,0 +1,82 @@
+.logo {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transform-origin: center bottom;
+}
+
+.logo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.letter {
+  font-size: 1.7rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.barbell {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 6px;
+  transform-origin: center bottom;
+}
+
+.bar {
+  width: 26px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.plate {
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+}
+
+.lifting .barbell {
+  animation: lift 450ms ease-out;
+}
+
+.lifting .letter {
+  animation: flex 450ms ease-out;
+}
+
+@keyframes lift {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  35% {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+  70% {
+    transform: translateY(-4px) rotate(1deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes flex {
+  0% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-1px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}

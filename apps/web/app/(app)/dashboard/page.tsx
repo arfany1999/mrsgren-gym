@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { WorkoutCard } from "@/components/workout/WorkoutCard/WorkoutCard";
-import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { WorkoutTimer } from "@/components/workout/WorkoutTimer/WorkoutTimer";
+import { HALogo } from "@/components/branding/HALogo/HALogo";
 import type { Workout } from "@/types/api";
 import { formatDate } from "@/lib/formatters";
 import styles from "./page.module.css";
@@ -62,7 +62,8 @@ export default function DashboardPage() {
     <div className={styles.page}>
       {/* Header */}
       <div className={styles.header}>
-        <div>
+        <div className={styles.headerLeft}>
+          <HALogo />
           <p className={styles.greeting}>{greeting(firstName)}</p>
           <p className={styles.date}>{today}</p>
         </div>

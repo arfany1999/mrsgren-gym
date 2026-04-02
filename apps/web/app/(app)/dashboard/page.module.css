@@ -1,4 +1,7 @@
-.page { padding-bottom: var(--sp-8); }
+.page {
+  padding-bottom: var(--sp-8);
+  animation: pageIn 0.22s ease both;
+}
 
 /* ── Header ──────────────────────────────────────────────── */
 .header {
@@ -6,6 +9,12 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--sp-5) var(--sp-4) var(--sp-4);
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .greeting {
@@ -102,6 +111,8 @@
   cursor: pointer;
   text-decoration: none;
   transition: opacity var(--transition-fast), transform var(--transition-fast);
+  animation: cardIn 0.28s ease both;
+  animation-delay: 0.05s;
 }
 
 .startCard:active {
@@ -115,14 +126,13 @@
 }
 
 .startCardIcon {
-  width: 32px;
-  height: 32px;
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: var(--radius-xs);
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .startCardText {
@@ -148,6 +158,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--sp-3);
+  animation: cardIn 0.28s ease both;
+  animation-delay: 0.10s;
 }
 
 .quickCard {
