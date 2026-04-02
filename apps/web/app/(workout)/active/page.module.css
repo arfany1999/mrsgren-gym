@@ -1,0 +1,161 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bg-primary);
+}
+
+/* ── Top Bar ─────────────────────────────────────────────────── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--separator);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  gap: var(--sp-3);
+}
+
+.discardBtn {
+  background: none;
+  border: none;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--accent-red);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.titleWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.titleBtn {
+  display: flex;
+  align-items: center;
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titleInput {
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  padding: 2px var(--sp-2);
+  text-align: center;
+  width: 160px;
+  outline: none;
+}
+
+/* ── Content ─────────────────────────────────────────────────── */
+.content {
+  flex: 1;
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-8);
+  overflow-y: auto;
+}
+
+/* ── Empty State ─────────────────────────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-12) var(--sp-6);
+  gap: var(--sp-3);
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 48px;
+}
+
+.emptyTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.emptyText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Add Exercise Button ─────────────────────────────────────── */
+.addExerciseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: calc(100% - 32px);
+  margin: var(--sp-4) var(--sp-4) 0;
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.addExerciseBtn:active {
+  background: var(--accent-dim);
+}
+
+/* ── Modal ───────────────────────────────────────────────────── */
+.modalStats {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-8);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.statValue {
+  font-size: var(--text-2xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+
+.statLabel {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.modalText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}

@@ -1,0 +1,110 @@
+.page { padding-bottom: var(--sp-8); }
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-12) 0;
+}
+
+.content {
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.meta {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--fw-medium);
+}
+
+/* ── Exercise List ───────────────────────────────────────────── */
+.exerciseList {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.noEx {
+  padding: var(--sp-4);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.exRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--separator);
+}
+
+.exIdx {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.exInfo { flex: 1; min-width: 0; }
+
+.exName {
+  font-size: var(--text-base);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+}
+
+.exMuscles {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: 1px;
+  text-transform: capitalize;
+}
+
+.exSets {
+  font-size: var(--text-xs);
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.removeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.addExBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  background: none;
+  border: none;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.addExBtn:active { background: var(--accent-dim); }

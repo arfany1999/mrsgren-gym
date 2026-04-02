@@ -1,0 +1,92 @@
+"use client";
+
+import { useRef } from "react";
+import { SetTypeSelector } from "@/components/workout/SetTypeSelector/SetTypeSelector";
+import type { ActiveSet } from "@/contexts/WorkoutContext";
+import type { SetType } from "@/types/api";
+import styles from "./SetRow.module.css";
+
+interface SetRowProps {
+  set: ActiveSet;
+  index: number;
+  weId: string;
+  onUpdateField: (field: keyof ActiveSet, value: string | SetType | boolean | number) => void;
+  onSave: () => void;
+  onDelete: (setId: string) => void;
+}
+
+export function SetRow({ set, index, weId, onUpdateField, onSave, onDelete }: SetRowProps) {
+  const weightRef = useRef<HTMLInputElement>(null);
+  const repsRef = useRef<HTMLInputElement>(null);
+
+  const canSave = set.reps !== "" || set.weightKg !== "";
+
+  return (
+    <div className={[styles.row, set.isSaved ? styles.saved : "", set.isPr ? styles.pr : ""].filter(Boolean).join(" ")}>
+      {/* Set number */}
+      <div className={styles.num}>
+        <SetTypeSelector
+          value={set.setType}
+          onChange={(t) => onUpdateField("setType", t)}
+        />
+      </div>
+
+      {/* Previous best placeholder */}
+      <div className={styles.prev}>—</div>
+
+      {/* Weight */}
+      <input
+        ref={weightRef}
+        className={styles.numInput}
+        type="tel"
+        inputMode="decimal"
+        placeholder="0"
+        value={set.weightKg}
+        onChange={(e) => onUpdateField("weightKg", e.target.value)}
+        onFocus={(e) => e.target.select()}
+      />
+
+      {/* Reps */}
+      <input
+        ref={repsRef}
+        className={styles.numInput}
+        type="tel"
+        inputMode="numeric"
+        placeholder="0"
+        value={set.reps}
+        onChange={(e) => onUpdateField("reps", e.target.value)}
+        onFocus={(e) => e.target.select()}
+      />
+
+      {/* PR badge */}
+      {set.isPr && <span className={styles.prBadge}>PR</span>}
+
+      {/* Save / check button */}
+      <button
+        className={[styles.checkBtn, set.isSaved ? styles.checked : ""].join(" ")}
+        onClick={onSave}
+        disabled={!canSave}
+        type="button"
+        aria-label={set.isSaved ? "Set saved" : "Save set"}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12l5 5L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Delete (long press or tap on saved set number area) */}
+      {set.isSaved && set.id && (
+        <button
+          className={styles.deleteBtn}
+          onClick={() => onDelete(set.id!)}
+          type="button"
+          aria-label="Delete set"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,17 @@
+.shell {
+  position: relative;
+  width: 100%;
+  max-width: var(--app-max-width);
+  min-height: 100dvh;
+  margin: 0 auto;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  padding-bottom: var(--bottom-nav-height);
+  overflow-y: auto;
+  overflow-x: hidden;
+}

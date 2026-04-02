@@ -1,0 +1,114 @@
+.row {
+  display: grid;
+  grid-template-columns: 40px 48px 1fr 1fr 32px;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  position: relative;
+}
+
+.saved {
+  background: var(--accent-dim);
+}
+
+.pr {
+  background: rgba(255, 214, 10, 0.08);
+}
+
+.num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+}
+
+.prev {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.numInput {
+  width: 100%;
+  height: 36px;
+  text-align: center;
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  outline: none;
+  padding: 0 var(--sp-2);
+}
+
+.numInput:focus {
+  border-color: var(--accent);
+}
+
+.prBadge {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  color: #000;
+  background: var(--accent-yellow);
+  padding: 2px 5px;
+  border-radius: var(--radius-xs);
+}
+
+.checkBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border-color);
+  background: none;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.checkBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.checkBtn:not(:disabled):active {
+  transform: scale(0.9);
+}
+
+.checked {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #000;
+}
+
+.deleteBtn {
+  display: none;
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.row:hover .deleteBtn {
+  display: flex;
+}

@@ -1,0 +1,66 @@
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--app-max-width);
+  height: var(--bottom-nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: rgba(28, 28, 30, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-color);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 100;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  height: 100%;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  padding-top: var(--sp-1);
+}
+
+.label {
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast);
+}
+
+.activeLabel { color: var(--accent); }
+
+/* Center Start / Resume button */
+.startBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(48, 209, 88, 0.35);
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.startBtn:active {
+  transform: scale(0.93);
+  opacity: 0.9;
+}
+
+.resumeBtn {
+  background: var(--accent);
+  box-shadow: 0 0 20px rgba(48, 209, 88, 0.5);
+}
