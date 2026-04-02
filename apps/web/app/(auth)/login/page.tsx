@@ -43,16 +43,7 @@ export default function LoginPage() {
         {/* Logo / Title */}
         <div className={styles.header}>
           <div className={styles.logo}>
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-              <rect width="48" height="48" rx="12" fill="#ffffff" />
-              <path
-                d="M8 24h5v-7h5v7h12v-7h5v7h5"
-                stroke="#000"
-                strokeWidth="3.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <img src="/logo.jpg" alt="Arfany GYM" className={styles.logoImg} />
           </div>
           <h1 className={styles.title}>GYM</h1>
           <p className={styles.subtitle}>Your workout tracker</p>
