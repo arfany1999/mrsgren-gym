@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
-import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import type { Routine } from "@/types/api";
@@ -23,6 +22,7 @@ export default function RoutinesPage() {
   const [library, setLibrary] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState<string | null>(null);
+  const [startingEmpty, setStartingEmpty] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -62,6 +62,16 @@ export default function RoutinesPage() {
       router.push("/active");
     } finally {
       setStartingId(null);
+    }
+  }
+
+  async function handleStartEmpty() {
+    setStartingEmpty(true);
+    try {
+      await startWorkout();
+      router.push("/active");
+    } finally {
+      setStartingEmpty(false);
     }
   }
 
@@ -163,56 +173,57 @@ export default function RoutinesPage() {
 
   return (
     <div className={styles.page}>
-      <TopBar
-        title="Routines"
-        rightAction={
-          <Link href="/routines/new" className={styles.addBtn}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" />
+      <header className={styles.header}>
+        <div className={styles.headLeft}>
+          <h1 className={styles.title}>Workout</h1>
+          <button type="button" className={styles.chevBtn} aria-label="Workout menu">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round" />
             </svg>
-          </Link>
-        }
-      />
+          </button>
+        </div>
+        <span className={styles.pro}>PRO</span>
+      </header>
 
-      {/* Tabs */}
-      <div className={styles.tabs}>
-        <button
-          className={[styles.tab, tab === "mine" ? styles.activeTab : ""].join(" ")}
-          onClick={() => setTab("mine")}
-          type="button"
-        >
-          My Routines
+      <section className={styles.content}>
+        <button type="button" className={styles.startEmpty} onClick={handleStartEmpty} disabled={startingEmpty}>
+          <span className={styles.plus}>+</span>
+          <span>Start Empty Workout</span>
         </button>
-        <button
-          className={[styles.tab, tab === "library" ? styles.activeTab : ""].join(" ")}
-          onClick={() => setTab("library")}
-          type="button"
-        >
-          Library
-        </button>
-      </div>
+
+        <div className={styles.sectionHead}>
+          <h2>Routines</h2>
+          <Link href="/routines/new" className={styles.addBtn} aria-label="New routine">
+            +
+          </Link>
+        </div>
+
+        <div className={styles.quick}>
+          <Link href="/routines/new" className={styles.quickCard}>
+            New Routine
+          </Link>
+          <button type="button" className={styles.quickCard} onClick={() => setTab("library")}>
+            Explore
+          </button>
+        </div>
+
+        <div className={styles.tip}>Press and hold a routine to reorder</div>
+
+        <div className={styles.mineHead}>
+          <span>My Routines ({myRoutines.length})</span>
+        </div>
+      </section>
 
       {loading ? (
         <div className={styles.loadingCenter}><Spinner size={28} /></div>
       ) : displayed.length === 0 ? (
         <div className={styles.empty}>
-          <div className={styles.emptyIconWrap}>
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-              <rect x="4" y="3" width="16" height="18" rx="2" stroke="var(--text-tertiary)" strokeWidth="1.6" />
-              <path d="M8 8h8M8 12h8M8 16h5" stroke="var(--text-tertiary)" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-          </div>
           <p className={styles.emptyTitle}>
             {tab === "mine" ? "No routines yet" : "No routines in library"}
           </p>
           <p className={styles.emptySub}>
             {tab === "mine" ? "Create a routine to plan your workouts" : "No public routines available"}
           </p>
-          {tab === "mine" && (
-            <Link href="/routines/new">
-              <Button variant="primary" size="sm">Create Routine</Button>
-            </Link>
-          )}
         </div>
       ) : (
         <div className={styles.list}>
@@ -220,17 +231,12 @@ export default function RoutinesPage() {
             <div key={r.id} className={styles.card}>
               <Link href={`/routines/${r.id}`} className={styles.cardLink}>
                 <h3 className={styles.cardTitle}>{r.title}</h3>
-                {r.description && <p className={styles.cardDesc}>{r.description}</p>}
-                <p className={styles.cardMeta}>
-                  {r.routineExercises.length} exercise{r.routineExercises.length !== 1 ? "s" : ""}
-                  {r.routineExercises.length > 0 && (
-                    <span> · {r.routineExercises.slice(0, 3).map((re) => re.exercise.name).join(", ")}
-                      {r.routineExercises.length > 3 && ` +${r.routineExercises.length - 3}`}
-                    </span>
-                  )}
+                <p className={styles.cardDesc}>
+                  {r.routineExercises.slice(0, 3).map((re) => re.exercise.name).join(", ")}
+                  {r.routineExercises.length > 3 ? "..." : ""}
                 </p>
               </Link>
-
+              <button type="button" className={styles.more} aria-label="More options">...</button>
               <div className={styles.cardActions}>
                 {tab === "mine" ? (
                   <Button
@@ -239,7 +245,7 @@ export default function RoutinesPage() {
                     onClick={() => handleStart(r.id)}
                     loading={startingId === r.id}
                   >
-                    Start
+                    Start Routine
                   </Button>
                 ) : (
                   <Button
@@ -253,6 +259,14 @@ export default function RoutinesPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === "library" && (
+        <div className={styles.backMineWrap}>
+          <button type="button" onClick={() => setTab("mine")} className={styles.backMine}>
+            Back to My Routines
+          </button>
         </div>
       )}
     </div>

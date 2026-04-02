@@ -1,32 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useWorkout } from "@/contexts/WorkoutContext";
-import { WorkoutCard } from "@/components/workout/WorkoutCard/WorkoutCard";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { WorkoutTimer } from "@/components/workout/WorkoutTimer/WorkoutTimer";
-import { HALogo } from "@/components/branding/HALogo/HALogo";
 import type { Workout } from "@/types/api";
-import { formatDate } from "@/lib/formatters";
 import styles from "./page.module.css";
-
-function greeting(name: string) {
-  const h = new Date().getHours();
-  const time = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-  return `${time}, ${name}`;
-}
 
 export default function DashboardPage() {
   const { profile, supabase } = useAuth();
-  const { activeWorkout, startWorkout } = useWorkout();
   const router = useRouter();
 
   const [recentWorkouts, setRecentWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
-  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -45,145 +31,124 @@ export default function DashboardPage() {
     load();
   }, [supabase]);
 
-  async function handleStartWorkout() {
-    setStarting(true);
-    try {
-      await startWorkout();
-      router.push("/active");
-    } finally {
-      setStarting(false);
-    }
-  }
-
-  const today = formatDate(new Date().toISOString());
-  const firstName = profile?.name?.split(" ")[0] ?? "Athlete";
+  const profileName = profile?.username || profile?.name || "athlete";
+  const profileInitial = (profile?.name?.[0] ?? profile?.username?.[0] ?? "U").toUpperCase();
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerTop}>
-          <div className={styles.brandMark}>
-            <HALogo />
-          </div>
-          <Link href="/profile" className={styles.avatarLink}>
-            <div className={styles.avatar}>
-              {(profile?.name?.[0] ?? "U").toUpperCase()}
-            </div>
-          </Link>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.homeTitle}>Home</h1>
+          <button type="button" className={styles.chevBtn} aria-label="Select feed">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
-        <h1 className={styles.homeTitle}>Home</h1>
-        <p className={styles.greeting}>{greeting(firstName)}</p>
-        <p className={styles.date}>{today}</p>
+        <div className={styles.headerActions}>
+          <button type="button" className={styles.iconBtn} aria-label="Search">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="var(--text-primary)" strokeWidth="1.8" />
+              <path d="M20 20l-3.5-3.5" stroke="var(--text-primary)" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+          <button type="button" className={styles.iconBtn} aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M18 16v-5a6 6 0 10-12 0v5l-2 2h16l-2-2z" stroke="var(--text-primary)" strokeWidth="1.8" strokeLinejoin="round" />
+              <path d="M10 20a2 2 0 004 0" stroke="var(--text-primary)" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       </header>
 
-      {activeWorkout && (
-        <section className={styles.section}>
-          <Link href="/active" className={styles.resumeBanner}>
-            <div className={styles.resumeLeft}>
-              <span className={styles.resumeDot} />
-              <div>
-                <p className={styles.resumeTitle}>{activeWorkout.title}</p>
-                <p className={styles.resumeSub}>Active now</p>
+      {loading ? (
+        <div className={styles.loadingCenter}><Spinner size={28} /></div>
+      ) : recentWorkouts.length === 0 ? (
+        <div className={styles.emptyState}>
+          <p className={styles.emptyTitle}>No workouts yet</p>
+          <p className={styles.emptySub}>Start one from the Workout tab.</p>
+        </div>
+      ) : (
+        <section className={styles.feed}>
+          {recentWorkouts.map((w) => (
+            <article key={w.id} className={styles.post} onClick={() => router.push(`/workouts/${w.id}`)}>
+              <div className={styles.postHeader}>
+                <div className={styles.postUser}>
+                  <div className={styles.avatar}>{profileInitial}</div>
+                  <div>
+                    <p className={styles.userName}>{profileName}</p>
+                    <p className={styles.timeAgo}>a month ago</p>
+                  </div>
+                </div>
+                <button type="button" className={styles.moreBtn} aria-label="More">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <circle cx="6" cy="12" r="1.7" fill="var(--text-secondary)" />
+                    <circle cx="12" cy="12" r="1.7" fill="var(--text-secondary)" />
+                    <circle cx="18" cy="12" r="1.7" fill="var(--text-secondary)" />
+                  </svg>
+                </button>
               </div>
-            </div>
-            <WorkoutTimer />
-          </Link>
+              <h2 className={styles.postTitle}>{w.title}</h2>
+              <div className={styles.metrics}>
+                <div>
+                  <p className={styles.metricLabel}>Time</p>
+                  <p className={styles.metricVal}>{estimateDuration(w)}</p>
+                </div>
+                <div>
+                  <p className={styles.metricLabel}>Volume</p>
+                  <p className={styles.metricVal}>{calcVolumeKg(w)} kg</p>
+                </div>
+              </div>
+              <div className={styles.exercisePreview}>
+                {w.workoutExercises.slice(0, 3).map((we) => (
+                  <p key={we.id} className={styles.exerciseLine}>
+                    {we.sets.length || 0} sets {we.exercise.name}
+                  </p>
+                ))}
+                {w.workoutExercises.length > 3 && (
+                  <p className={styles.moreExercises}>See {w.workoutExercises.length - 3} more exercise</p>
+                )}
+              </div>
+              <div className={styles.postActions}>
+                <button type="button" aria-label="Like" className={styles.actionBtn}>
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 11v8M8 11l3-7h3a1 1 0 011 1l-1 6h4a1 1 0 011 1l-1 6a2 2 0 01-2 2H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect x="4" y="11" width="4" height="8" rx="1" stroke="currentColor" strokeWidth="1.8"/>
+                  </svg>
+                </button>
+                <button type="button" aria-label="Comment" className={styles.actionBtn}>
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 14a6 6 0 01-6 6H8l-4 2 1.4-3.3A6 6 0 018 4h6a6 6 0 016 6v4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button type="button" aria-label="Share" className={styles.actionBtn}>
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 4v12M8 8l4-4 4 4M5 14v4a2 2 0 002 2h10a2 2 0 002-2v-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </article>
+          ))}
         </section>
       )}
-
-      <section className={styles.section}>
-        {!activeWorkout ? (
-          <button
-            className={styles.startCard}
-            onClick={handleStartWorkout}
-            disabled={starting}
-            type="button"
-          >
-            <div className={styles.startCardIcon}>
-              {starting ? (
-                <span className={styles.startSpinner} />
-              ) : (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5v14M5 12h14" stroke="#000" strokeWidth="2.5" strokeLinecap="round" />
-                </svg>
-              )}
-            </div>
-            <span className={styles.startCardText}>Start Workout</span>
-            <span className={styles.startCardSub}>No routine selected</span>
-          </button>
-        ) : (
-          <Link href="/active" className={styles.startCard}>
-            <div className={styles.startCardIcon}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M10 8l6 4-6 4V8z" fill="#000" />
-              </svg>
-            </div>
-            <span className={styles.startCardText}>Resume Workout</span>
-            <span className={styles.startCardSub}>Continue current session</span>
-          </Link>
-        )}
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.quickRow}>
-          <Link href="/routines/new" className={styles.quickCard}>
-            <div className={styles.quickCardIcon}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="4" y="3" width="16" height="18" rx="2" stroke="var(--accent)" strokeWidth="1.7" />
-                <path d="M12 9v6M9 12h6" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div>
-              <span className={styles.quickCardText}>New Routine</span>
-              <p className={styles.quickCardSub}>Build a template</p>
-            </div>
-          </Link>
-
-          <Link href="/routines" className={styles.quickCard}>
-            <div className={styles.quickCardIcon}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="4" y="3" width="16" height="18" rx="2" stroke="var(--accent)" strokeWidth="1.7" />
-                <path d="M8 8h8M8 12h8M8 16h5" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div>
-              <span className={styles.quickCardText}>My Routines</span>
-              <p className={styles.quickCardSub}>Browse your plans</p>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>History</h2>
-          <Link href="/workouts" className={styles.seeAll}>
-            See all
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className={styles.loadingCenter}><Spinner size={28} /></div>
-        ) : recentWorkouts.length === 0 ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIconWrap}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <path d="M6 12h2v-4h8v4h2M8 12v6h8v-6" stroke="var(--text-tertiary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <p className={styles.emptyTitle}>No workouts yet</p>
-            <p className={styles.emptySub}>Complete your first workout to see it here</p>
-          </div>
-        ) : (
-          <div className={styles.workoutList}>
-            {recentWorkouts.map((w) => (
-              <WorkoutCard key={w.id} workout={w} />
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
+}
+
+function estimateDuration(workout: Workout) {
+  if (!workout.finishedAt) return "In progress";
+  const ms = new Date(workout.finishedAt).getTime() - new Date(workout.startedAt).getTime();
+  const mins = Math.max(1, Math.round(ms / 60000));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
+function calcVolumeKg(workout: Workout) {
+  const total = workout.workoutExercises
+    .flatMap((we) => we.sets)
+    .reduce((sum, s) => sum + ((s.reps ?? 0) * (s.weightKg ?? 0)), 0);
+  return total.toLocaleString(undefined, { maximumFractionDigits: 1 });
 }
 
 function mapWorkout(row: Record<string, unknown>): Workout {

@@ -8,11 +8,11 @@
   height: var(--bottom-nav-height);
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  background: rgba(18, 18, 18, 0.97);
+  justify-content: space-between;
+  background: rgba(20, 20, 24, 0.97);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-top: 0.5px solid rgba(255, 255, 255, 0.1);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 100;
 }
@@ -22,17 +22,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  flex: 1;
+  gap: 3px;
+  flex: 1 1 33.3%;
   height: 100%;
   color: var(--text-tertiary);
   text-decoration: none;
-  padding-top: 6px;
+  padding-top: 5px;
   -webkit-tap-highlight-color: transparent;
 }
 
 .label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: var(--fw-medium);
   color: var(--text-tertiary);
   transition: color var(--transition-fast);
@@ -40,30 +40,3 @@
 }
 
 .activeLabel { color: var(--accent); }
-
-/* Center Start / Resume button */
-.startBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-full);
-  background: var(--accent);
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.18);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  flex-shrink: 0;
-  margin-bottom: 2px;
-}
-
-.startBtn:active {
-  transform: scale(0.91);
-  box-shadow: 0 1px 6px rgba(48, 209, 88, 0.3);
-}
-
-.resumeBtn {
-  background: var(--accent);
-  box-shadow: 0 2px 14px rgba(255, 255, 255, 0.22);
-}
