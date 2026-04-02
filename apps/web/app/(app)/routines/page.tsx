@@ -118,8 +118,27 @@ export default function RoutinesPage() {
           })
           .select()
           .single();
-        if (newRoutineByNameErr || !newRoutineByName) throw new Error(newRoutineByNameErr?.message ?? "Failed to copy routine");
-        newRoutine = newRoutineByName;
+        const userFkErrorOnName = Boolean(
+          newRoutineByNameErr?.message?.includes("routines_user_id_fkey")
+        );
+        if (newRoutineByName?.id) {
+          newRoutine = newRoutineByName;
+        } else if (userFkErrorOnName) {
+          const { data: newRoutineByNameNoUser, error: newRoutineByNameNoUserErr } = await supabase
+            .from("routines")
+            .insert({
+              name: baseTitle,
+              description: src.description,
+            })
+            .select()
+            .single();
+          if (newRoutineByNameNoUserErr || !newRoutineByNameNoUser) {
+            throw new Error(newRoutineByNameNoUserErr?.message ?? "Failed to copy routine");
+          }
+          newRoutine = newRoutineByNameNoUser;
+        } else {
+          throw new Error(newRoutineByNameErr?.message ?? "Failed to copy routine");
+        }
       }
 
       if (newRoutine && src.routine_exercises?.length > 0) {

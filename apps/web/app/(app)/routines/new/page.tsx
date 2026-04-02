@@ -158,10 +158,27 @@ export default function NewRoutinePage() {
           })
           .select()
           .single();
-        if (routineByNameErr || !routineByName) {
+        const userFkErrorOnName = Boolean(
+          routineByNameErr?.message?.includes("routines_user_id_fkey")
+        );
+        if (routineByName?.id) {
+          routine = routineByName;
+        } else if (userFkErrorOnName) {
+          const { data: routineByNameNoUser, error: routineByNameNoUserErr } = await supabase
+            .from("routines")
+            .insert({
+              name: title.trim(),
+              description: description.trim() || null,
+            })
+            .select()
+            .single();
+          if (routineByNameNoUserErr || !routineByNameNoUser) {
+            throw new Error(routineByNameNoUserErr?.message ?? "Failed to create routine");
+          }
+          routine = routineByNameNoUser;
+        } else {
           throw new Error(routineByNameErr?.message ?? "Failed to create routine");
         }
-        routine = routineByName;
       }
 
       if ((!missingTitleColumn && !userFkError && routineErr) || !routine) {
