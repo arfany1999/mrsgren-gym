@@ -60,36 +60,38 @@ export default function DashboardPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <HALogo />
-          <p className={styles.greeting}>{greeting(firstName)}</p>
-          <p className={styles.date}>{today}</p>
-        </div>
-        <Link href="/profile" className={styles.avatarLink}>
-          <div className={styles.avatar}>
-            {(profile?.name?.[0] ?? "U").toUpperCase()}
+      <header className={styles.header}>
+        <div className={styles.headerTop}>
+          <div className={styles.brandMark}>
+            <HALogo />
           </div>
-        </Link>
-      </div>
-
-      {/* Active Workout Resume Banner */}
-      {activeWorkout && (
-        <Link href="/active" className={styles.resumeBanner}>
-          <div className={styles.resumeLeft}>
-            <span className={styles.resumeDot} />
-            <div>
-              <p className={styles.resumeTitle}>{activeWorkout.title}</p>
-              <p className={styles.resumeSub}>Tap to resume</p>
+          <Link href="/profile" className={styles.avatarLink}>
+            <div className={styles.avatar}>
+              {(profile?.name?.[0] ?? "U").toUpperCase()}
             </div>
-          </div>
-          <WorkoutTimer />
-        </Link>
+          </Link>
+        </div>
+        <h1 className={styles.homeTitle}>Home</h1>
+        <p className={styles.greeting}>{greeting(firstName)}</p>
+        <p className={styles.date}>{today}</p>
+      </header>
+
+      {activeWorkout && (
+        <section className={styles.section}>
+          <Link href="/active" className={styles.resumeBanner}>
+            <div className={styles.resumeLeft}>
+              <span className={styles.resumeDot} />
+              <div>
+                <p className={styles.resumeTitle}>{activeWorkout.title}</p>
+                <p className={styles.resumeSub}>Active now</p>
+              </div>
+            </div>
+            <WorkoutTimer />
+          </Link>
+        </section>
       )}
 
-      {/* Quick Actions */}
-      <div className={styles.quickActions}>
+      <section className={styles.section}>
         {!activeWorkout ? (
           <button
             className={styles.startCard}
@@ -106,7 +108,8 @@ export default function DashboardPage() {
                 </svg>
               )}
             </div>
-            <span className={styles.startCardText}>Start an Empty Workout</span>
+            <span className={styles.startCardText}>Start Workout</span>
+            <span className={styles.startCardSub}>No routine selected</span>
           </button>
         ) : (
           <Link href="/active" className={styles.startCard}>
@@ -116,9 +119,12 @@ export default function DashboardPage() {
               </svg>
             </div>
             <span className={styles.startCardText}>Resume Workout</span>
+            <span className={styles.startCardSub}>Continue current session</span>
           </Link>
         )}
+      </section>
 
+      <section className={styles.section}>
         <div className={styles.quickRow}>
           <Link href="/routines/new" className={styles.quickCard}>
             <div className={styles.quickCardIcon}>
@@ -127,7 +133,10 @@ export default function DashboardPage() {
                 <path d="M12 9v6M9 12h6" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" />
               </svg>
             </div>
-            <span className={styles.quickCardText}>New Routine</span>
+            <div>
+              <span className={styles.quickCardText}>New Routine</span>
+              <p className={styles.quickCardSub}>Build a template</p>
+            </div>
           </Link>
 
           <Link href="/routines" className={styles.quickCard}>
@@ -137,16 +146,20 @@ export default function DashboardPage() {
                 <path d="M8 8h8M8 12h8M8 16h5" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" />
               </svg>
             </div>
-            <span className={styles.quickCardText}>My Routines</span>
+            <div>
+              <span className={styles.quickCardText}>My Routines</span>
+              <p className={styles.quickCardSub}>Browse your plans</p>
+            </div>
           </Link>
         </div>
-      </div>
+      </section>
 
-      {/* Recent Workouts */}
-      <div className={styles.section}>
+      <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>History</h2>
-          <Link href="/workouts" className={styles.seeAll}>See All</Link>
+          <Link href="/workouts" className={styles.seeAll}>
+            See all
+          </Link>
         </div>
 
         {loading ? (
@@ -168,7 +181,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
