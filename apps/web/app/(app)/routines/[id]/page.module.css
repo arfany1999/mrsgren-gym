@@ -25,6 +25,14 @@
   font-weight: var(--fw-medium);
 }
 
+.error {
+  font-size: var(--text-sm);
+  color: var(--accent-red);
+  padding: var(--sp-3);
+  background: var(--accent-red-dim);
+  border-radius: var(--radius-sm);
+}
+
 /* ── Exercise List ───────────────────────────────────────────── */
 .exerciseList {
   background: var(--bg-surface);

@@ -8,7 +8,7 @@ import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
-import type { Routine } from "@/types/api";
+import type { Exercise, Routine } from "@/types/api";
 import styles from "./page.module.css";
 
 export default function RoutineDetailPage() {
@@ -21,6 +21,7 @@ export default function RoutineDetailPage() {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [error, setError] = useState("");
 
   async function reload() {
     try {
@@ -51,21 +52,66 @@ export default function RoutineDetailPage() {
     }
   }
 
-  async function handleAddExercise(exerciseId: string) {
+  async function handleAddExercise(exercise: Exercise) {
     if (!routine) return;
-    const setsConfig = [{ setType: "normal", reps: null, weightKg: null }];
-    await supabase.from("routine_exercises").insert({
-      routine_id: id,
-      exercise_id: exerciseId,
-      order: routine.routineExercises.length,
-      sets_config: setsConfig,
-    });
-    reload();
+    setError("");
+    try {
+      let exerciseId = "";
+
+      const { data: existing, error: existingErr } = await supabase
+        .from("exercises")
+        .select("id")
+        .ilike("name", exercise.name)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingErr) throw new Error(existingErr.message);
+
+      if (existing?.id) {
+        exerciseId = existing.id;
+      } else {
+        const { data: inserted, error: insertErr } = await supabase
+          .from("exercises")
+          .insert({
+            name: exercise.name,
+            muscle_groups: exercise.muscleGroups,
+            equipment: exercise.equipment,
+            instructions: exercise.instructions,
+            video_url: exercise.videoUrl,
+            is_custom: false,
+          })
+          .select("id")
+          .single();
+        if (insertErr || !inserted) throw new Error(insertErr?.message ?? "Could not add exercise");
+        exerciseId = inserted.id;
+      }
+
+      const alreadyInRoutine = routine.routineExercises.some((re) => re.exerciseId === exerciseId);
+      if (alreadyInRoutine) return;
+
+      const setsConfig = [{ setType: "normal", reps: null, weightKg: null }];
+      const { error: addErr } = await supabase.from("routine_exercises").insert({
+        routine_id: id,
+        exercise_id: exerciseId,
+        order: routine.routineExercises.length,
+        sets_config: setsConfig,
+      });
+
+      if (addErr) throw new Error(addErr.message);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add exercise");
+    }
   }
 
   async function handleRemoveExercise(reId: string) {
-    await supabase.from("routine_exercises").delete().eq("id", reId);
-    reload();
+    setError("");
+    const { error: removeErr } = await supabase.from("routine_exercises").delete().eq("id", reId);
+    if (removeErr) {
+      setError(removeErr.message);
+      return;
+    }
+    await reload();
   }
 
   if (loading) return <div className={styles.loading}><Spinner size={32} /></div>;
@@ -83,6 +129,7 @@ export default function RoutineDetailPage() {
         <div className={styles.meta}>
           <span>{routine.routineExercises.length} exercise{routine.routineExercises.length !== 1 ? "s" : ""}</span>
         </div>
+        {error && <p className={styles.error}>{error}</p>}
 
         {/* Exercise list */}
         <div className={styles.exerciseList}>
