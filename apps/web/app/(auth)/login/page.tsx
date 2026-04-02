@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
+import { HALogo } from "@/components/branding/HALogo/HALogo";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
@@ -43,7 +44,7 @@ export default function LoginPage() {
         {/* Logo / Title */}
         <div className={styles.header}>
           <div className={styles.logo}>
-            <img src="/logo.jpg" alt="Arfany GYM" className={styles.logoImg} />
+            <HALogo />
           </div>
           <h1 className={styles.title}>GYM</h1>
           <p className={styles.subtitle}>Your workout tracker</p>
