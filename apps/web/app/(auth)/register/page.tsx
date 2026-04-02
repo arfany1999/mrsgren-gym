@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
-import { ApiError } from "@/lib/api";
 import styles from "./page.module.css";
 
 export default function RegisterPage() {
@@ -46,8 +45,7 @@ export default function RegisterPage() {
       await register(form);
       router.replace("/");
     } catch (err) {
-      if (err instanceof ApiError) setGlobalError(err.message);
-      else setGlobalError("Something went wrong. Please try again.");
+      setGlobalError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

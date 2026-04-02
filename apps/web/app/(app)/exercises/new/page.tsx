@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
-import { ApiError } from "@/lib/api";
 import styles from "./page.module.css";
 
 const MUSCLE_OPTIONS = [
@@ -20,7 +19,7 @@ const EQUIPMENT_OPTIONS = [
 ];
 
 export default function NewExercisePage() {
-  const { api } = useAuth();
+  const { supabase, user } = useAuth();
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -45,16 +44,18 @@ export default function NewExercisePage() {
 
     setLoading(true);
     try {
-      await api.post("/exercises", {
+      const { error: dbError } = await supabase.from("exercises").insert({
         name: name.trim(),
-        muscleGroups,
+        muscle_groups: muscleGroups,
         equipment: equipment || null,
         instructions: instructions || null,
+        is_custom: true,
+        created_by_user_id: user?.id ?? null,
       });
+      if (dbError) throw new Error(dbError.message);
       router.back();
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message);
-      else setError("Failed to create exercise");
+      setError(err instanceof Error ? err.message : "Failed to create exercise");
     } finally {
       setLoading(false);
     }

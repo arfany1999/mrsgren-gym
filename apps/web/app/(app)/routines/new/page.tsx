@@ -7,8 +7,6 @@ import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
-import { ApiError } from "@/lib/api";
-import type { Exercise } from "@/types/api";
 import styles from "./page.module.css";
 
 interface RoutineExerciseDraft {
@@ -19,7 +17,7 @@ interface RoutineExerciseDraft {
 }
 
 export default function NewRoutinePage() {
-  const { api } = useAuth();
+  const { supabase, user } = useAuth();
   const router = useRouter();
 
   const [title, setTitle] = useState("");
@@ -31,11 +29,17 @@ export default function NewRoutinePage() {
 
   async function handleExerciseSelect(exerciseId: string) {
     try {
-      const ex = await api.get<Exercise>(`/exercises/${exerciseId}`);
-      setExercises((prev) => [
-        ...prev,
-        { exerciseId: ex.id, name: ex.name, muscleGroups: ex.muscleGroups, sets: 3 },
-      ]);
+      const { data: ex } = await supabase
+        .from("exercises")
+        .select("id, name, muscle_groups")
+        .eq("id", exerciseId)
+        .single();
+      if (ex) {
+        setExercises((prev) => [
+          ...prev,
+          { exerciseId: ex.id, name: ex.name, muscleGroups: ex.muscle_groups ?? [], sets: 3 },
+        ]);
+      }
     } catch {
       // ignore
     }
@@ -59,29 +63,39 @@ export default function NewRoutinePage() {
 
     setLoading(true);
     try {
-      const routine = await api.post<{ id: string }>("/routines", {
-        title: title.trim(),
-        description: description || null,
-        isPublic: false,
-      });
+      const { data: routine, error: routineErr } = await supabase
+        .from("routines")
+        .insert({
+          user_id: user?.id,
+          title: title.trim(),
+          description: description || null,
+          is_public: false,
+        })
+        .select()
+        .single();
+
+      if (routineErr || !routine) throw new Error(routineErr?.message ?? "Failed to create routine");
 
       // Add exercises
-      for (let i = 0; i < exercises.length; i++) {
-        const ex = exercises[i]!;
-        const setsConfig = Array.from({ length: ex.sets }, () => ({
-          setType: "normal" as const, reps: undefined, weightKg: undefined,
-        }));
-        await api.post(`/routines/${routine.id}/exercises`, {
-          exerciseId: ex.exerciseId,
-          order: i,
-          setsConfig,
-        });
+      if (exercises.length > 0) {
+        const { error: exErr } = await supabase.from("routine_exercises").insert(
+          exercises.map((ex, i) => ({
+            routine_id: routine.id,
+            exercise_id: ex.exerciseId,
+            order: i,
+            sets_config: Array.from({ length: ex.sets }, () => ({
+              setType: "normal",
+              reps: null,
+              weightKg: null,
+            })),
+          }))
+        );
+        if (exErr) throw new Error(exErr.message);
       }
 
       router.replace(`/routines/${routine.id}`);
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message);
-      else setError("Failed to create routine");
+      setError(err instanceof Error ? err.message : "Failed to create routine");
     } finally {
       setLoading(false);
     }

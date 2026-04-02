@@ -14,7 +14,7 @@ import styles from "./page.module.css";
 type Tab = "mine" | "library";
 
 export default function RoutinesPage() {
-  const { api } = useAuth();
+  const { supabase, user } = useAuth();
   const { startWorkout } = useWorkout();
   const router = useRouter();
 
@@ -29,19 +29,27 @@ export default function RoutinesPage() {
       setLoading(true);
       try {
         const [mine, lib] = await Promise.all([
-          api.get<Routine[]>("/routines"),
-          api.get<Routine[]>("/routines/library"),
+          supabase
+            .from("routines")
+            .select("*, routine_exercises(*, exercises(*))")
+            .eq("user_id", user?.id ?? "")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("routines")
+            .select("*, routine_exercises(*, exercises(*))")
+            .eq("is_public", true)
+            .neq("user_id", user?.id ?? ""),
         ]);
-        setMyRoutines(mine);
-        setLibrary(lib);
+        setMyRoutines((mine.data ?? []).map(mapRoutine));
+        setLibrary((lib.data ?? []).map(mapRoutine));
       } catch {
         // ignore
       } finally {
         setLoading(false);
       }
     }
-    load();
-  }, [api]);
+    if (user) load();
+  }, [supabase, user]);
 
   async function handleStart(routineId: string) {
     setStartingId(routineId);
@@ -55,9 +63,44 @@ export default function RoutinesPage() {
 
   async function handleCopy(routineId: string) {
     try {
-      await api.post(`/routines/${routineId}/copy`, {});
-      const res = await api.get<Routine[]>("/routines");
-      setMyRoutines(res);
+      // Fetch the routine to copy
+      const { data: src } = await supabase
+        .from("routines")
+        .select("*, routine_exercises(*, exercises(*))")
+        .eq("id", routineId)
+        .single();
+      if (!src) return;
+
+      // Create a copy
+      const { data: newRoutine } = await supabase
+        .from("routines")
+        .insert({
+          user_id: user?.id,
+          title: src.title,
+          description: src.description,
+          is_public: false,
+        })
+        .select()
+        .single();
+
+      if (newRoutine && src.routine_exercises?.length > 0) {
+        await supabase.from("routine_exercises").insert(
+          src.routine_exercises.map((re: Record<string, unknown>) => ({
+            routine_id: newRoutine.id,
+            exercise_id: re.exercise_id,
+            order: re.order,
+            sets_config: re.sets_config,
+          }))
+        );
+      }
+
+      // Refresh my routines
+      const { data: refreshed } = await supabase
+        .from("routines")
+        .select("*, routine_exercises(*, exercises(*))")
+        .eq("user_id", user?.id ?? "")
+        .order("created_at", { ascending: false });
+      setMyRoutines((refreshed ?? []).map(mapRoutine));
       setTab("mine");
     } catch {
       alert("Failed to copy routine");
@@ -154,4 +197,39 @@ export default function RoutinesPage() {
       )}
     </div>
   );
+}
+
+function mapRoutine(row: Record<string, unknown>): Routine {
+  const res = (row.routine_exercises as Record<string, unknown>[]) ?? [];
+  return {
+    id: row.id as string,
+    userId: (row.user_id as string) ?? null,
+    title: row.title as string,
+    description: (row.description as string) ?? null,
+    folderId: (row.folder_id as string) ?? null,
+    isPublic: (row.is_public as boolean) ?? false,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+    folder: null,
+    routineExercises: res.map((re) => {
+      const ex = (re.exercises as Record<string, unknown>) ?? {};
+      return {
+        id: re.id as string,
+        routineId: re.routine_id as string,
+        exerciseId: re.exercise_id as string,
+        order: re.order as number,
+        setsConfig: (re.sets_config as Routine["routineExercises"][0]["setsConfig"]) ?? [],
+        exercise: {
+          id: ex.id as string,
+          name: ex.name as string,
+          muscleGroups: (ex.muscle_groups as string[]) ?? [],
+          equipment: (ex.equipment as string) ?? null,
+          instructions: (ex.instructions as string) ?? null,
+          videoUrl: (ex.video_url as string) ?? null,
+          isCustom: (ex.is_custom as boolean) ?? false,
+          createdByUserId: (ex.created_by_user_id as string) ?? null,
+        },
+      };
+    }),
+  };
 }

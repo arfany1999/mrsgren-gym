@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "Gym Web",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "--port", "3001"],
       "port": 3001
     }
   ]

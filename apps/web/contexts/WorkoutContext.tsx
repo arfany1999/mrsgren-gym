@@ -10,8 +10,12 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { setActiveWorkoutId, getActiveWorkoutId, clearActiveWorkoutId } from "@/lib/storage";
-import type { SetType, Workout } from "@/types/api";
+import {
+  setActiveWorkoutId,
+  getActiveWorkoutId,
+  clearActiveWorkoutId,
+} from "@/lib/storage";
+import type { SetType } from "@/types/api";
 
 // ── Types ─────────────────────────────────────────────────────
 export interface ActiveSet {
@@ -56,7 +60,12 @@ interface WorkoutContextValue {
   removeExercise: (weId: string) => Promise<void>;
 
   addSet: (weId: string) => void;
-  updateSetField: (weId: string, idx: number, field: keyof ActiveSet, value: string | number | boolean | SetType) => void;
+  updateSetField: (
+    weId: string,
+    idx: number,
+    field: keyof ActiveSet,
+    value: string | number | boolean | SetType
+  ) => void;
   saveSet: (weId: string, idx: number) => Promise<void>;
   deleteSet: (weId: string, setId: string) => Promise<void>;
   clearPrBanner: () => void;
@@ -72,10 +81,12 @@ export function useWorkout(): WorkoutContextValue {
 
 // ── Provider ──────────────────────────────────────────────────
 export function WorkoutProvider({ children }: { children: React.ReactNode }) {
-  const { api } = useAuth();
+  const { supabase, user } = useAuth();
   const router = useRouter();
 
-  const [activeWorkout, setActiveWorkout] = useState<ActiveWorkout | null>(null);
+  const [activeWorkout, setActiveWorkout] = useState<ActiveWorkout | null>(
+    null
+  );
   const [exercises, setExercises] = useState<ActiveExercise[]>([]);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [showPrBanner, setShowPrBanner] = useState(false);
@@ -83,10 +94,11 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Start timer
   function startTimer(startedAt: string) {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    const base = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+    const base = Math.floor(
+      (Date.now() - new Date(startedAt).getTime()) / 1000
+    );
     setElapsedSeconds(base);
     intervalRef.current = setInterval(() => {
       setElapsedSeconds((s) => s + 1);
@@ -101,10 +113,9 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     setElapsedSeconds(0);
   }
 
-  // On unmount clean up timer
   useEffect(() => () => stopTimer(), []);
 
-  // Try to restore active workout from localStorage on mount
+  // Restore active workout from localStorage
   useEffect(() => {
     const savedId = getActiveWorkoutId();
     if (savedId && !activeWorkout) {
@@ -112,97 +123,195 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function workoutToState(workout: Workout) {
-    const mapped: ActiveExercise[] = workout.workoutExercises.map((we) => ({
-      weId: we.id,
-      exerciseId: we.exerciseId,
-      name: we.exercise.name,
-      muscleGroups: we.exercise.muscleGroups,
-      sets: we.sets.map((s) => ({
-        id: s.id,
-        reps: s.reps !== null ? String(s.reps) : "",
-        weightKg: s.weightKg !== null ? String(s.weightKg) : "",
-        setType: s.setType,
-        rpe: s.rpe ?? undefined,
-        isPr: false,
-        isSaved: true,
-      })),
-    }));
-    return mapped;
+  async function fetchWorkoutExercises(workoutId: string): Promise<ActiveExercise[]> {
+    const { data: wes } = await supabase
+      .from("workout_exercises")
+      .select("id, exercise_id, order, exercises(id, name, muscle_groups)")
+      .eq("workout_id", workoutId)
+      .order("order");
+
+    if (!wes) return [];
+
+    const weIds = wes.map((we: Record<string, unknown>) => we.id as string);
+    const { data: sets } = await supabase
+      .from("sets")
+      .select("*")
+      .in("workout_exercise_id", weIds)
+      .order("created_at");
+
+    return wes.map((we: Record<string, unknown>) => {
+      const exercise = we.exercises as unknown as Record<string, unknown>;
+      const weSets = (sets ?? []).filter(
+        (s: Record<string, unknown>) => s.workout_exercise_id === we.id
+      );
+      return {
+        weId: we.id as string,
+        exerciseId: we.exercise_id as string,
+        name: (exercise?.name as string) ?? "",
+        muscleGroups: (exercise?.muscle_groups as string[]) ?? [],
+        sets: weSets.map((s: Record<string, unknown>) => ({
+          id: s.id as string,
+          reps: s.reps !== null ? String(s.reps) : "",
+          weightKg: s.weight_kg !== null ? String(s.weight_kg) : "",
+          setType: (s.set_type as SetType) ?? "normal",
+          rpe: (s.rpe as number) ?? undefined,
+          isPr: false,
+          isSaved: true,
+        })),
+      };
+    });
   }
 
-  const loadActiveWorkout = useCallback(async (id: string) => {
-    const workout = await api.get<Workout>(`/workouts/${id}`);
-    if (workout.finishedAt) {
-      clearActiveWorkoutId();
-      return;
-    }
-    setActiveWorkout({ id: workout.id, title: workout.title, startedAt: workout.startedAt });
-    setExercises(workoutToState(workout));
-    startTimer(workout.startedAt);
-    setActiveWorkoutId(id);
-  }, [api]); // eslint-disable-line react-hooks/exhaustive-deps
+  const loadActiveWorkout = useCallback(
+    async (id: string) => {
+      const { data: workout } = await supabase
+        .from("workouts")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-  const startWorkout = useCallback(async (routineId?: string) => {
-    const body = routineId ? { routineId, title: "Workout" } : { title: "Workout" };
-    const workout = await api.post<Workout>("/workouts", body);
-    setActiveWorkout({ id: workout.id, title: workout.title, startedAt: workout.startedAt });
-    setExercises(workoutToState(workout));
-    startTimer(workout.startedAt);
-    setActiveWorkoutId(workout.id);
-  }, [api]); // eslint-disable-line react-hooks/exhaustive-deps
+      if (!workout || workout.finished_at) {
+        clearActiveWorkoutId();
+        return;
+      }
+      setActiveWorkout({
+        id: workout.id,
+        title: workout.title,
+        startedAt: workout.started_at,
+      });
+      const mapped = await fetchWorkoutExercises(workout.id);
+      setExercises(mapped);
+      startTimer(workout.started_at);
+      setActiveWorkoutId(id);
+    },
+    [supabase] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const startWorkout = useCallback(
+    async (routineId?: string) => {
+      if (!user) return;
+      const now = new Date().toISOString();
+      const { data: workout, error } = await supabase
+        .from("workouts")
+        .insert({
+          user_id: user.id,
+          routine_id: routineId ?? null,
+          title: "Workout",
+          started_at: now,
+        })
+        .select()
+        .single();
+
+      if (error || !workout) throw new Error(error?.message ?? "Failed to create workout");
+
+      // If starting from a routine, copy routine exercises
+      if (routineId) {
+        const { data: routineExercises } = await supabase
+          .from("routine_exercises")
+          .select("exercise_id, order")
+          .eq("routine_id", routineId)
+          .order("order");
+
+        if (routineExercises && routineExercises.length > 0) {
+          await supabase.from("workout_exercises").insert(
+            routineExercises.map((re: Record<string, unknown>) => ({
+              workout_id: workout.id,
+              exercise_id: re.exercise_id,
+              order: re.order,
+            }))
+          );
+        }
+      }
+
+      setActiveWorkout({
+        id: workout.id,
+        title: workout.title,
+        startedAt: workout.started_at,
+      });
+      const mapped = await fetchWorkoutExercises(workout.id);
+      setExercises(mapped);
+      startTimer(workout.started_at);
+      setActiveWorkoutId(workout.id);
+    },
+    [supabase, user] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const finishWorkout = useCallback(async () => {
     if (!activeWorkout) return;
-    await api.patch(`/workouts/${activeWorkout.id}`, { finishedAt: new Date().toISOString() });
+    await supabase
+      .from("workouts")
+      .update({ finished_at: new Date().toISOString() })
+      .eq("id", activeWorkout.id);
     const finishedId = activeWorkout.id;
     stopTimer();
     clearActiveWorkoutId();
     setActiveWorkout(null);
     setExercises([]);
     router.push(`/workouts/${finishedId}`);
-  }, [activeWorkout, api, router]);
+  }, [activeWorkout, supabase, router]);
 
   const discardWorkout = useCallback(async () => {
     if (!activeWorkout) return;
-    await api.delete(`/workouts/${activeWorkout.id}`);
+    await supabase.from("workouts").delete().eq("id", activeWorkout.id);
     stopTimer();
     clearActiveWorkoutId();
     setActiveWorkout(null);
     setExercises([]);
     router.replace("/");
-  }, [activeWorkout, api, router]);
+  }, [activeWorkout, supabase, router]);
 
-  const updateTitle = useCallback((title: string) => {
-    setActiveWorkout((w) => w ? { ...w, title } : w);
-    if (activeWorkout) {
-      api.patch(`/workouts/${activeWorkout.id}`, { title }).catch(() => {});
-    }
-  }, [activeWorkout, api]);
+  const updateTitle = useCallback(
+    (title: string) => {
+      setActiveWorkout((w) => (w ? { ...w, title } : w));
+      if (activeWorkout) {
+        supabase
+          .from("workouts")
+          .update({ title })
+          .eq("id", activeWorkout.id)
+          .then(() => {});
+      }
+    },
+    [activeWorkout, supabase]
+  );
 
-  const addExercise = useCallback(async (exerciseId: string) => {
-    if (!activeWorkout) return;
-    const we = await api.post<{ id: string; exerciseId: string; order: number; exercise: { name: string; muscleGroups: string[] }; sets: unknown[] }>(
-      `/workouts/${activeWorkout.id}/exercises`,
-      { exerciseId }
-    );
-    setExercises((prev) => [
-      ...prev,
-      {
-        weId: we.id,
-        exerciseId: we.exerciseId,
-        name: we.exercise.name,
-        muscleGroups: we.exercise.muscleGroups,
-        sets: [],
-      },
-    ]);
-  }, [activeWorkout, api]);
+  const addExercise = useCallback(
+    async (exerciseId: string) => {
+      if (!activeWorkout) return;
+      const nextOrder = exercises.length;
+      const { data: we, error } = await supabase
+        .from("workout_exercises")
+        .insert({
+          workout_id: activeWorkout.id,
+          exercise_id: exerciseId,
+          order: nextOrder,
+        })
+        .select("id, exercise_id, exercises(id, name, muscle_groups)")
+        .single();
 
-  const removeExercise = useCallback(async (weId: string) => {
-    if (!activeWorkout) return;
-    await api.delete(`/workouts/${activeWorkout.id}/exercises/${weId}`);
-    setExercises((prev) => prev.filter((e) => e.weId !== weId));
-  }, [activeWorkout, api]);
+      if (error || !we) return;
+      const exercise = we.exercises as unknown as Record<string, unknown>;
+      setExercises((prev) => [
+        ...prev,
+        {
+          weId: we.id,
+          exerciseId: we.exercise_id,
+          name: (exercise?.name as string) ?? "",
+          muscleGroups: (exercise?.muscle_groups as string[]) ?? [],
+          sets: [],
+        },
+      ]);
+    },
+    [activeWorkout, exercises.length, supabase]
+  );
+
+  const removeExercise = useCallback(
+    async (weId: string) => {
+      if (!activeWorkout) return;
+      await supabase.from("workout_exercises").delete().eq("id", weId);
+      setExercises((prev) => prev.filter((e) => e.weId !== weId));
+    },
+    [activeWorkout, supabase]
+  );
 
   const addSet = useCallback((weId: string) => {
     setExercises((prev) =>
@@ -212,7 +321,13 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
               ...e,
               sets: [
                 ...e.sets,
-                { reps: "", weightKg: "", setType: "normal", isPr: false, isSaved: false },
+                {
+                  reps: "",
+                  weightKg: "",
+                  setType: "normal" as SetType,
+                  isPr: false,
+                  isSaved: false,
+                },
               ],
             }
           : e
@@ -221,7 +336,12 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateSetField = useCallback(
-    (weId: string, idx: number, field: keyof ActiveSet, value: string | number | boolean | SetType) => {
+    (
+      weId: string,
+      idx: number,
+      field: keyof ActiveSet,
+      value: string | number | boolean | SetType
+    ) => {
       setExercises((prev) =>
         prev.map((e) => {
           if (e.weId !== weId) return e;
@@ -236,61 +356,98 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  const saveSet = useCallback(async (weId: string, idx: number) => {
-    if (!activeWorkout) return;
-    const exercise = exercises.find((e) => e.weId === weId);
-    if (!exercise) return;
-    const set = exercise.sets[idx];
-    if (!set) return;
+  const saveSet = useCallback(
+    async (weId: string, idx: number) => {
+      if (!activeWorkout) return;
+      const exercise = exercises.find((e) => e.weId === weId);
+      if (!exercise) return;
+      const set = exercise.sets[idx];
+      if (!set) return;
 
-    const reps = parseInt(set.reps) || undefined;
-    const weightKg = parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : undefined;
+      const reps = parseInt(set.reps) || null;
+      const weightKg =
+        parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : null;
 
-    const body: Record<string, unknown> = { setType: set.setType };
-    if (reps && reps > 0) body.reps = reps;
-    if (weightKg !== undefined) body.weightKg = weightKg;
-    if (set.rpe) body.rpe = set.rpe;
+      const { data: savedSet, error } = await supabase
+        .from("sets")
+        .insert({
+          workout_exercise_id: weId,
+          reps,
+          weight_kg: weightKg,
+          set_type: set.setType,
+          rpe: set.rpe ?? null,
+        })
+        .select()
+        .single();
 
-    const res = await api.post<{ set: { id: string; reps: number | null; weightKg: number | null; setType: SetType; rpe: number | null; createdAt: string; workoutExerciseId: string }; isPr: boolean }>(
-      `/workouts/${activeWorkout.id}/exercises/${weId}/sets`,
-      body
-    );
+      if (error || !savedSet) return;
 
-    setExercises((prev) =>
-      prev.map((e) => {
-        if (e.weId !== weId) return e;
-        const sets = [...e.sets];
-        const existing = sets[idx];
-        if (!existing) return e;
-        sets[idx] = {
-          ...existing,
-          id: res.set.id,
-          isSaved: true,
-          isPr: res.isPr,
-          reps: res.set.reps !== null ? String(res.set.reps) : set.reps,
-          weightKg: res.set.weightKg !== null ? String(res.set.weightKg) : set.weightKg,
-        };
-        return { ...e, sets };
-      })
-    );
+      // Check for PR
+      let isPr = false;
+      if (reps && weightKg && weightKg > 0) {
+        const { data: prevSets } = await supabase
+          .from("sets")
+          .select("weight_kg, reps, workout_exercises!inner(exercise_id)")
+          .eq("workout_exercises.exercise_id", exercise.exerciseId)
+          .not("id", "eq", savedSet.id);
 
-    if (res.isPr) {
-      setPrExerciseName(exercise.name);
-      setShowPrBanner(true);
-      setTimeout(() => setShowPrBanner(false), 3500);
-    }
-  }, [activeWorkout, api, exercises]);
+        if (prevSets) {
+          const prevMax = Math.max(
+            0,
+            ...prevSets.map(
+              (s: Record<string, unknown>) =>
+                ((s.weight_kg as number) ?? 0) *
+                (1 + ((s.reps as number) ?? 0) / 30)
+            )
+          );
+          const current1RM = weightKg * (1 + reps / 30);
+          isPr = current1RM > prevMax && prevSets.length > 0;
+        }
+      }
 
-  const deleteSet = useCallback(async (weId: string, setId: string) => {
-    await api.delete(`/sets/${setId}`);
-    setExercises((prev) =>
-      prev.map((e) =>
-        e.weId === weId
-          ? { ...e, sets: e.sets.filter((s) => s.id !== setId) }
-          : e
-      )
-    );
-  }, [api]);
+      setExercises((prev) =>
+        prev.map((e) => {
+          if (e.weId !== weId) return e;
+          const sets = [...e.sets];
+          const existing = sets[idx];
+          if (!existing) return e;
+          sets[idx] = {
+            ...existing,
+            id: savedSet.id,
+            isSaved: true,
+            isPr,
+            reps: savedSet.reps !== null ? String(savedSet.reps) : set.reps,
+            weightKg:
+              savedSet.weight_kg !== null
+                ? String(savedSet.weight_kg)
+                : set.weightKg,
+          };
+          return { ...e, sets };
+        })
+      );
+
+      if (isPr) {
+        setPrExerciseName(exercise.name);
+        setShowPrBanner(true);
+        setTimeout(() => setShowPrBanner(false), 3500);
+      }
+    },
+    [activeWorkout, exercises, supabase]
+  );
+
+  const deleteSet = useCallback(
+    async (weId: string, setId: string) => {
+      await supabase.from("sets").delete().eq("id", setId);
+      setExercises((prev) =>
+        prev.map((e) =>
+          e.weId === weId
+            ? { ...e, sets: e.sets.filter((s) => s.id !== setId) }
+            : e
+        )
+      );
+    },
+    [supabase]
+  );
 
   const clearPrBanner = useCallback(() => setShowPrBanner(false), []);
 

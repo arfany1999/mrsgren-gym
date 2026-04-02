@@ -5,25 +5,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import type { Workout } from "@/types/api";
 import { formatDateFull } from "@/lib/formatters";
 import styles from "./page.module.css";
 
 export default function ProfilePage() {
-  const { user, api, logout } = useAuth();
-  const [stats, setStats] = useState({ totalWorkouts: 0, totalSets: 0, joinedAt: "" });
+  const { profile, user, supabase, logout } = useAuth();
+  const [totalWorkouts, setTotalWorkouts] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-    api
-      .get<{ workouts: Workout[]; total: number }>("/workouts?limit=1")
-      .then((res) => {
-        setStats((s) => ({ ...s, totalWorkouts: res.total }));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [api]);
+    async function load() {
+      try {
+        const { count } = await supabase
+          .from("workouts")
+          .select("id", { count: "exact", head: true })
+          .not("finished_at", "is", null);
+        setTotalWorkouts(count ?? 0);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [supabase]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -34,7 +38,7 @@ export default function ProfilePage() {
     }
   }
 
-  const joinDate = user?.createdAt ? formatDateFull(user.createdAt) : "—";
+  const joinDate = user?.created_at ? formatDateFull(user.created_at) : "—";
 
   return (
     <div className={styles.page}>
@@ -43,11 +47,11 @@ export default function ProfilePage() {
       {/* Avatar & Name */}
       <div className={styles.hero}>
         <div className={styles.avatar}>
-          {(user?.name?.[0] ?? "U").toUpperCase()}
+          {(profile?.name?.[0] ?? "U").toUpperCase()}
         </div>
-        <h1 className={styles.name}>{user?.name}</h1>
-        <p className={styles.username}>@{user?.username}</p>
-        <p className={styles.email}>{user?.email}</p>
+        <h1 className={styles.name}>{profile?.name}</h1>
+        <p className={styles.username}>@{profile?.username}</p>
+        <p className={styles.email}>{profile?.email}</p>
       </div>
 
       {/* Stats */}
@@ -56,7 +60,7 @@ export default function ProfilePage() {
       ) : (
         <div className={styles.statsCard}>
           <div className={styles.stat}>
-            <p className={styles.statVal}>{stats.totalWorkouts}</p>
+            <p className={styles.statVal}>{totalWorkouts}</p>
             <p className={styles.statLabel}>Workouts</p>
           </div>
           <div className={styles.statDivider} />
@@ -73,17 +77,17 @@ export default function ProfilePage() {
         <div className={styles.card}>
           <div className={styles.row}>
             <span className={styles.rowLabel}>Name</span>
-            <span className={styles.rowValue}>{user?.name}</span>
+            <span className={styles.rowValue}>{profile?.name}</span>
           </div>
           <div className={styles.separator} />
           <div className={styles.row}>
             <span className={styles.rowLabel}>Username</span>
-            <span className={styles.rowValue}>@{user?.username}</span>
+            <span className={styles.rowValue}>@{profile?.username}</span>
           </div>
           <div className={styles.separator} />
           <div className={styles.row}>
             <span className={styles.rowLabel}>Email</span>
-            <span className={styles.rowValue}>{user?.email}</span>
+            <span className={styles.rowValue}>{profile?.email}</span>
           </div>
         </div>
       </div>

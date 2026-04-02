@@ -14,7 +14,7 @@ import { formatDate } from "@/lib/formatters";
 import styles from "./page.module.css";
 
 export default function DashboardPage() {
-  const { user, api } = useAuth();
+  const { profile, supabase } = useAuth();
   const { activeWorkout, startWorkout } = useWorkout();
   const router = useRouter();
 
@@ -23,12 +23,21 @@ export default function DashboardPage() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-    api
-      .get<{ workouts: Workout[] }>("/workouts?limit=5")
-      .then((res) => setRecentWorkouts(res.workouts))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [api]);
+    async function load() {
+      try {
+        const { data } = await supabase
+          .from("workouts")
+          .select("*, workout_exercises(*, exercises(*), sets(*))")
+          .not("finished_at", "is", null)
+          .order("started_at", { ascending: false })
+          .limit(5);
+        if (data) setRecentWorkouts(data.map(mapWorkout));
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [supabase]);
 
   async function handleStartWorkout() {
     setStarting(true);
@@ -41,7 +50,7 @@ export default function DashboardPage() {
   }
 
   const today = formatDate(new Date().toISOString());
-  const firstName = user?.name.split(" ")[0] ?? "Athlete";
+  const firstName = profile?.name?.split(" ")[0] ?? "Athlete";
 
   return (
     <div className={styles.page}>
@@ -53,7 +62,7 @@ export default function DashboardPage() {
         </div>
         <Link href="/profile" className={styles.avatarLink}>
           <div className={styles.avatar}>
-            {(user?.name?.[0] ?? "U").toUpperCase()}
+            {(profile?.name?.[0] ?? "U").toUpperCase()}
           </div>
         </Link>
       </div>
@@ -109,4 +118,49 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+// Map Supabase snake_case to the Workout type the UI expects
+function mapWorkout(row: Record<string, unknown>): Workout {
+  const wes = (row.workout_exercises as Record<string, unknown>[]) ?? [];
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    routineId: (row.routine_id as string) ?? null,
+    title: row.title as string,
+    notes: (row.notes as string) ?? null,
+    startedAt: row.started_at as string,
+    finishedAt: (row.finished_at as string) ?? null,
+    isPublic: (row.is_public as boolean) ?? false,
+    workoutExercises: wes.map((we) => {
+      const ex = (we.exercises as Record<string, unknown>) ?? {};
+      const sets = (we.sets as Record<string, unknown>[]) ?? [];
+      return {
+        id: we.id as string,
+        workoutId: we.workout_id as string,
+        exerciseId: we.exercise_id as string,
+        order: we.order as number,
+        supersetId: null,
+        exercise: {
+          id: ex.id as string,
+          name: ex.name as string,
+          muscleGroups: (ex.muscle_groups as string[]) ?? [],
+          equipment: (ex.equipment as string) ?? null,
+          instructions: (ex.instructions as string) ?? null,
+          videoUrl: (ex.video_url as string) ?? null,
+          isCustom: (ex.is_custom as boolean) ?? false,
+          createdByUserId: (ex.created_by_user_id as string) ?? null,
+        },
+        sets: sets.map((s) => ({
+          id: s.id as string,
+          workoutExerciseId: s.workout_exercise_id as string,
+          reps: (s.reps as number) ?? null,
+          weightKg: (s.weight_kg as number) ?? null,
+          setType: (s.set_type as string as import("@/types/api").SetType) ?? "normal",
+          rpe: (s.rpe as number) ?? null,
+          createdAt: s.created_at as string,
+        })),
+      };
+    }),
+  };
 }

@@ -5,33 +5,32 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import type { User, AuthResponse } from "@/types/api";
-import { authFetch, createApiClient, type ApiClient } from "@/lib/api";
-import {
-  getRefreshToken,
-  setRefreshToken,
-  clearRefreshToken,
-  getStoredUser,
-  setStoredUser,
-  clearStoredUser,
-} from "@/lib/storage";
+import { createClient } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 // ── Types ─────────────────────────────────────────────────────
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
+interface Profile {
+  id: string;
+  email: string;
+  name: string;
+  username: string;
+  avatar_url: string | null;
+  created_at: string;
+}
+
 interface AuthContextValue {
   user: User | null;
+  profile: Profile | null;
   status: AuthStatus;
-  api: ApiClient;
-  getToken: () => string | null;
+  supabase: ReturnType<typeof createClient>;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
-  refreshAccessToken: () => Promise<string | null>;
 }
 
 interface RegisterData {
@@ -53,90 +52,101 @@ export function useAuth(): AuthContextValue {
 // ── Provider ──────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(() => getStoredUser<User>());
+  const [supabase] = useState(() => createClient());
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
-  const accessTokenRef = useRef<string | null>(null);
 
-  const getToken = useCallback((): string | null => {
-    return accessTokenRef.current;
-  }, []);
-
-  const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-    const rt = getRefreshToken();
-    if (!rt) {
-      setStatus("unauthenticated");
-      return null;
-    }
-    try {
-      const data = await authFetch<{ access: string; refresh: string }>("/auth/refresh", { refreshToken: rt });
-      accessTokenRef.current = data.access;
-      setRefreshToken(data.refresh);
-      setStatus("authenticated");
-      return data.access;
-    } catch {
-      clearRefreshToken();
-      clearStoredUser();
-      accessTokenRef.current = null;
-      setUser(null);
-      setStatus("unauthenticated");
-      return null;
-    }
-  }, []);
-
-  const onUnauthorized = useCallback(() => {
-    clearRefreshToken();
-    clearStoredUser();
-    accessTokenRef.current = null;
-    setUser(null);
-    setStatus("unauthenticated");
-    router.replace("/login");
-  }, [router]);
-
-  // Build the API client once
-  const api = React.useMemo(
-    () => createApiClient({ getToken, onRefresh: refreshAccessToken, onUnauthorized }),
-    [getToken, refreshAccessToken, onUnauthorized]
+  const fetchProfile = useCallback(
+    async (userId: string) => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+      setProfile(data);
+    },
+    [supabase]
   );
 
-  // Silently restore session on mount
+  // Listen for auth state changes
   useEffect(() => {
-    refreshAccessToken();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        setStatus("authenticated");
+        fetchProfile(session.user.id);
+      } else {
+        setStatus("unauthenticated");
+      }
+    });
 
-  const login = useCallback(async (email: string, password: string) => {
-    const data = await authFetch<AuthResponse>("/auth/login", { email, password });
-    accessTokenRef.current = data.access;
-    setRefreshToken(data.refresh);
-    setStoredUser(data.user);
-    setUser(data.user);
-    setStatus("authenticated");
-  }, []);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        setStatus("authenticated");
+        fetchProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setStatus("unauthenticated");
+      }
+    });
 
-  const register = useCallback(async (d: RegisterData) => {
-    const data = await authFetch<AuthResponse>("/auth/register", d);
-    accessTokenRef.current = data.access;
-    setRefreshToken(data.refresh);
-    setStoredUser(data.user);
-    setUser(data.user);
-    setStatus("authenticated");
-  }, []);
+    return () => subscription.unsubscribe();
+  }, [supabase, fetchProfile]);
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw new Error(error.message);
+    },
+    [supabase]
+  );
+
+  const register = useCallback(
+    async (d: RegisterData) => {
+      const { data, error } = await supabase.auth.signUp({
+        email: d.email,
+        password: d.password,
+        options: {
+          data: {
+            name: d.name,
+            username: d.username,
+          },
+        },
+      });
+      if (error) throw new Error(error.message);
+
+      // Create profile row
+      if (data.user) {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          email: d.email,
+          name: d.name,
+          username: d.username,
+        });
+      }
+    },
+    [supabase]
+  );
 
   const logout = useCallback(async () => {
-    const rt = getRefreshToken();
-    if (rt) {
-      try { await api.post("/auth/logout", { refreshToken: rt }); } catch { /* ignore */ }
-    }
-    clearRefreshToken();
-    clearStoredUser();
-    accessTokenRef.current = null;
+    await supabase.auth.signOut();
     setUser(null);
+    setProfile(null);
     setStatus("unauthenticated");
     router.replace("/login");
-  }, [api, router]);
+  }, [supabase, router]);
 
   return (
     <AuthContext.Provider
-      value={{ user, status, api, getToken, login, register, logout, refreshAccessToken }}
+      value={{ user, profile, status, supabase, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>

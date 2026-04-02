@@ -7,13 +7,13 @@ import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Button } from "@/components/ui/Button/Button";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import type { Workout } from "@/types/api";
+import type { Workout, SetType } from "@/types/api";
 import { formatDateFull, formatTime, workoutDuration, calcVolume } from "@/lib/formatters";
 import styles from "./page.module.css";
 
 export default function WorkoutDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { api } = useAuth();
+  const { supabase } = useAuth();
   const router = useRouter();
 
   const [workout, setWorkout] = useState<Workout | null>(null);
@@ -22,16 +22,29 @@ export default function WorkoutDetailPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    api.get<Workout>(`/workouts/${id}`)
-      .then(setWorkout)
-      .catch(() => router.replace("/workouts"))
-      .finally(() => setLoading(false));
-  }, [id, api, router]);
+    async function load() {
+      try {
+        const { data, error } = await supabase
+          .from("workouts")
+          .select("*, workout_exercises(*, exercises(*), sets(*))")
+          .eq("id", id)
+          .single();
+        if (error || !data) {
+          router.replace("/workouts");
+          return;
+        }
+        setWorkout(mapWorkout(data));
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [id, supabase, router]);
 
   async function handleDelete() {
     setDeleting(true);
     try {
-      await api.delete(`/workouts/${id}`);
+      await supabase.from("workouts").delete().eq("id", id);
       router.replace("/workouts");
     } finally {
       setDeleting(false);
@@ -146,4 +159,48 @@ export default function WorkoutDetailPage() {
       </Modal>
     </div>
   );
+}
+
+function mapWorkout(row: Record<string, unknown>): Workout {
+  const wes = (row.workout_exercises as Record<string, unknown>[]) ?? [];
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    routineId: (row.routine_id as string) ?? null,
+    title: row.title as string,
+    notes: (row.notes as string) ?? null,
+    startedAt: row.started_at as string,
+    finishedAt: (row.finished_at as string) ?? null,
+    isPublic: (row.is_public as boolean) ?? false,
+    workoutExercises: wes.map((we) => {
+      const ex = (we.exercises as Record<string, unknown>) ?? {};
+      const sets = (we.sets as Record<string, unknown>[]) ?? [];
+      return {
+        id: we.id as string,
+        workoutId: we.workout_id as string,
+        exerciseId: we.exercise_id as string,
+        order: we.order as number,
+        supersetId: null,
+        exercise: {
+          id: ex.id as string,
+          name: ex.name as string,
+          muscleGroups: (ex.muscle_groups as string[]) ?? [],
+          equipment: (ex.equipment as string) ?? null,
+          instructions: (ex.instructions as string) ?? null,
+          videoUrl: (ex.video_url as string) ?? null,
+          isCustom: (ex.is_custom as boolean) ?? false,
+          createdByUserId: (ex.created_by_user_id as string) ?? null,
+        },
+        sets: sets.map((s) => ({
+          id: s.id as string,
+          workoutExerciseId: s.workout_exercise_id as string,
+          reps: (s.reps as number) ?? null,
+          weightKg: (s.weight_kg as number) ?? null,
+          setType: (s.set_type as SetType) ?? "normal",
+          rpe: (s.rpe as number) ?? null,
+          createdAt: s.created_at as string,
+        })),
+      };
+    }),
+  };
 }

@@ -8,12 +8,12 @@ import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
-import type { Routine, Exercise } from "@/types/api";
+import type { Routine } from "@/types/api";
 import styles from "./page.module.css";
 
 export default function RoutineDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { api } = useAuth();
+  const { supabase } = useAuth();
   const { startWorkout } = useWorkout();
   const router = useRouter();
 
@@ -24,10 +24,16 @@ export default function RoutineDetailPage() {
 
   async function reload() {
     try {
-      const r = await api.get<Routine>(`/routines/${id}`);
-      setRoutine(r);
-    } catch {
-      router.replace("/routines");
+      const { data, error } = await supabase
+        .from("routines")
+        .select("*, routine_exercises(*, exercises(*))")
+        .eq("id", id)
+        .single();
+      if (error || !data) {
+        router.replace("/routines");
+        return;
+      }
+      setRoutine(mapRoutine(data));
     } finally {
       setLoading(false);
     }
@@ -48,16 +54,17 @@ export default function RoutineDetailPage() {
   async function handleAddExercise(exerciseId: string) {
     if (!routine) return;
     const setsConfig = [{ setType: "normal", reps: null, weightKg: null }];
-    await api.post(`/routines/${id}/exercises`, {
-      exerciseId,
+    await supabase.from("routine_exercises").insert({
+      routine_id: id,
+      exercise_id: exerciseId,
       order: routine.routineExercises.length,
-      setsConfig,
+      sets_config: setsConfig,
     });
     reload();
   }
 
   async function handleRemoveExercise(reId: string) {
-    await api.delete(`/routines/${id}/exercises/${reId}`);
+    await supabase.from("routine_exercises").delete().eq("id", reId);
     reload();
   }
 
@@ -132,4 +139,39 @@ export default function RoutineDetailPage() {
       />
     </div>
   );
+}
+
+function mapRoutine(row: Record<string, unknown>): Routine {
+  const res = (row.routine_exercises as Record<string, unknown>[]) ?? [];
+  return {
+    id: row.id as string,
+    userId: (row.user_id as string) ?? null,
+    title: row.title as string,
+    description: (row.description as string) ?? null,
+    folderId: (row.folder_id as string) ?? null,
+    isPublic: (row.is_public as boolean) ?? false,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+    folder: null,
+    routineExercises: res.map((re) => {
+      const ex = (re.exercises as Record<string, unknown>) ?? {};
+      return {
+        id: re.id as string,
+        routineId: re.routine_id as string,
+        exerciseId: re.exercise_id as string,
+        order: re.order as number,
+        setsConfig: (re.sets_config as Routine["routineExercises"][0]["setsConfig"]) ?? [],
+        exercise: {
+          id: ex.id as string,
+          name: ex.name as string,
+          muscleGroups: (ex.muscle_groups as string[]) ?? [],
+          equipment: (ex.equipment as string) ?? null,
+          instructions: (ex.instructions as string) ?? null,
+          videoUrl: (ex.video_url as string) ?? null,
+          isCustom: (ex.is_custom as boolean) ?? false,
+          createdByUserId: (ex.created_by_user_id as string) ?? null,
+        },
+      };
+    }),
+  };
 }
