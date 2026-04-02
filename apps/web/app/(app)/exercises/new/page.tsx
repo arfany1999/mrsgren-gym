@@ -52,7 +52,16 @@ export default function NewExercisePage() {
         is_custom: true,
         created_by_user_id: user?.id ?? null,
       });
-      if (dbError) throw new Error(dbError.message);
+      const missingMuscleGroupsColumn = Boolean(
+        dbError?.message?.includes("muscle_groups") && dbError?.message?.includes("schema cache")
+      );
+      if (dbError && !missingMuscleGroupsColumn) throw new Error(dbError.message);
+      if (missingMuscleGroupsColumn) {
+        const { error: fallbackErr } = await supabase.from("exercises").insert({
+          name: name.trim(),
+        });
+        if (fallbackErr) throw new Error(fallbackErr.message);
+      }
       router.back();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create exercise");

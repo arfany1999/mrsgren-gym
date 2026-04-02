@@ -126,7 +126,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   async function fetchWorkoutExercises(workoutId: string): Promise<ActiveExercise[]> {
     const { data: wes } = await supabase
       .from("workout_exercises")
-      .select("id, exercise_id, order, exercises(id, name, muscle_groups)")
+      .select("id, exercise_id, order, exercises(id, name)")
       .eq("workout_id", workoutId)
       .order("order");
 
@@ -302,8 +302,22 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           })
           .select("id")
           .single();
-        if (insertErr || !inserted) return;
-        exerciseUuid = inserted.id;
+        const missingMuscleGroupsColumn = Boolean(
+          insertErr?.message?.includes("muscle_groups") && insertErr?.message?.includes("schema cache")
+        );
+        if (inserted?.id) {
+          exerciseUuid = inserted.id;
+        } else if (missingMuscleGroupsColumn) {
+          const { data: fallbackInserted, error: fallbackErr } = await supabase
+            .from("exercises")
+            .insert({ name: exercise.name })
+            .select("id")
+            .single();
+          if (fallbackErr || !fallbackInserted) return;
+          exerciseUuid = fallbackInserted.id;
+        } else {
+          return;
+        }
       }
 
       const nextOrder = exercises.length;

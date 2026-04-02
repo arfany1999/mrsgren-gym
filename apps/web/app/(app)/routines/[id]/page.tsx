@@ -82,8 +82,24 @@ export default function RoutineDetailPage() {
           })
           .select("id")
           .single();
-        if (insertErr || !inserted) throw new Error(insertErr?.message ?? "Could not add exercise");
-        exerciseId = inserted.id;
+        const missingMuscleGroupsColumn = Boolean(
+          insertErr?.message?.includes("muscle_groups") && insertErr?.message?.includes("schema cache")
+        );
+        if (inserted?.id) {
+          exerciseId = inserted.id;
+        } else if (missingMuscleGroupsColumn) {
+          const { data: fallbackInserted, error: fallbackErr } = await supabase
+            .from("exercises")
+            .insert({ name: exercise.name })
+            .select("id")
+            .single();
+          if (fallbackErr || !fallbackInserted) {
+            throw new Error(fallbackErr?.message ?? "Could not add exercise");
+          }
+          exerciseId = fallbackInserted.id;
+        } else {
+          throw new Error(insertErr?.message ?? "Could not add exercise");
+        }
       }
 
       const alreadyInRoutine = routine.routineExercises.some((re) => re.exerciseId === exerciseId);
