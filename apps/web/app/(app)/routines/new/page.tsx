@@ -18,7 +18,7 @@ interface RoutineExerciseDraft {
 }
 
 export default function NewRoutinePage() {
-  const { supabase, user } = useAuth();
+  const { supabase, user, profile } = useAuth();
   const router = useRouter();
 
   const [title, setTitle] = useState("");
@@ -116,73 +116,62 @@ export default function NewRoutinePage() {
 
     setLoading(true);
     try {
-      const basePayload = {
-        user_id: user.id,
-        title: title.trim(),
-        description: description.trim() || null,
-      };
-      const { data: routineByTitle, error: routineErr } = await supabase
-        .from("routines")
-        .insert(basePayload)
-        .select()
-        .single();
-      const missingTitleColumn = Boolean(
-        routineErr?.message?.includes("title") && routineErr?.message?.includes("schema cache")
+      const candidateUserIds = [profile?.id, user.id].filter(
+        (v, i, arr): v is string => Boolean(v) && arr.indexOf(v) === i
       );
-      const userFkError = Boolean(
-        routineErr?.message?.includes("routines_user_id_fkey")
-      );
+      let routine: { id: string } | null = null;
+      let lastErr: string | null = null;
 
-      let routine = routineByTitle;
-      if (userFkError) {
-        const { data: routineWithoutUser, error: routineWithoutUserErr } = await supabase
+      for (const candidateUserId of candidateUserIds) {
+        const { data: byTitle, error: byTitleErr } = await supabase
           .from("routines")
           .insert({
+            user_id: candidateUserId,
             title: title.trim(),
             description: description.trim() || null,
           })
           .select()
           .single();
-        if (routineWithoutUserErr || !routineWithoutUser) {
-          throw new Error(routineWithoutUserErr?.message ?? "Failed to create routine");
+
+        if (byTitle?.id) {
+          routine = byTitle;
+          break;
         }
-        routine = routineWithoutUser;
-      }
-      if (missingTitleColumn) {
-        const { data: routineByName, error: routineByNameErr } = await supabase
-          .from("routines")
-          .insert({
-            user_id: userFkError ? null : user.id,
-            name: title.trim(),
-            description: description.trim() || null,
-          })
-          .select()
-          .single();
-        const userFkErrorOnName = Boolean(
-          routineByNameErr?.message?.includes("routines_user_id_fkey")
+
+        const missingTitleColumn = Boolean(
+          byTitleErr?.message?.includes("title") && byTitleErr?.message?.includes("schema cache")
         );
-        if (routineByName?.id) {
-          routine = routineByName;
-        } else if (userFkErrorOnName) {
-          const { data: routineByNameNoUser, error: routineByNameNoUserErr } = await supabase
+        const userFkError = Boolean(byTitleErr?.message?.includes("routines_user_id_fkey"));
+        lastErr = byTitleErr?.message ?? lastErr;
+
+        if (missingTitleColumn) {
+          const { data: byName, error: byNameErr } = await supabase
             .from("routines")
             .insert({
+              user_id: candidateUserId,
               name: title.trim(),
               description: description.trim() || null,
             })
             .select()
             .single();
-          if (routineByNameNoUserErr || !routineByNameNoUser) {
-            throw new Error(routineByNameNoUserErr?.message ?? "Failed to create routine");
+
+          if (byName?.id) {
+            routine = byName;
+            break;
           }
-          routine = routineByNameNoUser;
-        } else {
-          throw new Error(routineByNameErr?.message ?? "Failed to create routine");
+
+          const userFkErrorOnName = Boolean(byNameErr?.message?.includes("routines_user_id_fkey"));
+          lastErr = byNameErr?.message ?? lastErr;
+          if (userFkError || userFkErrorOnName) {
+            continue;
+          }
+        } else if (userFkError) {
+          continue;
         }
       }
 
-      if ((!missingTitleColumn && !userFkError && routineErr) || !routine) {
-        throw new Error(routineErr?.message ?? "Failed to create routine");
+      if (!routine) {
+        throw new Error(lastErr ?? "Failed to create routine");
       }
 
       // Add exercises

@@ -14,7 +14,7 @@ import styles from "./page.module.css";
 type Tab = "mine" | "library";
 
 export default function RoutinesPage() {
-  const { supabase, user } = useAuth();
+  const { supabase, user, profile } = useAuth();
   const { startWorkout } = useWorkout();
   const router = useRouter();
 
@@ -77,68 +77,62 @@ export default function RoutinesPage() {
 
       // Create a copy
       const baseTitle = (src.title as string) ?? (src.name as string) ?? "Routine";
-      const { data: newRoutineByTitle, error: newRoutineErr } = await supabase
-        .from("routines")
-        .insert({
-          user_id: user?.id,
-          title: baseTitle,
-          description: src.description,
-        })
-        .select()
-        .single();
-      const missingTitleColumn = Boolean(
-        newRoutineErr?.message?.includes("title") && newRoutineErr?.message?.includes("schema cache")
+      const candidateUserIds = [profile?.id, user?.id].filter(
+        (v, i, arr): v is string => Boolean(v) && arr.indexOf(v) === i
       );
-      const userFkError = Boolean(
-        newRoutineErr?.message?.includes("routines_user_id_fkey")
-      );
+      let newRoutine: { id: string } | null = null;
+      let lastErr: string | null = null;
 
-      let newRoutine = newRoutineByTitle;
-      if (userFkError) {
-        const { data: newRoutineWithoutUser, error: newRoutineWithoutUserErr } = await supabase
+      for (const candidateUserId of candidateUserIds) {
+        const { data: byTitle, error: byTitleErr } = await supabase
           .from("routines")
           .insert({
+            user_id: candidateUserId,
             title: baseTitle,
             description: src.description,
           })
           .select()
           .single();
-        if (newRoutineWithoutUserErr || !newRoutineWithoutUser) {
-          throw new Error(newRoutineWithoutUserErr?.message ?? "Failed to copy routine");
+
+        if (byTitle?.id) {
+          newRoutine = byTitle;
+          break;
         }
-        newRoutine = newRoutineWithoutUser;
-      }
-      if (missingTitleColumn) {
-        const { data: newRoutineByName, error: newRoutineByNameErr } = await supabase
-          .from("routines")
-          .insert({
-            user_id: userFkError ? null : user?.id,
-            name: baseTitle,
-            description: src.description,
-          })
-          .select()
-          .single();
-        const userFkErrorOnName = Boolean(
-          newRoutineByNameErr?.message?.includes("routines_user_id_fkey")
+
+        const missingTitleColumn = Boolean(
+          byTitleErr?.message?.includes("title") && byTitleErr?.message?.includes("schema cache")
         );
-        if (newRoutineByName?.id) {
-          newRoutine = newRoutineByName;
-        } else if (userFkErrorOnName) {
-          const { data: newRoutineByNameNoUser, error: newRoutineByNameNoUserErr } = await supabase
+        const userFkError = Boolean(byTitleErr?.message?.includes("routines_user_id_fkey"));
+        lastErr = byTitleErr?.message ?? lastErr;
+
+        if (missingTitleColumn) {
+          const { data: byName, error: byNameErr } = await supabase
             .from("routines")
             .insert({
+              user_id: candidateUserId,
               name: baseTitle,
               description: src.description,
             })
             .select()
             .single();
-          if (newRoutineByNameNoUserErr || !newRoutineByNameNoUser) {
-            throw new Error(newRoutineByNameNoUserErr?.message ?? "Failed to copy routine");
+
+          if (byName?.id) {
+            newRoutine = byName;
+            break;
           }
-          newRoutine = newRoutineByNameNoUser;
-        } else {
-          throw new Error(newRoutineByNameErr?.message ?? "Failed to copy routine");
+
+          const userFkErrorOnName = Boolean(byNameErr?.message?.includes("routines_user_id_fkey"));
+          lastErr = byNameErr?.message ?? lastErr;
+          if (userFkError || userFkErrorOnName) {
+            continue;
+          }
+        } else if (userFkError) {
+          continue;
         }
+      }
+
+      if (!newRoutine) {
+        throw new Error(lastErr ?? "Failed to copy routine");
       }
 
       if (newRoutine && src.routine_exercises?.length > 0) {
