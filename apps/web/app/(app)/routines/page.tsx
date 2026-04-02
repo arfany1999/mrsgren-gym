@@ -76,15 +76,33 @@ export default function RoutinesPage() {
       if (!src) return;
 
       // Create a copy
-      const { data: newRoutine } = await supabase
+      const { data: newRoutineByTitle, error: newRoutineErr } = await supabase
         .from("routines")
         .insert({
           user_id: user?.id,
-          title: src.title,
+          title: (src.title as string) ?? (src.name as string) ?? "Routine",
           description: src.description,
         })
         .select()
         .single();
+      const missingTitleColumn = Boolean(
+        newRoutineErr?.message?.includes("title") && newRoutineErr?.message?.includes("schema cache")
+      );
+
+      let newRoutine = newRoutineByTitle;
+      if (missingTitleColumn) {
+        const { data: newRoutineByName, error: newRoutineByNameErr } = await supabase
+          .from("routines")
+          .insert({
+            user_id: user?.id,
+            name: (src.title as string) ?? (src.name as string) ?? "Routine",
+            description: src.description,
+          })
+          .select()
+          .single();
+        if (newRoutineByNameErr || !newRoutineByName) throw new Error(newRoutineByNameErr?.message ?? "Failed to copy routine");
+        newRoutine = newRoutineByName;
+      }
 
       if (newRoutine && src.routine_exercises?.length > 0) {
         await supabase.from("routine_exercises").insert(
@@ -215,7 +233,7 @@ function mapRoutine(row: Record<string, unknown>): Routine {
   return {
     id: row.id as string,
     userId: (row.user_id as string) ?? null,
-    title: row.title as string,
+    title: ((row.title as string) ?? (row.name as string) ?? "Routine"),
     description: (row.description as string) ?? null,
     folderId: (row.folder_id as string) ?? null,
     isPublic: (row.is_public as boolean) ?? false,

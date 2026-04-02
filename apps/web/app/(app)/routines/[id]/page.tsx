@@ -209,7 +209,7 @@ function mapRoutine(row: Record<string, unknown>): Routine {
   return {
     id: row.id as string,
     userId: (row.user_id as string) ?? null,
-    title: row.title as string,
+    title: ((row.title as string) ?? (row.name as string) ?? "Routine"),
     description: (row.description as string) ?? null,
     folderId: (row.folder_id as string) ?? null,
     isPublic: (row.is_public as boolean) ?? false,

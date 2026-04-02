@@ -116,7 +116,7 @@ export default function NewRoutinePage() {
 
     setLoading(true);
     try {
-      const { data: routine, error: routineErr } = await supabase
+      const { data: routineByTitle, error: routineErr } = await supabase
         .from("routines")
         .insert({
           user_id: user.id,
@@ -125,8 +125,30 @@ export default function NewRoutinePage() {
         })
         .select()
         .single();
+      const missingTitleColumn = Boolean(
+        routineErr?.message?.includes("title") && routineErr?.message?.includes("schema cache")
+      );
 
-      if (routineErr || !routine) throw new Error(routineErr?.message ?? "Failed to create routine");
+      let routine = routineByTitle;
+      if (missingTitleColumn) {
+        const { data: routineByName, error: routineByNameErr } = await supabase
+          .from("routines")
+          .insert({
+            user_id: user.id,
+            name: title.trim(),
+            description: description.trim() || null,
+          })
+          .select()
+          .single();
+        if (routineByNameErr || !routineByName) {
+          throw new Error(routineByNameErr?.message ?? "Failed to create routine");
+        }
+        routine = routineByName;
+      }
+
+      if ((!missingTitleColumn && routineErr) || !routine) {
+        throw new Error(routineErr?.message ?? "Failed to create routine");
+      }
 
       // Add exercises
       if (exercises.length > 0) {
