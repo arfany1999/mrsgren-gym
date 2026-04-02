@@ -68,7 +68,7 @@
 
 .signature {
   position: absolute;
-  bottom: var(--sp-6);
+  bottom: 8%;
   left: 50%;
   transform: translateX(-50%);
   font-size: 11px;

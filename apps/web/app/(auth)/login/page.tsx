@@ -94,7 +94,7 @@ export default function LoginPage() {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }}>
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
         </svg>
-        Secured by Arfany
+        Secured by Hamidreza Arfany
       </p>
     </div>
   );
