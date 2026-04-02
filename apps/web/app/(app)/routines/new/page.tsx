@@ -116,25 +116,43 @@ export default function NewRoutinePage() {
 
     setLoading(true);
     try {
+      const basePayload = {
+        user_id: user.id,
+        title: title.trim(),
+        description: description.trim() || null,
+      };
       const { data: routineByTitle, error: routineErr } = await supabase
         .from("routines")
-        .insert({
-          user_id: user.id,
-          title: title.trim(),
-          description: description.trim() || null,
-        })
+        .insert(basePayload)
         .select()
         .single();
       const missingTitleColumn = Boolean(
         routineErr?.message?.includes("title") && routineErr?.message?.includes("schema cache")
       );
+      const userFkError = Boolean(
+        routineErr?.message?.includes("routines_user_id_fkey")
+      );
 
       let routine = routineByTitle;
+      if (userFkError) {
+        const { data: routineWithoutUser, error: routineWithoutUserErr } = await supabase
+          .from("routines")
+          .insert({
+            title: title.trim(),
+            description: description.trim() || null,
+          })
+          .select()
+          .single();
+        if (routineWithoutUserErr || !routineWithoutUser) {
+          throw new Error(routineWithoutUserErr?.message ?? "Failed to create routine");
+        }
+        routine = routineWithoutUser;
+      }
       if (missingTitleColumn) {
         const { data: routineByName, error: routineByNameErr } = await supabase
           .from("routines")
           .insert({
-            user_id: user.id,
+            user_id: userFkError ? null : user.id,
             name: title.trim(),
             description: description.trim() || null,
           })
@@ -146,7 +164,7 @@ export default function NewRoutinePage() {
         routine = routineByName;
       }
 
-      if ((!missingTitleColumn && routineErr) || !routine) {
+      if ((!missingTitleColumn && !userFkError && routineErr) || !routine) {
         throw new Error(routineErr?.message ?? "Failed to create routine");
       }
 
