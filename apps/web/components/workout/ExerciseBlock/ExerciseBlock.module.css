@@ -3,18 +3,18 @@
   border-radius: var(--radius-md);
   margin: 0 var(--sp-4) var(--sp-3);
   overflow: visible;
+  animation: cardIn 0.22s ease both;
 }
 
+/* ── Header ──────────────────────────────────────────────── */
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  padding: var(--sp-4) var(--sp-4) var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-2);
 }
 
-.info {
-  flex: 1;
-}
+.info { flex: 1; }
 
 .name {
   font-size: var(--text-base);
@@ -29,9 +29,8 @@
   text-transform: capitalize;
 }
 
-.menuWrapper {
-  position: relative;
-}
+/* ── Menu ────────────────────────────────────────────────── */
+.menuWrapper { position: relative; }
 
 .menuBtn {
   background: none;
@@ -41,20 +40,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
 }
+
+.menuBtn:active { background: var(--bg-elevated); }
 
 .menu {
   position: absolute;
   right: 0;
-  top: 100%;
+  top: calc(100% + 4px);
   background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
+  border: 0.5px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
   z-index: 30;
   min-width: 180px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  animation: fadeIn 0.1s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  animation: fadeIn 0.12s ease;
 }
 
 .menuItem {
@@ -71,22 +74,23 @@
   text-align: left;
 }
 
-.menuItem:active {
-  background: var(--bg-overlay);
-}
+.menuItem:active { background: var(--bg-overlay); }
 
+/* ── Column labels ───────────────────────────────────────── */
 .colLabels {
   display: grid;
-  grid-template-columns: 40px 48px 1fr 1fr 32px;
+  grid-template-columns: 40px 52px 1fr 1fr 40px;
   gap: var(--sp-2);
-  padding: 0 var(--sp-4);
-  margin-bottom: var(--sp-1);
-  font-size: var(--text-xs);
+  padding: 4px var(--sp-4);
+  font-size: 10px;
   font-weight: var(--fw-semibold);
   color: var(--text-tertiary);
   text-align: center;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
+/* ── Add Set button ──────────────────────────────────────── */
 .addSetBtn {
   display: flex;
   align-items: center;
@@ -99,14 +103,13 @@
   color: var(--accent);
   background: none;
   border: none;
-  border-top: 1px solid var(--separator);
+  border-top: 0.5px solid var(--separator);
   cursor: pointer;
-  margin-top: var(--sp-2);
+  margin-top: var(--sp-1);
+  transition: background var(--transition-fast);
 }
 
-.addSetBtn:active {
-  background: var(--accent-dim);
-}
+.addSetBtn:active { background: var(--accent-dim); }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-4px); }

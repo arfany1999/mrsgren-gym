@@ -10,7 +10,7 @@ import styles from "./ExercisePicker.module.css";
 interface ExercisePickerProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (exerciseId: string) => void;
+  onSelect: (exercise: Exercise) => void;
 }
 
 export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps) {
@@ -47,8 +47,8 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
     };
   }, [query, open, load]);
 
-  function handleSelect(id: string) {
-    onSelect(id);
+  function handleSelect(exercise: Exercise) {
+    onSelect(exercise);
     onClose();
     setQuery("");
   }
@@ -90,7 +90,7 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
           <ul className={styles.list}>
             {exercises.map((ex) => (
               <li key={ex.id}>
-                <button className={styles.item} onClick={() => handleSelect(ex.id)} type="button">
+                <button className={styles.item} onClick={() => handleSelect(ex)} type="button">
                   {ex.videoUrl && (
                     <div className={styles.gifWrap}>
                       <Image

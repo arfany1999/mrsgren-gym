@@ -1,4 +1,7 @@
-.page { padding-bottom: var(--sp-8); }
+.page {
+  padding-bottom: var(--sp-8);
+  animation: pageIn 0.22s ease both;
+}
 
 .loadingCenter {
   display: flex;

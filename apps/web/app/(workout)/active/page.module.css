@@ -3,6 +3,7 @@
   flex-direction: column;
   min-height: 100dvh;
   background: var(--bg-primary);
+  animation: pageIn 0.2s ease both;
 }
 
 /* ── Top Bar ─────────────────────────────────────────────────── */
@@ -106,20 +107,21 @@
   justify-content: center;
   gap: var(--sp-2);
   width: calc(100% - 32px);
-  margin: var(--sp-4) var(--sp-4) 0;
+  margin: var(--sp-3) var(--sp-4) 0;
   padding: var(--sp-4);
   background: var(--bg-surface);
-  border: 1px dashed var(--border-color);
+  border: none;
   border-radius: var(--radius-md);
   font-size: var(--text-base);
   font-weight: var(--fw-semibold);
   color: var(--accent);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .addExerciseBtn:active {
-  background: var(--accent-dim);
+  background: var(--bg-elevated);
+  transform: scale(0.98);
 }
 
 /* ── Modal ───────────────────────────────────────────────────── */

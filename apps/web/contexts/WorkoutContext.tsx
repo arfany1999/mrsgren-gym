@@ -15,7 +15,7 @@ import {
   getActiveWorkoutId,
   clearActiveWorkoutId,
 } from "@/lib/storage";
-import type { SetType } from "@/types/api";
+import type { SetType, Exercise } from "@/types/api";
 
 // ── Types ─────────────────────────────────────────────────────
 export interface ActiveSet {
@@ -56,7 +56,7 @@ interface WorkoutContextValue {
   discardWorkout: () => Promise<void>;
   updateTitle: (title: string) => void;
 
-  addExercise: (exerciseId: string) => Promise<void>;
+  addExercise: (exercise: Exercise) => Promise<void>;
   removeExercise: (weId: string) => Promise<void>;
 
   addSet: (weId: string) => void;
@@ -275,28 +275,56 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addExercise = useCallback(
-    async (exerciseId: string) => {
+    async (exercise: Exercise) => {
       if (!activeWorkout) return;
+
+      // Upsert exercise by name to get a stable UUID
+      let exerciseUuid: string;
+      const { data: existing } = await supabase
+        .from("exercises")
+        .select("id")
+        .ilike("name", exercise.name)
+        .limit(1)
+        .single();
+
+      if (existing?.id) {
+        exerciseUuid = existing.id;
+      } else {
+        const { data: inserted, error: insertErr } = await supabase
+          .from("exercises")
+          .insert({
+            name: exercise.name,
+            muscle_groups: exercise.muscleGroups,
+            equipment: exercise.equipment,
+            instructions: exercise.instructions,
+            video_url: exercise.videoUrl,
+            is_custom: false,
+          })
+          .select("id")
+          .single();
+        if (insertErr || !inserted) return;
+        exerciseUuid = inserted.id;
+      }
+
       const nextOrder = exercises.length;
       const { data: we, error } = await supabase
         .from("workout_exercises")
         .insert({
           workout_id: activeWorkout.id,
-          exercise_id: exerciseId,
+          exercise_id: exerciseUuid,
           order: nextOrder,
         })
-        .select("id, exercise_id, exercises(id, name, muscle_groups)")
+        .select("id, exercise_id")
         .single();
 
       if (error || !we) return;
-      const exercise = we.exercises as unknown as Record<string, unknown>;
       setExercises((prev) => [
         ...prev,
         {
           weId: we.id,
-          exerciseId: we.exercise_id,
-          name: (exercise?.name as string) ?? "",
-          muscleGroups: (exercise?.muscle_groups as string[]) ?? [],
+          exerciseId: exerciseUuid,
+          name: exercise.name,
+          muscleGroups: exercise.muscleGroups,
           sets: [],
         },
       ]);
