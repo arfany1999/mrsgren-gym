@@ -29,15 +29,20 @@ export default function NewRoutinePage() {
   const [loading, setLoading] = useState(false);
 
   async function handleExerciseSelect(exercise: Exercise) {
+    setError("");
     try {
       let exerciseId = "";
 
-      const { data: existing } = await supabase
+      const { data: existing, error: existingErr } = await supabase
         .from("exercises")
         .select("id")
         .ilike("name", exercise.name)
         .limit(1)
-        .single();
+        .maybeSingle();
+
+      if (existingErr) {
+        throw new Error(existingErr.message);
+      }
 
       if (existing?.id) {
         exerciseId = existing.id;
@@ -94,15 +99,16 @@ export default function NewRoutinePage() {
     setError("");
 
     if (!title.trim()) { setError("Routine name is required"); return; }
+    if (!user?.id) { setError("Please sign in again and retry."); return; }
 
     setLoading(true);
     try {
       const { data: routine, error: routineErr } = await supabase
         .from("routines")
         .insert({
-          user_id: user?.id,
+          user_id: user.id,
           title: title.trim(),
-          description: description || null,
+          description: description.trim() || null,
           is_public: false,
         })
         .select()
@@ -124,7 +130,10 @@ export default function NewRoutinePage() {
             })),
           }))
         );
-        if (exErr) throw new Error(exErr.message);
+        if (exErr) {
+          await supabase.from("routines").delete().eq("id", routine.id);
+          throw new Error(exErr.message);
+        }
       }
 
       router.replace(`/routines/${routine.id}`);
@@ -162,6 +171,9 @@ export default function NewRoutinePage() {
         <div className={styles.fieldGroup}>
           <label className={styles.fieldLabel}>Exercises</label>
           <div className={styles.exerciseList}>
+            {exercises.length === 0 && (
+              <p className={styles.emptyHint}>No exercises yet. Add at least one to build your routine.</p>
+            )}
             {exercises.map((ex, idx) => (
               <div key={`${ex.exerciseId}-${idx}`} className={styles.exRow}>
                 <div className={styles.exInfo}>
@@ -211,7 +223,7 @@ export default function NewRoutinePage() {
 
         {error && <p className={styles.error}>{error}</p>}
 
-        <Button type="submit" fullWidth size="lg" loading={loading}>
+        <Button type="submit" fullWidth size="lg" loading={loading} disabled={loading || !title.trim()}>
           Create Routine
         </Button>
       </form>

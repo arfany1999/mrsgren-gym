@@ -49,6 +49,13 @@
   overflow: hidden;
 }
 
+.emptyHint {
+  padding: var(--sp-4);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--separator);
+}
+
 .exRow {
   display: flex;
   align-items: center;
