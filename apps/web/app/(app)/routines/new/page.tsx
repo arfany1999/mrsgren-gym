@@ -7,6 +7,7 @@ import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
+import type { Exercise } from "@/types/api";
 import styles from "./page.module.css";
 
 interface RoutineExerciseDraft {
@@ -27,21 +28,54 @@ export default function NewRoutinePage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleExerciseSelect(exerciseId: string) {
+  async function handleExerciseSelect(exercise: Exercise) {
     try {
-      const { data: ex } = await supabase
+      let exerciseId = "";
+
+      const { data: existing } = await supabase
         .from("exercises")
-        .select("id, name, muscle_groups")
-        .eq("id", exerciseId)
+        .select("id")
+        .ilike("name", exercise.name)
+        .limit(1)
         .single();
-      if (ex) {
-        setExercises((prev) => [
-          ...prev,
-          { exerciseId: ex.id, name: ex.name, muscleGroups: ex.muscle_groups ?? [], sets: 3 },
-        ]);
+
+      if (existing?.id) {
+        exerciseId = existing.id;
+      } else {
+        const { data: inserted, error: insertErr } = await supabase
+          .from("exercises")
+          .insert({
+            name: exercise.name,
+            muscle_groups: exercise.muscleGroups,
+            equipment: exercise.equipment,
+            instructions: exercise.instructions,
+            video_url: exercise.videoUrl,
+            is_custom: false,
+          })
+          .select("id")
+          .single();
+
+        if (insertErr || !inserted) {
+          throw new Error(insertErr?.message ?? "Could not add exercise");
+        }
+
+        exerciseId = inserted.id;
       }
-    } catch {
-      // ignore
+
+      setExercises((prev) => {
+        if (prev.some((e) => e.exerciseId === exerciseId)) return prev;
+        return [
+          ...prev,
+          {
+            exerciseId,
+            name: exercise.name,
+            muscleGroups: exercise.muscleGroups ?? [],
+            sets: 3,
+          },
+        ];
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add exercise");
     }
   }
 
