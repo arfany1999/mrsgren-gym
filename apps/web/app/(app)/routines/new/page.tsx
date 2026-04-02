@@ -116,6 +116,7 @@ export default function NewRoutinePage() {
 
     setLoading(true);
     try {
+      await ensureOwnProfileRow();
       const candidateUserIds = await resolveCandidateUserIds();
       let routine: { id: string } | null = null;
       let lastErr: string | null = null;
@@ -229,6 +230,26 @@ export default function NewRoutinePage() {
     }
 
     return Array.from(ids);
+  }
+
+  async function ensureOwnProfileRow() {
+    if (!user?.id) return;
+    const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+    await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          email: user.email ?? null,
+          name:
+            (meta.name as string) ||
+            (meta.full_name as string) ||
+            user.email?.split("@")[0] ||
+            "Athlete",
+          username: (meta.username as string) || user.email?.split("@")[0] || null,
+        },
+        { onConflict: "id" }
+      );
   }
 
   return (
