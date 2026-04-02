@@ -109,7 +109,6 @@ export default function NewRoutinePage() {
           user_id: user.id,
           title: title.trim(),
           description: description.trim() || null,
-          is_public: false,
         })
         .select()
         .single();

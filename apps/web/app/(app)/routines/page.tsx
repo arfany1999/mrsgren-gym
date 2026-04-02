@@ -28,20 +28,24 @@ export default function RoutinesPage() {
     async function load() {
       setLoading(true);
       try {
-        const [mine, lib] = await Promise.all([
-          supabase
-            .from("routines")
-            .select("*, routine_exercises(*, exercises(*))")
-            .eq("user_id", user?.id ?? "")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("routines")
-            .select("*, routine_exercises(*, exercises(*))")
-            .eq("is_public", true)
-            .neq("user_id", user?.id ?? ""),
-        ]);
+        const mine = await supabase
+          .from("routines")
+          .select("*, routine_exercises(*, exercises(*))")
+          .eq("user_id", user?.id ?? "")
+          .order("created_at", { ascending: false });
+
+        const lib = await supabase
+          .from("routines")
+          .select("*, routine_exercises(*, exercises(*))")
+          .eq("is_public", true)
+          .neq("user_id", user?.id ?? "");
+
+        const missingPublicColumn = Boolean(
+          lib.error?.message?.includes("is_public") || lib.error?.message?.includes("schema cache")
+        );
+
         setMyRoutines((mine.data ?? []).map(mapRoutine));
-        setLibrary((lib.data ?? []).map(mapRoutine));
+        setLibrary(missingPublicColumn ? [] : (lib.data ?? []).map(mapRoutine));
       } catch {
         // ignore
       } finally {
@@ -78,7 +82,6 @@ export default function RoutinesPage() {
           user_id: user?.id,
           title: src.title,
           description: src.description,
-          is_public: false,
         })
         .select()
         .single();
