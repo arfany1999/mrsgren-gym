@@ -82,7 +82,7 @@
 
 .activeChip {
   background: var(--accent);
-  color: #000;
+  color: #fff;
   border-color: var(--accent);
 }
 

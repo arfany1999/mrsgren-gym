@@ -1,6 +1,22 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 8px;
+}
+
+.pageTitle {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
 .page {
   padding-bottom: var(--sp-8);
   animation: pageIn 0.22s ease both;
+  background: #000;
 }
 
 .loadingCenter {

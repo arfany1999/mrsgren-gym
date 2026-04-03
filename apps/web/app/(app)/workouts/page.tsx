@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { WorkoutCard } from "@/components/workout/WorkoutCard/WorkoutCard";
-import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/Button/Button";
 import type { Workout, SetType } from "@/types/api";
@@ -55,7 +54,9 @@ export default function WorkoutsPage() {
 
   return (
     <div className={styles.page}>
-      <TopBar title="History" />
+      <header className={styles.header}>
+        <h1 className={styles.pageTitle}>Home</h1>
+      </header>
 
       {loading ? (
         <div className={styles.loadingCenter}>

@@ -36,8 +36,8 @@ body {
   --bg-overlay:     #3a3a3c;
 
   /* Accent Colors */
-  --accent:         #ffffff;
-  --accent-dim:     rgba(255, 255, 255, 0.10);
+  --accent:         #0a84ff;
+  --accent-dim:     rgba(10, 132, 255, 0.12);
   --accent-red:     #ff453a;
   --accent-red-dim: rgba(255, 69, 58, 0.15);
   --accent-orange:  #ff9f0a;

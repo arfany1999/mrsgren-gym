@@ -223,14 +223,15 @@ export default function RoutinesPage() {
         <div className={styles.list} ref={menuRef}>
           {displayed.map((r) => (
             <div key={r.id} className={styles.card}>
-              <Link href={`/routines/${r.id}`} className={styles.cardLink}>
-                <h3 className={styles.cardTitle}>{r.title}</h3>
-                <p className={styles.cardDesc}>
-                  {r.routineExercises.length === 0
-                    ? "No exercises"
-                    : r.routineExercises.map((re) => re.exercise.name).join(", ")}
-                </p>
-              </Link>
+              <div className={styles.cardTop}>
+                <Link href={`/routines/${r.id}`} className={styles.cardLink}>
+                  <h3 className={styles.cardTitle}>{r.title}</h3>
+                  <p className={styles.cardDesc}>
+                    {r.routineExercises.length === 0
+                      ? "No exercises"
+                      : r.routineExercises.map((re) => re.exercise.name).join(", ")}
+                  </p>
+                </Link>
 
               {/* 3-dots menu */}
               {!showLibrary && (
@@ -283,6 +284,19 @@ export default function RoutinesPage() {
                     </div>
                   )}
                 </div>
+              )}
+
+              </div>{/* end cardTop */}
+
+              {!showLibrary && (
+                <button
+                  type="button"
+                  className={styles.startRoutineBtn}
+                  onClick={() => handleStart(r.id)}
+                  disabled={startingId === r.id}
+                >
+                  {startingId === r.id ? "Starting…" : "Start Routine"}
+                </button>
               )}
 
               {showLibrary && (

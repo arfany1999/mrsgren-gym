@@ -39,14 +39,14 @@
 }
 
 .regionActive {
-  fill: rgba(58, 123, 255, 0.65);
-  stroke: #3a7bff;
+  fill: rgba(10, 132, 255, 0.65);
+  stroke: var(--accent);
   stroke-width: 1;
   animation: musclePulse 1.8s ease-in-out infinite;
   filter: url(#muscleGlow);
 }
 
 @keyframes musclePulse {
-  0%,  100% { fill: rgba(58, 123, 255, 0.55); }
-  50%        { fill: rgba(58, 123, 255, 0.85); }
+  0%,  100% { fill: rgba(10, 132, 255, 0.55); }
+  50%        { fill: rgba(10, 132, 255, 0.85); }
 }

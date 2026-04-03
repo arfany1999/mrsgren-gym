@@ -234,7 +234,7 @@
 .libChipActive {
   background: var(--accent);
   border-color: var(--accent);
-  color: #000;
+  color: #fff;
 }
 
 .libLoading { display: flex; justify-content: center; padding: 24px; }
