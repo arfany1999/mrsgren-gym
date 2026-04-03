@@ -67,7 +67,7 @@ export default function RoutinesPage() {
     try {
       const mine = await supabase
         .from("routines")
-        .select("id, title, name, description, user_id, is_public, created_at, updated_at, folder_id, routine_exercises(id, exercise_id, order_index, sets, reps, weight, exercises(id, name, muscle_groups))")
+        .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, order_index, sets, reps, weight, exercises(id, name, muscle_group))")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       setMyRoutines((mine.data ?? []).map(mapRoutine));
@@ -79,8 +79,7 @@ export default function RoutinesPage() {
   async function loadLibrary() {
     const lib = await supabase
       .from("routines")
-      .select("id, title, name, description, user_id, is_public, created_at, updated_at, folder_id, routine_exercises(id, exercise_id, order_index, sets, reps, weight, exercises(id, name, muscle_groups))")
-      .eq("is_public", true)
+      .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, order_index, sets, reps, weight, exercises(id, name, muscle_group))")
       .neq("user_id", user!.id);
     setLibrary(lib.error ? [] : (lib.data ?? []).map(mapRoutine));
   }
@@ -362,9 +361,9 @@ function mapRoutine(row: Record<string, unknown>): Routine {
     title: ((row.name as string) ?? (row.title as string) ?? "Routine"),
     description: (row.description as string) ?? null,
     folderId: (row.folder_id as string) ?? null,
-    isPublic: (row.is_public as boolean) ?? false,
+    isPublic: false,
     createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
+    updatedAt: "",
     folder: null,
     routineExercises: res.map((re) => {
       const ex = (re.exercises as Record<string, unknown>) ?? {};
@@ -377,12 +376,12 @@ function mapRoutine(row: Record<string, unknown>): Routine {
         exercise: {
           id: ex.id as string,
           name: ex.name as string,
-          muscleGroups: (ex.muscle_groups as string[]) ?? [],
+          muscleGroups: ex.muscle_group ? [ex.muscle_group as string] : [],
           equipment: (ex.equipment as string) ?? null,
           instructions: (ex.instructions as string) ?? null,
-          videoUrl: (ex.video_url as string) ?? null,
+          videoUrl: null,
           isCustom: (ex.is_custom as boolean) ?? false,
-          createdByUserId: (ex.created_by_user_id as string) ?? null,
+          createdByUserId: (ex.user_id as string) ?? null,
         },
       };
     }),

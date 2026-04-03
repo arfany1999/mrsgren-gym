@@ -19,7 +19,7 @@ export default function DashboardPage() {
       try {
         const { data } = await supabase
           .from("workouts")
-          .select("id, title, started_at, finished_at, user_id, routine_id, notes, is_public, workout_exercises(id, workout_id, exercise_id, order_index, exercises(id, name, muscle_groups), workout_sets(id, workout_exercise_id, reps, weight, set_type, rpe, created_at))")
+          .select("id, title, started_at, finished_at, user_id, routine_id, notes, workout_exercises(id, workout_id, exercise_id, order_index, exercises(id, name, muscle_group), workout_sets(id, workout_exercise_id, reps, weight, set_type, rpe))")
           .not("finished_at", "is", null)
           .order("started_at", { ascending: false })
           .limit(10);
@@ -207,7 +207,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
     notes: (row.notes as string) ?? null,
     startedAt: row.started_at as string,
     finishedAt: (row.finished_at as string) ?? null,
-    isPublic: (row.is_public as boolean) ?? false,
+    isPublic: false,
     workoutExercises: wes.map((we) => {
       const ex = (we.exercises as Record<string, unknown>) ?? {};
       const sets = (we.workout_sets as Record<string, unknown>[]) ?? [];
@@ -220,12 +220,12 @@ function mapWorkout(row: Record<string, unknown>): Workout {
         exercise: {
           id: ex.id as string,
           name: ex.name as string,
-          muscleGroups: (ex.muscle_groups as string[]) ?? [],
+          muscleGroups: ex.muscle_group ? [ex.muscle_group as string] : [],
           equipment: (ex.equipment as string) ?? null,
           instructions: (ex.instructions as string) ?? null,
-          videoUrl: (ex.video_url as string) ?? null,
+          videoUrl: null,
           isCustom: (ex.is_custom as boolean) ?? false,
-          createdByUserId: (ex.created_by_user_id as string) ?? null,
+          createdByUserId: (ex.user_id as string) ?? null,
         },
         sets: sets.map((s) => ({
           id: s.id as string,
@@ -234,7 +234,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
           weightKg: (s.weight as number) ?? null,
           setType: (s.set_type as import("@/types/api").SetType) ?? "normal",
           rpe: (s.rpe as number) ?? null,
-          createdAt: s.created_at as string,
+          createdAt: "",
         })),
       };
     }),

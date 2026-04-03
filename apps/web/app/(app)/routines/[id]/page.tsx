@@ -260,7 +260,7 @@ function mapRoutine(row: Record<string, unknown>): Routine {
           exercise: {
             id: ex.id as string,
             name: ex.name as string,
-            muscleGroups: (ex.muscle_groups as string[]) ?? [],
+            muscleGroups: ex.muscle_group ? [ex.muscle_group as string] : [],
             equipment: (ex.equipment as string) ?? null,
             instructions: (ex.instructions as string) ?? null,
             videoUrl: (ex.video_url as string) ?? null,

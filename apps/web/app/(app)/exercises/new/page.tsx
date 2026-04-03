@@ -46,7 +46,7 @@ export default function NewExercisePage() {
     try {
       const { error: dbError } = await supabase.from("exercises").insert({
         name: name.trim(),
-        muscle_groups: muscleGroups,
+        muscle_group: muscleGroups,
         equipment: equipment || null,
         instructions: instructions || null,
         is_custom: true,

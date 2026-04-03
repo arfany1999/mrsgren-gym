@@ -198,7 +198,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         weId: we.id as string,
         exerciseId: we.exercise_id as string,
         name: (exercise?.name as string) ?? "",
-        muscleGroups: (exercise?.muscle_groups as string[]) ?? [],
+        muscleGroups: exercise?.muscle_group ? [exercise.muscle_group as string] : [],
         sets: weSets.map((s: Record<string, unknown>) => ({
           id: s.id as string,
           reps: s.reps !== null ? String(s.reps) : "",
@@ -395,12 +395,11 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           .from("exercises")
           .insert({
             name: exercise.name,
-            muscle_groups: exercise.muscleGroups,
+            muscle_group: exercise.muscleGroups,
             equipment: exercise.equipment,
             instructions: exercise.instructions,
-            video_url: exercise.videoUrl,
             is_custom: false,
-            created_by_user_id: user?.id ?? null,
+            user_id: user?.id ?? null,
           })
           .select("id")
           .single();
@@ -412,7 +411,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         } else if (missingMuscleGroupsColumn) {
           const { data: fallbackInserted, error: fallbackErr } = await supabase
             .from("exercises")
-            .insert({ name: exercise.name, created_by_user_id: user?.id ?? null })
+            .insert({ name: exercise.name, user_id: user?.id ?? null })
             .select("id")
             .single();
           if (fallbackErr || !fallbackInserted) return;
