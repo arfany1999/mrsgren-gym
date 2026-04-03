@@ -117,6 +117,15 @@ export default function NewRoutinePage() {
 
     setLoading(true);
     try {
+      // Ensure a profile row exists for this user (FK may reference profiles)
+      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+      await supabase.from("profiles").upsert({
+        id: user.id,
+        email: user.email ?? null,
+        name: (meta.name as string) || (meta.full_name as string) || user.email?.split("@")[0] || "Athlete",
+        username: (meta.username as string) || user.email?.split("@")[0] || null,
+      }, { onConflict: "id" });
+
       const { data: routine, error: routineErr } = await supabase
         .from("routines")
         .insert({
