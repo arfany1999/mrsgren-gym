@@ -52,7 +52,7 @@ interface WorkoutContextValue {
 
   startWorkout: (routineId?: string) => Promise<void>;
   loadActiveWorkout: (id: string) => Promise<void>;
-  finishWorkout: () => Promise<void>;
+  finishWorkout: () => Promise<string | null>;
   discardWorkout: () => Promise<void>;
   updateTitle: (title: string) => void;
 
@@ -240,7 +240,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   );
 
   const finishWorkout = useCallback(async () => {
-    if (!activeWorkout) return;
+    if (!activeWorkout) return null;
     await supabase
       .from("workouts")
       .update({ finished_at: new Date().toISOString() })
@@ -250,8 +250,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     clearActiveWorkoutId();
     setActiveWorkout(null);
     setExercises([]);
-    router.push(`/workouts/${finishedId}`);
-  }, [activeWorkout, supabase, router]);
+    return finishedId;
+  }, [activeWorkout, supabase]);
 
   const discardWorkout = useCallback(async () => {
     if (!activeWorkout) return;

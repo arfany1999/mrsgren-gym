@@ -1,0 +1,174 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.35s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(160deg, #0d1117 0%, #0a1929 100%);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 20px;
+  padding: 28px 24px 20px;
+  box-shadow: 0 0 60px rgba(52, 211, 153, 0.1);
+}
+
+.accentBar {
+  height: 4px;
+  background: linear-gradient(90deg, #34d399, #059669);
+  border-radius: 2px;
+  margin-bottom: 22px;
+}
+
+.hype {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.workoutTitle {
+  font-size: 14px;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 10px 6px;
+}
+
+.statVal {
+  font-size: 20px;
+  font-weight: 740;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.statLbl {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 3px;
+}
+
+.volume {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #34d399;
+  margin-bottom: 16px;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin-bottom: 14px;
+}
+
+.exList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  max-height: 180px;
+  overflow: hidden;
+}
+
+.exRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.exName {
+  font-size: 14px;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70%;
+}
+
+.exSets {
+  font-size: 13px;
+  font-weight: 700;
+  color: #34d399;
+  flex-shrink: 0;
+}
+
+.footer {
+  font-size: 11px;
+  color: #334155;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.shareBtn {
+  flex: 1;
+  height: 52px;
+  border-radius: 14px;
+  border: 1.5px solid #34d399;
+  background: transparent;
+  color: #34d399;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.shareBtn:active { background: rgba(52,211,153,0.1); }
+
+.doneBtn {
+  flex: 1;
+  height: 52px;
+  border-radius: 14px;
+  border: none;
+  background: #34d399;
+  color: #000;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.doneBtn:active { opacity: 0.85; }

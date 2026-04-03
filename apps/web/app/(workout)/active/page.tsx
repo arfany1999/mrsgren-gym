@@ -7,9 +7,10 @@ import { ExerciseBlock } from "@/components/workout/ExerciseBlock/ExerciseBlock"
 import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
 import { WorkoutTimer } from "@/components/workout/WorkoutTimer/WorkoutTimer";
 import { PRBanner } from "@/components/workout/PRBanner/PRBanner";
+import { WorkoutReport } from "@/components/workout/WorkoutReport/WorkoutReport";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
-import type { ActiveSet } from "@/contexts/WorkoutContext";
+import type { ActiveSet, ActiveExercise } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./page.module.css";
 
@@ -18,6 +19,7 @@ export default function ActiveWorkoutPage() {
   const {
     activeWorkout,
     exercises,
+    elapsedSeconds,
     addExercise,
     removeExercise,
     addSet,
@@ -36,6 +38,7 @@ export default function ActiveWorkoutPage() {
   const [titleDraft, setTitleDraft] = useState("");
   const [finishing, setFinishing] = useState(false);
   const [discarding, setDiscarding] = useState(false);
+  const [report, setReport] = useState<{ id: string; title: string; secs: number; exercises: ActiveExercise[] } | null>(null);
 
   useEffect(() => {
     if (!activeWorkout) {
@@ -49,11 +52,20 @@ export default function ActiveWorkoutPage() {
 
   async function handleFinish() {
     setFinishing(true);
+    // Capture summary before context clears
+    const summaryTitle = activeWorkout?.title ?? "Workout";
+    const summaryExercises = [...exercises];
+    const summarySecs = elapsedSeconds;
     try {
-      await finishWorkout();
+      const id = await finishWorkout();
+      setFinishOpen(false);
+      if (id) {
+        setReport({ id, title: summaryTitle, secs: summarySecs, exercises: summaryExercises });
+      } else {
+        router.replace("/");
+      }
     } finally {
       setFinishing(false);
-      setFinishOpen(false);
     }
   }
 
@@ -195,6 +207,17 @@ export default function ActiveWorkoutPage() {
           </Button>
         </div>
       </Modal>
+
+      {/* Workout Report */}
+      {report && (
+        <WorkoutReport
+          title={report.title}
+          elapsedSeconds={report.secs}
+          exercises={report.exercises}
+          workoutId={report.id}
+          onDone={(id) => router.replace(`/workouts/${id}`)}
+        />
+      )}
     </div>
   );
 }

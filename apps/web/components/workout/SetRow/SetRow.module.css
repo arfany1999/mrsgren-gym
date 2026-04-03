@@ -10,7 +10,7 @@
 }
 
 .saved {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(52, 211, 153, 0.07);
   border-radius: var(--radius-xs);
 }
 
@@ -95,10 +95,16 @@
 }
 
 .checked {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: #34d399;
+  background: #34d399;
   color: #000;
-  animation: checkPop 0.25s ease both;
+  animation: checkPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes checkPop {
+  0%   { transform: scale(0.6); opacity: 0.4; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* Delete (hover on desktop, always visible on mobile via long press) */
