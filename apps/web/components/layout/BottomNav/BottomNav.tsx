@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./BottomNav.module.css";
 
-function IconFeed({ active }: { active: boolean }) {
+function IconHistory({ active }: { active: boolean }) {
   const c = active ? "var(--accent)" : "var(--text-tertiary)";
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1v-9.5z" stroke={c} strokeWidth="1.7" strokeLinejoin="round" fill={active ? "var(--accent-dim)" : "none"} />
-      <path d="M9 21V13h6v8" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="8.5" stroke={c} strokeWidth="1.7" />
+      <path d="M12 7.5V12l3 3" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -45,7 +45,7 @@ function IconProfile({ active }: { active: boolean }) {
 }
 
 const TABS = [
-  { href: "/dashboard", label: "Feed", Icon: IconFeed },
+  { href: "/workouts", label: "History", Icon: IconHistory },
   { href: "/routines", label: "Routines", Icon: IconRoutines },
   { href: "/exercises", label: "Exercises", Icon: IconExercises },
   { href: "/profile", label: "Profile", Icon: IconProfile },
