@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,57 +10,69 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import type { Routine } from "@/types/api";
 import styles from "./page.module.css";
 
-type Tab = "mine" | "library";
-
 export default function RoutinesPage() {
   const { supabase, user } = useAuth();
   const { startWorkout } = useWorkout();
   const router = useRouter();
 
-  const [tab, setTab] = useState<Tab>("mine");
   const [myRoutines, setMyRoutines] = useState<Routine[]>([]);
   const [library, setLibrary] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [startingEmpty, setStartingEmpty] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
+
+  // 3-dots menu
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Rename modal
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [renameLoading, setRenameLoading] = useState(false);
+
+  // Delete confirm
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const ownerIds = await resolveCandidateUserIds();
-        const mineFilterIds = ownerIds.length > 0 ? ownerIds : [user?.id ?? ""];
-        const mine = await supabase
-          .from("routines")
-          .select("*, routine_exercises(*, exercises(*))")
-          .in("user_id", mineFilterIds)
-          .order("created_at", { ascending: false });
+    if (user) load();
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-        const mineExclusion = mineFilterIds.filter(Boolean);
-        const libQuery = supabase
-          .from("routines")
-          .select("*, routine_exercises(*, exercises(*))")
-          .eq("is_public", true);
-        const lib = mineExclusion.length
-          ? await libQuery.not("user_id", "in", `(${mineExclusion.map((id) => `"${id}"`).join(",")})`)
-          : await libQuery;
-
-        const missingPublicColumn = Boolean(
-          lib.error?.message?.includes("is_public") || lib.error?.message?.includes("schema cache")
-        );
-
-        setMyRoutines((mine.data ?? []).map(mapRoutine));
-        setLibrary(missingPublicColumn ? [] : (lib.data ?? []).map(mapRoutine));
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null);
       }
     }
-    if (user) load();
-  }, [supabase, user]);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const mine = await supabase
+        .from("routines")
+        .select("*, routine_exercises(*, exercises(*))")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+
+      const lib = await supabase
+        .from("routines")
+        .select("*, routine_exercises(*, exercises(*))")
+        .eq("is_public", true)
+        .neq("user_id", user!.id);
+
+      setMyRoutines((mine.data ?? []).map(mapRoutine));
+      setLibrary(lib.error ? [] : (lib.data ?? []).map(mapRoutine));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleStart(routineId: string) {
+    setMenuOpenId(null);
     setStartingId(routineId);
     try {
       await startWorkout(routineId);
@@ -82,7 +94,6 @@ export default function RoutinesPage() {
 
   async function handleCopy(routineId: string) {
     try {
-      // Fetch the routine to copy
       const { data: src } = await supabase
         .from("routines")
         .select("*, routine_exercises(*, exercises(*))")
@@ -90,70 +101,69 @@ export default function RoutinesPage() {
         .single();
       if (!src) return;
 
-      // Create a copy
-      const baseTitle = (src.name as string) ?? (src.title as string) ?? "Routine";
-      const { routine: newRoutine, lastErr } = await createRoutine(
-        baseTitle,
-        (src.description as string) ?? null
-      );
+      const { data: newRoutine, error } = await supabase
+        .from("routines")
+        .insert({ user_id: user?.id, name: ((src.name as string) ?? (src.title as string) ?? "Routine"), description: src.description ?? null })
+        .select()
+        .single();
 
-      if (!newRoutine) {
-        throw new Error(lastErr ?? "Failed to copy routine");
-      }
+      if (error || !newRoutine) throw new Error(error?.message ?? "Failed to copy");
 
-      if (newRoutine && src.routine_exercises?.length > 0) {
+      const res = (src.routine_exercises as Record<string, unknown>[]) ?? [];
+      if (res.length > 0) {
         await supabase.from("routine_exercises").insert(
-          src.routine_exercises.map((re: Record<string, unknown>) => ({
+          res.map((re, i) => ({
             routine_id: newRoutine.id,
             exercise_id: re.exercise_id,
-            order: re.order,
-            sets_config: re.sets_config,
+            order_index: (re.order_index ?? re.order ?? i) as number,
+            sets: (re.sets ?? 3) as number,
           }))
         );
       }
 
-      // Refresh my routines
-      const ownerIds = resolveCandidateUserIds();
-      const { data: refreshed } = await supabase
-        .from("routines")
-        .select("*, routine_exercises(*, exercises(*))")
-        .in("user_id", ownerIds)
-        .order("created_at", { ascending: false });
-      setMyRoutines((refreshed ?? []).map(mapRoutine));
-      setTab("mine");
+      await load();
+      setShowLibrary(false);
     } catch {
       alert("Failed to copy routine");
     }
   }
 
-  const displayed = tab === "mine" ? myRoutines : library;
-
-  function resolveCandidateUserIds() {
-    return [user?.id ?? ""].filter(Boolean);
+  async function handleRename() {
+    if (!renameId || !renameDraft.trim()) return;
+    setRenameLoading(true);
+    try {
+      await supabase
+        .from("routines")
+        .update({ name: renameDraft.trim() })
+        .eq("id", renameId);
+      setMyRoutines((prev) =>
+        prev.map((r) => (r.id === renameId ? { ...r, title: renameDraft.trim() } : r))
+      );
+    } finally {
+      setRenameLoading(false);
+      setRenameId(null);
+    }
   }
 
-  async function createRoutine(
-    routineTitle: string,
-    routineDescription: string | null
-  ) {
-    const { data: routine, error } = await supabase
-      .from("routines")
-      .insert({ user_id: user?.id, name: routineTitle, description: routineDescription })
-      .select()
-      .single();
-    return { routine: routine ?? null, lastErr: error?.message ?? null };
+  async function handleDelete() {
+    if (!deleteId) return;
+    setDeleteLoading(true);
+    try {
+      await supabase.from("routines").delete().eq("id", deleteId);
+      setMyRoutines((prev) => prev.filter((r) => r.id !== deleteId));
+    } finally {
+      setDeleteLoading(false);
+      setDeleteId(null);
+    }
   }
+
+  const displayed = showLibrary ? library : myRoutines;
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headLeft}>
           <h1 className={styles.title}>Workout</h1>
-          <button type="button" className={styles.chevBtn} aria-label="Workout menu">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M6 9l6 6 6-6" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
         </div>
         <span className={styles.pro}>PRO</span>
       </header>
@@ -161,29 +171,27 @@ export default function RoutinesPage() {
       <section className={styles.content}>
         <button type="button" className={styles.startEmpty} onClick={handleStartEmpty} disabled={startingEmpty}>
           <span className={styles.plus}>+</span>
-          <span>Start Empty Workout</span>
+          <span>{startingEmpty ? "Starting…" : "Start Empty Workout"}</span>
         </button>
 
         <div className={styles.sectionHead}>
           <h2>Routines</h2>
-          <Link href="/routines/new" className={styles.addBtn} aria-label="New routine">
-            +
-          </Link>
+          <Link href="/routines/new" className={styles.addBtn} aria-label="New routine">+</Link>
         </div>
 
         <div className={styles.quick}>
-          <Link href="/routines/new" className={styles.quickCard}>
-            New Routine
-          </Link>
-          <button type="button" className={styles.quickCard} onClick={() => setTab("library")}>
-            Explore
-          </button>
+          <Link href="/routines/new" className={styles.quickCard}>New Routine</Link>
+          <button type="button" className={styles.quickCard} onClick={() => setShowLibrary(true)}>Explore</button>
         </div>
 
-        <div className={styles.tip}>Press and hold a routine to reorder</div>
-
         <div className={styles.mineHead}>
-          <span>My Routines ({myRoutines.length})</span>
+          {showLibrary ? (
+            <button type="button" className={styles.backMineInline} onClick={() => setShowLibrary(false)}>
+              ← My Routines ({myRoutines.length})
+            </button>
+          ) : (
+            <span>My Routines ({myRoutines.length})</span>
+          )}
         </div>
       </section>
 
@@ -192,41 +200,93 @@ export default function RoutinesPage() {
       ) : displayed.length === 0 ? (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>
-            {tab === "mine" ? "No routines yet" : "No routines in library"}
+            {showLibrary ? "No routines in library" : "No routines yet"}
           </p>
           <p className={styles.emptySub}>
-            {tab === "mine" ? "Create a routine to plan your workouts" : "No public routines available"}
+            {showLibrary ? "No public routines available" : "Tap + to create your first routine"}
           </p>
         </div>
       ) : (
-        <div className={styles.list}>
+        <div className={styles.list} ref={menuRef}>
           {displayed.map((r) => (
             <div key={r.id} className={styles.card}>
               <Link href={`/routines/${r.id}`} className={styles.cardLink}>
                 <h3 className={styles.cardTitle}>{r.title}</h3>
                 <p className={styles.cardDesc}>
-                  {r.routineExercises.slice(0, 3).map((re) => re.exercise.name).join(", ")}
-                  {r.routineExercises.length > 3 ? "..." : ""}
+                  {r.routineExercises.length === 0
+                    ? "No exercises"
+                    : r.routineExercises.slice(0, 3).map((re) => re.exercise.name).join(", ") +
+                      (r.routineExercises.length > 3 ? `… +${r.routineExercises.length - 3}` : "")}
                 </p>
               </Link>
-              <button type="button" className={styles.more} aria-label="More options">...</button>
+
+              {/* 3-dots menu */}
+              {!showLibrary && (
+                <div className={styles.menuWrap}>
+                  <button
+                    type="button"
+                    className={styles.more}
+                    aria-label="More options"
+                    onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === r.id ? null : r.id); }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="5" r="1.6" fill="currentColor" />
+                      <circle cx="12" cy="12" r="1.6" fill="currentColor" />
+                      <circle cx="12" cy="19" r="1.6" fill="currentColor" />
+                    </svg>
+                  </button>
+                  {menuOpenId === r.id && (
+                    <div className={styles.dropdown}>
+                      <button
+                        type="button"
+                        className={styles.dropItem}
+                        onClick={() => { setMenuOpenId(null); handleStart(r.id); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <polygon points="5,3 19,12 5,21" fill="currentColor" />
+                        </svg>
+                        Start Workout
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.dropItem}
+                        onClick={() => { setMenuOpenId(null); setRenameDraft(r.title); setRenameId(r.id); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Edit Name
+                      </button>
+                      <button
+                        type="button"
+                        className={[styles.dropItem, styles.dropDanger].join(" ")}
+                        onClick={() => { setMenuOpenId(null); setDeleteId(r.id); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className={styles.cardActions}>
-                {tab === "mine" ? (
+                {showLibrary ? (
+                  <Button variant="secondary" size="sm" onClick={() => handleCopy(r.id)} fullWidth>
+                    Copy to My Routines
+                  </Button>
+                ) : (
                   <Button
                     variant="primary"
                     size="sm"
                     onClick={() => handleStart(r.id)}
                     loading={startingId === r.id}
+                    fullWidth
                   >
                     Start Routine
-                  </Button>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleCopy(r.id)}
-                  >
-                    Copy
                   </Button>
                 )}
               </div>
@@ -235,11 +295,56 @@ export default function RoutinesPage() {
         </div>
       )}
 
-      {tab === "library" && (
-        <div className={styles.backMineWrap}>
-          <button type="button" onClick={() => setTab("mine")} className={styles.backMine}>
-            Back to My Routines
-          </button>
+      {/* Rename Modal */}
+      {renameId && (
+        <div className={styles.modalOverlay} onClick={() => setRenameId(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Edit Routine Name</h3>
+            <input
+              className={styles.modalInput}
+              value={renameDraft}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleRename()}
+              autoFocus
+              placeholder="Routine name"
+            />
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.modalCancel} onClick={() => setRenameId(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.modalSave}
+                onClick={handleRename}
+                disabled={renameLoading || !renameDraft.trim()}
+              >
+                {renameLoading ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteId && (
+        <div className={styles.modalOverlay} onClick={() => setDeleteId(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Delete Routine?</h3>
+            <p className={styles.modalText}>This cannot be undone.</p>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.modalCancel} onClick={() => setDeleteId(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.modalDelete}
+                onClick={handleDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -251,7 +356,7 @@ function mapRoutine(row: Record<string, unknown>): Routine {
   return {
     id: row.id as string,
     userId: (row.user_id as string) ?? null,
-    title: ((row.title as string) ?? (row.name as string) ?? "Routine"),
+    title: ((row.name as string) ?? (row.title as string) ?? "Routine"),
     description: (row.description as string) ?? null,
     folderId: (row.folder_id as string) ?? null,
     isPublic: (row.is_public as boolean) ?? false,
@@ -264,8 +369,8 @@ function mapRoutine(row: Record<string, unknown>): Routine {
         id: re.id as string,
         routineId: re.routine_id as string,
         exerciseId: re.exercise_id as string,
-        order: re.order as number,
-        setsConfig: (re.sets_config as Routine["routineExercises"][0]["setsConfig"]) ?? [],
+        order: (re.order_index ?? re.order ?? 0) as number,
+        setsConfig: [],
         exercise: {
           id: ex.id as string,
           name: ex.name as string,

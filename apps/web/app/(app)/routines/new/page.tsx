@@ -144,7 +144,7 @@ export default function NewRoutinePage() {
         }
       }
 
-      router.replace(`/routines/${routine.id}`);
+      router.replace("/routines");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create routine");
     } finally {

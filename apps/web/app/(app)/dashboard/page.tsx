@@ -19,7 +19,7 @@ export default function DashboardPage() {
       try {
         const { data } = await supabase
           .from("workouts")
-          .select("*, workout_exercises(*, exercises(*), sets(*))")
+          .select("*, workout_exercises(*, exercises(*), workout_sets(*))")
           .not("finished_at", "is", null)
           .order("started_at", { ascending: false })
           .limit(5);
@@ -77,7 +77,7 @@ export default function DashboardPage() {
                   <div className={styles.avatar}>{profileInitial}</div>
                   <div>
                     <p className={styles.userName}>{profileName}</p>
-                    <p className={styles.timeAgo}>a month ago</p>
+                    <p className={styles.timeAgo}>{timeAgo(w.startedAt)}</p>
                   </div>
                 </div>
                 <button type="button" className={styles.moreBtn} aria-label="More">
@@ -135,6 +135,19 @@ export default function DashboardPage() {
   );
 }
 
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks}w ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+}
+
 function estimateDuration(workout: Workout) {
   if (!workout.finishedAt) return "In progress";
   const ms = new Date(workout.finishedAt).getTime() - new Date(workout.startedAt).getTime();
@@ -164,7 +177,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
     isPublic: (row.is_public as boolean) ?? false,
     workoutExercises: wes.map((we) => {
       const ex = (we.exercises as Record<string, unknown>) ?? {};
-      const sets = (we.sets as Record<string, unknown>[]) ?? [];
+      const sets = (we.workout_sets as Record<string, unknown>[]) ?? [];
       return {
         id: we.id as string,
         workoutId: we.workout_id as string,
@@ -185,7 +198,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
           id: s.id as string,
           workoutExerciseId: s.workout_exercise_id as string,
           reps: (s.reps as number) ?? null,
-          weightKg: (s.weight_kg as number) ?? null,
+          weightKg: (s.weight as number) ?? null,
           setType: (s.set_type as string as import("@/types/api").SetType) ?? "normal",
           rpe: (s.rpe as number) ?? null,
           createdAt: s.created_at as string,
