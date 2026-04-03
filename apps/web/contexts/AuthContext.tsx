@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(
     async (authUser: User) => {
       const { data } = await supabase
-        .from("profiles")
+        .from("users")
         .select("*")
         .eq("id", authUser.id)
         .maybeSingle();
@@ -149,9 +149,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw new Error(error.message);
 
-      // Create profile row
+      // Create user row
       if (data.user) {
-        await supabase.from("profiles").upsert({
+        await supabase.from("users").upsert({
           id: data.user.id,
           email: d.email,
           name: d.name,

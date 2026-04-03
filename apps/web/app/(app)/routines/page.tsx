@@ -82,7 +82,7 @@ export default function RoutinesPage() {
 
   async function handleCopy(routineId: string) {
     try {
-      await ensureOwnProfileRow();
+      await ensureOwnUserRow();
       // Fetch the routine to copy
       const { data: src } = await supabase
         .from("routines")
@@ -92,12 +92,10 @@ export default function RoutinesPage() {
       if (!src) return;
 
       // Create a copy
-      const baseTitle = (src.title as string) ?? (src.name as string) ?? "Routine";
-      const candidateUserIds = await resolveCandidateUserIds();
-      const { routine: newRoutine, lastErr } = await createRoutineWithFallbacks(
+      const baseTitle = (src.name as string) ?? (src.title as string) ?? "Routine";
+      const { routine: newRoutine, lastErr } = await createRoutine(
         baseTitle,
-        (src.description as string) ?? null,
-        candidateUserIds
+        (src.description as string) ?? null
       );
 
       if (!newRoutine) {
@@ -116,10 +114,11 @@ export default function RoutinesPage() {
       }
 
       // Refresh my routines
+      const ownerIds = resolveCandidateUserIds();
       const { data: refreshed } = await supabase
         .from("routines")
         .select("*, routine_exercises(*, exercises(*))")
-        .in("user_id", candidateUserIds.length ? candidateUserIds : [user?.id ?? ""])
+        .in("user_id", ownerIds)
         .order("created_at", { ascending: false });
       setMyRoutines((refreshed ?? []).map(mapRoutine));
       setTab("mine");
@@ -130,144 +129,38 @@ export default function RoutinesPage() {
 
   const displayed = tab === "mine" ? myRoutines : library;
 
-  async function resolveCandidateUserIds() {
-    const ids = new Set<string>();
-    if (profile?.id) ids.add(profile.id);
-    if (user?.id) ids.add(user.id);
-
-    const email = user?.email ?? null;
-    const username =
-      profile?.username ??
-      ((user?.user_metadata?.username as string | undefined) ?? null);
-
-    if (email) {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", email)
-        .limit(5);
-      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
-    }
-
-    if (username) {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .limit(5);
-      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
-    }
-
-    return Array.from(ids);
+  function resolveCandidateUserIds() {
+    return [user?.id ?? ""].filter(Boolean);
   }
 
-  async function ensureOwnProfileRow() {
+  async function ensureOwnUserRow() {
     if (!user?.id) return;
     const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-    await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: user.id,
-          email: user.email ?? null,
-          name:
-            (meta.name as string) ||
-            (meta.full_name as string) ||
-            user.email?.split("@")[0] ||
-            "Athlete",
-          username: (meta.username as string) || user.email?.split("@")[0] || null,
-        },
-        { onConflict: "id" }
-      );
+    await supabase.from("users").upsert(
+      {
+        id: user.id,
+        email: user.email ?? "",
+        name:
+          (meta.name as string) ||
+          (meta.full_name as string) ||
+          user.email?.split("@")[0] ||
+          "Athlete",
+        username: (meta.username as string) || user.email?.split("@")[0] || null,
+      },
+      { onConflict: "id" }
+    );
   }
 
-  async function createRoutineWithFallbacks(
+  async function createRoutine(
     routineTitle: string,
-    routineDescription: string | null,
-    candidateUserIds: string[]
+    routineDescription: string | null
   ) {
-    let routine: { id: string } | null = null;
-    let lastErr: string | null = null;
-
-    for (const candidateUserId of candidateUserIds) {
-      const byTitle = await supabase
-        .from("routines")
-        .insert({
-          user_id: candidateUserId,
-          title: routineTitle,
-          description: routineDescription,
-        })
-        .select()
-        .single();
-      if (byTitle.data?.id) {
-        routine = byTitle.data;
-        break;
-      }
-
-      const missingTitleColumn = Boolean(
-        byTitle.error?.message?.includes("title") && byTitle.error?.message?.includes("schema cache")
-      );
-      const userFkError = Boolean(byTitle.error?.message?.includes("routines_user_id_fkey"));
-      lastErr = byTitle.error?.message ?? lastErr;
-
-      if (missingTitleColumn) {
-        const byName = await supabase
-          .from("routines")
-          .insert({
-            user_id: candidateUserId,
-            name: routineTitle,
-            description: routineDescription,
-          })
-          .select()
-          .single();
-        if (byName.data?.id) {
-          routine = byName.data;
-          break;
-        }
-        lastErr = byName.error?.message ?? lastErr;
-        if (userFkError || byName.error?.message?.includes("routines_user_id_fkey")) continue;
-      } else if (userFkError) {
-        continue;
-      }
-    }
-
-    if (!routine) {
-      const byTitleNoOwner = await supabase
-        .from("routines")
-        .insert({
-          title: routineTitle,
-          description: routineDescription,
-        })
-        .select()
-        .single();
-
-      if (byTitleNoOwner.data?.id) {
-        routine = byTitleNoOwner.data;
-      } else {
-        const missingTitleColumn = Boolean(
-          byTitleNoOwner.error?.message?.includes("title") &&
-          byTitleNoOwner.error?.message?.includes("schema cache")
-        );
-        lastErr = byTitleNoOwner.error?.message ?? lastErr;
-        if (missingTitleColumn) {
-          const byNameNoOwner = await supabase
-            .from("routines")
-            .insert({
-              name: routineTitle,
-              description: routineDescription,
-            })
-            .select()
-            .single();
-          if (byNameNoOwner.data?.id) {
-            routine = byNameNoOwner.data;
-          } else {
-            lastErr = byNameNoOwner.error?.message ?? lastErr;
-          }
-        }
-      }
-    }
-
-    return { routine, lastErr };
+    const { data: routine, error } = await supabase
+      .from("routines")
+      .insert({ user_id: user?.id, name: routineTitle, description: routineDescription })
+      .select()
+      .single();
+    return { routine: routine ?? null, lastErr: error?.message ?? null };
   }
 
   return (
