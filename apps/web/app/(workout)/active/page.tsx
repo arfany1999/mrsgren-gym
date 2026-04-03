@@ -7,11 +7,10 @@ import { ExerciseBlock } from "@/components/workout/ExerciseBlock/ExerciseBlock"
 import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
 import { WorkoutTimer } from "@/components/workout/WorkoutTimer/WorkoutTimer";
 import { PRBanner } from "@/components/workout/PRBanner/PRBanner";
-import { WorkoutReport } from "@/components/workout/WorkoutReport/WorkoutReport";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
 import { getActiveWorkoutId } from "@/lib/storage";
-import type { ActiveSet, ActiveExercise } from "@/contexts/WorkoutContext";
+import type { ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./page.module.css";
 
@@ -35,13 +34,13 @@ export default function ActiveWorkoutPage() {
   const [discardOpen, setDiscardOpen] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [discarding, setDiscarding] = useState(false);
-  const [report, setReport] = useState<{ id: string; title: string; secs: number; exercises: ActiveExercise[] } | null>(null);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (!activeWorkout && !getActiveWorkoutId() && !report && !finishing) {
+    if (!activeWorkout && !getActiveWorkoutId() && !finishing && !done) {
       router.replace("/");
     }
-  }, [activeWorkout, router, report, finishing]);
+  }, [activeWorkout, router, finishing, done]);
 
   if (!activeWorkout) return null;
 
@@ -52,13 +51,11 @@ export default function ActiveWorkoutPage() {
 
   async function handleFinish() {
     setFinishing(true);
-    const summaryTitle = activeWorkout?.title ?? "Workout";
-    const summaryExercises = [...exercises];
-    const summarySecs = elapsedSeconds;
     try {
       const id = await finishWorkout();
       if (id) {
-        setReport({ id, title: summaryTitle, secs: summarySecs, exercises: summaryExercises });
+        setDone(true);
+        router.replace(`/workouts/${id}?new=1`);
       } else {
         router.replace("/");
       }
@@ -171,16 +168,6 @@ export default function ActiveWorkoutPage() {
         </div>
       </Modal>
 
-      {/* Workout Report */}
-      {report && (
-        <WorkoutReport
-          title={report.title}
-          elapsedSeconds={report.secs}
-          exercises={report.exercises}
-          workoutId={report.id}
-          onDone={(id) => router.replace(`/workouts/${id}`)}
-        />
-      )}
     </div>
   );
 }

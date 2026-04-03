@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Button } from "@/components/ui/Button/Button";
@@ -13,13 +13,19 @@ import styles from "./page.module.css";
 
 export default function WorkoutDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { supabase } = useAuth();
+  const { supabase, profile } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") setShowReport(true);
+  }, [searchParams]);
 
   useEffect(() => {
     async function load() {
@@ -155,6 +161,53 @@ export default function WorkoutDetailPage() {
           ))}
         </div>
       </div>
+
+      {/* Workout Report Overlay */}
+      {showReport && workout && (
+        <div className={styles.reportOverlay}>
+          <div className={styles.reportCard}>
+            <div className={styles.reportEmoji}>🏆</div>
+            <h2 className={styles.reportTitle}>Well Done G!</h2>
+            {profile?.name && <p className={styles.reportName}>{profile.name}</p>}
+            <p className={styles.reportSub}>{workout.title}</p>
+
+            <div className={styles.reportStats}>
+              {isFinished && (
+                <div className={styles.reportStat}>
+                  <span className={styles.reportStatVal}>{duration}</span>
+                  <span className={styles.reportStatLbl}>Duration</span>
+                </div>
+              )}
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatVal}>{allSets.length}</span>
+                <span className={styles.reportStatLbl}>Sets Done</span>
+              </div>
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatVal}>{workout.workoutExercises.length}</span>
+                <span className={styles.reportStatLbl}>Exercises</span>
+              </div>
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatVal}>
+                  {volume > 0 ? `${Math.round(volume).toLocaleString()} kg` : "—"}
+                </span>
+                <span className={styles.reportStatLbl}>Volume Lifted</span>
+              </div>
+            </div>
+
+            <Button
+              variant="primary"
+              fullWidth
+              size="lg"
+              onClick={() => {
+                setShowReport(false);
+                router.replace(`/workouts/${id}`);
+              }}
+            >
+              See Full Report
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Modal */}
       <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete Workout?">
