@@ -38,10 +38,10 @@ export default function ActiveWorkoutPage() {
   const [report, setReport] = useState<{ id: string; title: string; secs: number; exercises: ActiveExercise[] } | null>(null);
 
   useEffect(() => {
-    if (!activeWorkout && !getActiveWorkoutId()) {
+    if (!activeWorkout && !getActiveWorkoutId() && !report) {
       router.replace("/");
     }
-  }, [activeWorkout, router]);
+  }, [activeWorkout, router, report]);
 
   if (!activeWorkout) return null;
 
