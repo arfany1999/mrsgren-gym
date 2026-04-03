@@ -41,8 +41,6 @@ export default function ActiveWorkoutPage() {
     }
   }, [activeWorkout, router, finishing, done]);
 
-  if (!activeWorkout) return null;
-
   const totalSets = useMemo(
     () => exercises.reduce((sum, e) => sum + e.sets.filter(s => s.isSaved).length, 0),
     [exercises]
@@ -53,6 +51,8 @@ export default function ActiveWorkoutPage() {
     ),
     [exercises]
   );
+
+  if (!activeWorkout) return null;
 
   async function handleFinish() {
     setFinishing(true);
