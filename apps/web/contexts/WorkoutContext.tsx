@@ -192,15 +192,6 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       if (!user) return;
       const now = new Date().toISOString();
 
-      // Ensure user row exists (FK workouts_user_id_fkey references public.users)
-      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-      await supabase.from("users").upsert({
-        id: user.id,
-        email: user.email ?? "",
-        name: (meta.name as string) || (meta.full_name as string) || user.email?.split("@")[0] || "Athlete",
-        username: (meta.username as string) || user.email?.split("@")[0] || null,
-      }, { onConflict: "id" });
-
       const { data: workout, error: workoutErr } = await supabase
         .from("workouts")
         .insert({

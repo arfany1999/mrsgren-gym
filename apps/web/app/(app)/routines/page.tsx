@@ -82,7 +82,6 @@ export default function RoutinesPage() {
 
   async function handleCopy(routineId: string) {
     try {
-      await ensureOwnUserRow();
       // Fetch the routine to copy
       const { data: src } = await supabase
         .from("routines")
@@ -131,24 +130,6 @@ export default function RoutinesPage() {
 
   function resolveCandidateUserIds() {
     return [user?.id ?? ""].filter(Boolean);
-  }
-
-  async function ensureOwnUserRow() {
-    if (!user?.id) return;
-    const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-    await supabase.from("users").upsert(
-      {
-        id: user.id,
-        email: user.email ?? "",
-        name:
-          (meta.name as string) ||
-          (meta.full_name as string) ||
-          user.email?.split("@")[0] ||
-          "Athlete",
-        username: (meta.username as string) || user.email?.split("@")[0] || null,
-      },
-      { onConflict: "id" }
-    );
   }
 
   async function createRoutine(
