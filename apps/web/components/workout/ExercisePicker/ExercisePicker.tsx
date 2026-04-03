@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
 import { BottomSheet } from "@/components/ui/BottomSheet/BottomSheet";
+import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
 import { fetchExercises, searchExercises } from "@/lib/exercisedb";
 import type { Exercise } from "@/types/api";
 import styles from "./ExercisePicker.module.css";
@@ -132,18 +132,9 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
             {exercises.map((ex) => (
               <li key={ex.id}>
                 <button className={styles.item} onClick={() => handleSelect(ex)} type="button">
-                  {ex.videoUrl && (
-                    <div className={styles.gifWrap}>
-                      <Image
-                        src={ex.videoUrl}
-                        alt={ex.name}
-                        width={44}
-                        height={44}
-                        className={styles.gif}
-                        unoptimized
-                      />
-                    </div>
-                  )}
+                  <div className={styles.mapWrap}>
+                    <MuscleMap muscles={ex.muscleGroups} variant="compact" />
+                  </div>
                   <div className={styles.info}>
                     <p className={styles.itemName}>{ex.name}</p>
                     {ex.muscleGroups.length > 0 && (

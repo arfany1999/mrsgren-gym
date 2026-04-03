@@ -119,16 +119,14 @@
 
 .item:last-child { border-bottom: none; }
 
-.gifWrap {
-  width: 42px;
-  height: 42px;
+.mapWrap {
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-
-.gif { width: 100%; height: 100%; object-fit: cover; }
 
 .info { flex: 1; min-width: 0; text-align: left; }
 

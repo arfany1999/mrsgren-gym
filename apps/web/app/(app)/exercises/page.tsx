@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
 import { fetchExercises, searchExercises } from "@/lib/exercisedb";
 import type { Exercise } from "@/types/api";
 import styles from "./page.module.css";
@@ -183,18 +183,9 @@ export default function ExercisesPage() {
             {displayed.map((ex) => (
               <li key={ex.id}>
                 <Link href={`/exercises/${ex.id}`} className={styles.item}>
-                  {ex.videoUrl && (
-                    <div className={styles.gifWrap}>
-                      <Image
-                        src={ex.videoUrl}
-                        alt={ex.name}
-                        width={56}
-                        height={56}
-                        className={styles.gif}
-                        unoptimized
-                      />
-                    </div>
-                  )}
+                  <div className={styles.mapWrap}>
+                    <MuscleMap muscles={ex.muscleGroups} variant="compact" />
+                  </div>
                   <div className={styles.itemInfo}>
                     <p className={styles.itemName}>{ex.name}</p>
                     {ex.muscleGroups.length > 0 && (

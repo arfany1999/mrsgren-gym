@@ -1,0 +1,52 @@
+.wrap {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.wrapCompact {
+  display: flex;
+  justify-content: center;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.svg {
+  width: 80px;
+  height: auto;
+  display: block;
+}
+
+/* ── Muscle region styles ──────────────────────────────────────── */
+.region {
+  fill: rgba(255, 255, 255, 0.03);
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 0.8;
+}
+
+.regionActive {
+  fill: rgba(58, 123, 255, 0.65);
+  stroke: #3a7bff;
+  stroke-width: 1;
+  animation: musclePulse 1.8s ease-in-out infinite;
+  filter: url(#muscleGlow);
+}
+
+@keyframes musclePulse {
+  0%,  100% { fill: rgba(58, 123, 255, 0.55); }
+  50%        { fill: rgba(58, 123, 255, 0.85); }
+}

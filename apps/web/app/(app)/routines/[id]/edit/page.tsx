@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
 import { fetchExercises, searchExercises } from "@/lib/exercisedb";
 import type { Exercise } from "@/types/api";
 import styles from "./page.module.css";
@@ -297,11 +298,7 @@ export default function EditRoutinePage() {
               libraryExercises.map(ex => (
                 <button key={ex.id} type="button" className={styles.libItem} onClick={() => handleAddFromLibrary(ex)}>
                   <div className={styles.libIcon}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="9" width="4" height="6" rx="1" stroke="#555" strokeWidth="1.5"/>
-                      <rect x="17" y="9" width="4" height="6" rx="1" stroke="#555" strokeWidth="1.5"/>
-                      <rect x="7" y="10.5" width="10" height="3" rx="1.5" stroke="#555" strokeWidth="1.5"/>
-                    </svg>
+                    <MuscleMap muscles={ex.muscleGroups} variant="compact" />
                   </div>
                   <div className={styles.libInfo}>
                     <p className={styles.libName}>{ex.name}</p>

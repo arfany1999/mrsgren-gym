@@ -64,6 +64,20 @@ export async function fetchExercises(opts: {
   };
 }
 
+export async function fetchExerciseById(id: string): Promise<Exercise | null> {
+  try {
+    const res = await fetch(`${BASE_URL}/exercises/${encodeURIComponent(id)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    // API returns single object with a data field or directly
+    const item: ExerciseDBItem = json.data ?? json;
+    if (!item?.exerciseId) return null;
+    return toExercise(item);
+  } catch {
+    return null;
+  }
+}
+
 export async function searchExercises(opts: {
   q: string;
   limit?: number;
