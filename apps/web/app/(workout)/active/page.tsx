@@ -10,6 +10,7 @@ import { PRBanner } from "@/components/workout/PRBanner/PRBanner";
 import { WorkoutReport } from "@/components/workout/WorkoutReport/WorkoutReport";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
+import { getActiveWorkoutId } from "@/lib/storage";
 import type { ActiveSet, ActiveExercise } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./page.module.css";
@@ -41,7 +42,7 @@ export default function ActiveWorkoutPage() {
   const [report, setReport] = useState<{ id: string; title: string; secs: number; exercises: ActiveExercise[] } | null>(null);
 
   useEffect(() => {
-    if (!activeWorkout) {
+    if (!activeWorkout && !getActiveWorkoutId()) {
       router.replace("/");
     }
   }, [activeWorkout, router]);

@@ -105,12 +105,11 @@ export default function RoutineDetailPage() {
       const alreadyInRoutine = routine.routineExercises.some((re) => re.exerciseId === exerciseId);
       if (alreadyInRoutine) return;
 
-      const setsConfig = [{ setType: "normal", reps: null, weightKg: null }];
       const { error: addErr } = await supabase.from("routine_exercises").insert({
         routine_id: id,
         exercise_id: exerciseId,
-        order: routine.routineExercises.length,
-        sets_config: setsConfig,
+        order_index: routine.routineExercises.length,
+        sets: 3,
       });
 
       if (addErr) throw new Error(addErr.message);
@@ -222,8 +221,8 @@ function mapRoutine(row: Record<string, unknown>): Routine {
         id: re.id as string,
         routineId: re.routine_id as string,
         exerciseId: re.exercise_id as string,
-        order: re.order as number,
-        setsConfig: (re.sets_config as Routine["routineExercises"][0]["setsConfig"]) ?? [],
+        order: (re.order_index ?? re.order) as number,
+        setsConfig: Array.isArray(re.sets_config) ? re.sets_config : (re.sets ? [{ setType: "normal", reps: null, weightKg: null }] : []),
         exercise: {
           id: ex.id as string,
           name: ex.name as string,
