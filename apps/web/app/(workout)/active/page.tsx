@@ -158,7 +158,7 @@ export default function ActiveWorkoutPage() {
       <ExercisePicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={(id) => addExercise(id)}
+        onSelect={(exercise) => addExercise(exercise)}
       />
 
       {/* Finish Modal */}

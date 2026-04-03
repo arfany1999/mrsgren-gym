@@ -342,6 +342,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
             instructions: exercise.instructions,
             video_url: exercise.videoUrl,
             is_custom: false,
+            created_by_user_id: user?.id ?? null,
           })
           .select("id")
           .single();
@@ -353,7 +354,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         } else if (missingMuscleGroupsColumn) {
           const { data: fallbackInserted, error: fallbackErr } = await supabase
             .from("exercises")
-            .insert({ name: exercise.name })
+            .insert({ name: exercise.name, created_by_user_id: user?.id ?? null })
             .select("id")
             .single();
           if (fallbackErr || !fallbackInserted) return;
