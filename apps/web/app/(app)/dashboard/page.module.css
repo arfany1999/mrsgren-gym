@@ -19,9 +19,11 @@
 .metrics { margin-top: 10px; display: flex; gap: 26px; padding-bottom: 12px; border-bottom: 0.5px solid rgba(255, 255, 255, 0.12); }
 .metricLabel { font-size: 14px; color: var(--text-secondary); }
 .metricVal { margin-top: 2px; font-size: 16px; line-height: 1.15; letter-spacing: -0.01em; font-weight: 700; color: var(--text-primary); }
-.exercisePreview { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-.exerciseLine { font-size: 17px; line-height: 1.3; letter-spacing: -0.01em; font-weight: 640; color: var(--text-primary); }
-.moreExercises { margin-top: 4px; font-size: 14px; letter-spacing: -0.01em; color: var(--text-secondary); font-weight: 600; text-align: center; }
+.exercisePreview { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+.exPreviewRow { display: flex; align-items: baseline; gap: 8px; }
+.exPreviewSets { font-size: 15px; font-weight: 700; color: var(--text-primary); min-width: 56px; flex-shrink: 0; letter-spacing: -0.01em; }
+.exPreviewName { font-size: 15px; font-weight: 500; color: var(--text-secondary); }
+.moreExercises { margin-top: 4px; font-size: 13px; letter-spacing: -0.01em; color: var(--text-tertiary); font-weight: 600; }
 .postActions { margin-top: 12px; display: flex; gap: 10px; color: var(--text-secondary); }
 .actionBtn {
   width: 30px;

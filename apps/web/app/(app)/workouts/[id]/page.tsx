@@ -26,7 +26,7 @@ export default function WorkoutDetailPage() {
       try {
         const { data, error } = await supabase
           .from("workouts")
-          .select("*, workout_exercises(*, exercises(*), sets(*))")
+          .select("*, workout_exercises(*, exercises(*), workout_sets(*))")
           .eq("id", id)
           .single();
         if (error || !data) {
@@ -128,21 +128,28 @@ export default function WorkoutDetailPage() {
               )}
               <div className={styles.setsTable}>
                 <div className={styles.setsHeader}>
-                  <span>Set</span>
-                  <span>Weight</span>
-                  <span>Reps</span>
-                  <span>Type</span>
+                  <span>SET</span>
+                  <span>WEIGHT &amp; REPS</span>
+                  <span>TYPE</span>
                 </div>
-                {we.sets.map((s, i) => (
-                  <div key={s.id} className={styles.setRow}>
-                    <span className={styles.setNum}>{i + 1}</span>
-                    <span>{s.weightKg != null ? `${s.weightKg} kg` : "—"}</span>
-                    <span>{s.reps != null ? s.reps : "—"}</span>
-                    <span className={[styles.setType, styles[s.setType]].join(" ")}>
-                      {s.setType === "normal" ? "·" : (s.setType[0] ?? "·").toUpperCase()}
-                    </span>
-                  </div>
-                ))}
+                {we.sets.map((s, i) => {
+                  const weightReps = s.weightKg != null && s.reps != null
+                    ? `${s.weightKg}kg × ${s.reps} reps`
+                    : s.weightKg != null
+                    ? `${s.weightKg}kg`
+                    : s.reps != null
+                    ? `${s.reps} reps`
+                    : "—";
+                  return (
+                    <div key={s.id} className={styles.setRow}>
+                      <span className={styles.setNum}>{i + 1}</span>
+                      <span className={styles.setWeightReps}>{weightReps}</span>
+                      <span className={[styles.setType, styles[s.setType]].join(" ")}>
+                        {s.setType === "normal" ? "" : (s.setType[0] ?? "").toUpperCase()}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -174,7 +181,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
     isPublic: (row.is_public as boolean) ?? false,
     workoutExercises: wes.map((we) => {
       const ex = (we.exercises as Record<string, unknown>) ?? {};
-      const sets = (we.sets as Record<string, unknown>[]) ?? [];
+      const sets = (we.workout_sets as Record<string, unknown>[]) ?? [];
       return {
         id: we.id as string,
         workoutId: we.workout_id as string,
@@ -195,7 +202,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
           id: s.id as string,
           workoutExerciseId: s.workout_exercise_id as string,
           reps: (s.reps as number) ?? null,
-          weightKg: (s.weight_kg as number) ?? null,
+          weightKg: (s.weight as number) ?? null,
           setType: (s.set_type as SetType) ?? "normal",
           rpe: (s.rpe as number) ?? null,
           createdAt: s.created_at as string,

@@ -100,13 +100,27 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className={styles.exercisePreview}>
-                {w.workoutExercises.slice(0, 3).map((we) => (
-                  <p key={we.id} className={styles.exerciseLine}>
-                    {we.sets.length || 0} sets {we.exercise.name}
-                  </p>
-                ))}
-                {w.workoutExercises.length > 3 && (
-                  <p className={styles.moreExercises}>See {w.workoutExercises.length - 3} more exercise</p>
+                {w.workoutExercises.slice(0, 4).map((we) => {
+                  const sets = we.sets.length;
+                  const bestSet = we.sets.reduce<typeof we.sets[0] | null>((best, s) => {
+                    if (!best) return s;
+                    return (s.weightKg ?? 0) > (best.weightKg ?? 0) ? s : best;
+                  }, null);
+                  const setsLabel = sets > 0 ? `${sets} × ` : "";
+                  const weightLabel = bestSet?.weightKg
+                    ? `${bestSet.weightKg}kg`
+                    : bestSet?.reps
+                    ? `${bestSet.reps} reps`
+                    : "";
+                  return (
+                    <div key={we.id} className={styles.exPreviewRow}>
+                      <span className={styles.exPreviewSets}>{setsLabel}{weightLabel || "—"}</span>
+                      <span className={styles.exPreviewName}>{we.exercise.name}</span>
+                    </div>
+                  );
+                })}
+                {w.workoutExercises.length > 4 && (
+                  <p className={styles.moreExercises}>+ {w.workoutExercises.length - 4} more exercises</p>
                 )}
               </div>
               <div className={styles.postActions}>

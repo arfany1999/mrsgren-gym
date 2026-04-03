@@ -10,6 +10,19 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import type { Routine } from "@/types/api";
 import styles from "./page.module.css";
 
+const MUSCLE_COLORS: Record<string, string> = {
+  chest: "#e05c5c", back: "#3a9bdc", shoulders: "#9b7fe8",
+  biceps: "#e8a23a", triceps: "#e87a3a", legs: "#4caf7d",
+  quads: "#4caf7d", hamstrings: "#4caf7d", glutes: "#4caf7d",
+  calves: "#4caf7d", abs: "#f5c518", core: "#f5c518",
+  cardio: "#34d399", forearms: "#e8a23a", traps: "#3a9bdc", lats: "#3a9bdc",
+};
+
+function getMuscleColor(muscles: string[]): string {
+  if (!muscles.length) return "#5e6272";
+  return MUSCLE_COLORS[(muscles[0] ?? "").toLowerCase()] ?? "#5e6272";
+}
+
 export default function RoutinesPage() {
   const { supabase, user } = useAuth();
   const { startWorkout } = useWorkout();
@@ -212,12 +225,23 @@ export default function RoutinesPage() {
             <div key={r.id} className={styles.card}>
               <Link href={`/routines/${r.id}`} className={styles.cardLink}>
                 <h3 className={styles.cardTitle}>{r.title}</h3>
-                <p className={styles.cardDesc}>
-                  {r.routineExercises.length === 0
-                    ? "No exercises"
-                    : r.routineExercises.slice(0, 3).map((re) => re.exercise.name).join(", ") +
-                      (r.routineExercises.length > 3 ? `… +${r.routineExercises.length - 3}` : "")}
+                <p className={styles.cardMeta}>
+                  {r.routineExercises.length} exercise{r.routineExercises.length !== 1 ? "s" : ""}
                 </p>
+                <div className={styles.cardExList}>
+                  {r.routineExercises.slice(0, 5).map((re) => (
+                    <p key={re.id} className={styles.cardExLine}>
+                      <span
+                        className={styles.cardExDot}
+                        style={{ background: getMuscleColor(re.exercise.muscleGroups) }}
+                      />
+                      {re.exercise.name}
+                    </p>
+                  ))}
+                  {r.routineExercises.length > 5 && (
+                    <p className={styles.cardExMore}>+{r.routineExercises.length - 5} more</p>
+                  )}
+                </div>
               </Link>
 
               {/* 3-dots menu */}

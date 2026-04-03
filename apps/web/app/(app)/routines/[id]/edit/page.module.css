@@ -1,0 +1,174 @@
+.page { min-height: 100dvh; background: #000; padding-bottom: var(--sp-10); animation: pageIn 0.2s ease both; }
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-12) 0;
+}
+
+.content {
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ── Save button in TopBar ───────────────────────────────────── */
+.saveBtn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Routine name ────────────────────────────────────────────── */
+.nameWrap {
+  background: #17191e;
+  border-radius: 14px;
+  padding: 4px 16px;
+}
+
+.nameInput {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  padding: 10px 0;
+}
+
+.nameInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ── Error ───────────────────────────────────────────────────── */
+.error {
+  font-size: var(--text-sm);
+  color: var(--accent-red);
+  padding: var(--sp-3);
+  background: var(--accent-red-dim);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Exercise list ───────────────────────────────────────────── */
+.exList {
+  background: #17191e;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.exRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+.exRow:last-child {
+  border-bottom: none;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  padding: 4px 2px;
+  cursor: grab;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.exInfo { flex: 1; min-width: 0; }
+
+.exName {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.exMuscles {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  text-transform: capitalize;
+}
+
+/* ── Sets stepper ────────────────────────────────────────────── */
+.setsStepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.stepBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.stepBtn:active { background: rgba(255, 255, 255, 0.14); }
+
+.setsVal {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 44px;
+  text-align: center;
+}
+
+/* ── Remove / Add ────────────────────────────────────────────── */
+.removeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.removeBtn:active { background: rgba(255, 0, 0, 0.08); }
+
+.addExBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--accent);
+  cursor: pointer;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+.addExBtn:active { background: var(--accent-dim); }

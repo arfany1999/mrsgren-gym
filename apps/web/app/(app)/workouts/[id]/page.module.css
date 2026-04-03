@@ -124,9 +124,15 @@
 .setsHeader,
 .setRow {
   display: grid;
-  grid-template-columns: 32px 1fr 1fr 40px;
+  grid-template-columns: 32px 1fr 40px;
   gap: var(--sp-2);
   align-items: center;
+}
+
+.setWeightReps {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
 }
 
 .setsHeader {
