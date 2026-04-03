@@ -13,18 +13,33 @@ interface ExercisePickerProps {
   onSelect: (exercise: Exercise) => void;
 }
 
+const MUSCLE_CHIPS = [
+  { label: "All",       bodyPart: "" },
+  { label: "Chest",     bodyPart: "chest" },
+  { label: "Back",      bodyPart: "back" },
+  { label: "Shoulders", bodyPart: "shoulders" },
+  { label: "Upper Arms",bodyPart: "upper arms" },
+  { label: "Lower Arms",bodyPart: "lower arms" },
+  { label: "Upper Legs",bodyPart: "upper legs" },
+  { label: "Lower Legs",bodyPart: "lower legs" },
+  { label: "Waist",     bodyPart: "waist" },
+  { label: "Cardio",    bodyPart: "cardio" },
+];
+
 export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps) {
   const [query, setQuery] = useState("");
+  const [muscle, setMuscle] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const load = useCallback(async (q: string) => {
+  const load = useCallback(async (q: string, bodyPart: string) => {
     setLoading(true);
     try {
-      const result = q
-        ? await searchExercises({ q, limit: 50 })
-        : await fetchExercises({ limit: 50, offset: 0 });
+      const searchTerm = q || bodyPart;
+      const result = searchTerm
+        ? await searchExercises({ q: searchTerm, limit: 80 })
+        : await fetchExercises({ limit: 80, offset: 0 });
       setExercises(result.exercises);
     } catch {
       setExercises([]);
@@ -34,28 +49,39 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
   }, []);
 
   useEffect(() => {
-    if (open) load("");
+    if (open) load("", "");
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!open) return;
     if (searchTimer.current) clearTimeout(searchTimer.current);
-    if (!query) { load(""); return; }
-    searchTimer.current = setTimeout(() => load(query), 300);
-    return () => {
-      if (searchTimer.current) clearTimeout(searchTimer.current);
-    };
-  }, [query, open, load]);
+    if (!query) { load("", muscle); return; }
+    searchTimer.current = setTimeout(() => load(query, muscle), 300);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [query, muscle, open, load]);
 
   function handleSelect(exercise: Exercise) {
     onSelect(exercise);
     onClose();
     setQuery("");
+    setMuscle("");
+  }
+
+  function handleClose() {
+    onClose();
+    setQuery("");
+    setMuscle("");
+  }
+
+  function handleMuscle(bodyPart: string) {
+    setMuscle(bodyPart);
+    setQuery("");
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} title="Add Exercise" height="90dvh">
+    <BottomSheet open={open} onClose={handleClose} title="Add Exercise" height="90dvh">
       <div className={styles.inner}>
+        {/* Search */}
         <div className={styles.searchWrapper}>
           <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="8" stroke="var(--text-tertiary)" strokeWidth="2" />
@@ -78,6 +104,21 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
           )}
         </div>
 
+        {/* Muscle chips */}
+        <div className={styles.chipsRow}>
+          {MUSCLE_CHIPS.map((chip) => (
+            <button
+              key={chip.bodyPart}
+              type="button"
+              className={[styles.chip, muscle === chip.bodyPart ? styles.chipActive : ""].join(" ")}
+              onClick={() => handleMuscle(chip.bodyPart)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
+        {/* List */}
         {loading ? (
           <div className={styles.empty}>
             <p className={styles.emptyText}>Loading...</p>

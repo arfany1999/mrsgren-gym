@@ -50,6 +50,43 @@
   height: 18px;
 }
 
+/* ── Muscle chips ───────────────────────────────────────── */
+.chipsRow {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 0 var(--sp-4) var(--sp-3);
+  flex-shrink: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chipsRow::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease,
+              transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chip:active { transform: scale(0.93); }
+
+.chipActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
 /* ── Exercise list ──────────────────────────────────────── */
 .list {
   flex: 1;

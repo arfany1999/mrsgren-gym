@@ -9,6 +9,19 @@ import { fetchExercises, searchExercises } from "@/lib/exercisedb";
 import type { Exercise } from "@/types/api";
 import styles from "./page.module.css";
 
+const MUSCLE_CHIPS = [
+  { label: "All",        bodyPart: "" },
+  { label: "Chest",      bodyPart: "chest" },
+  { label: "Back",       bodyPart: "back" },
+  { label: "Shoulders",  bodyPart: "shoulders" },
+  { label: "Upper Arms", bodyPart: "upper arms" },
+  { label: "Lower Arms", bodyPart: "lower arms" },
+  { label: "Upper Legs", bodyPart: "upper legs" },
+  { label: "Lower Legs", bodyPart: "lower legs" },
+  { label: "Waist",      bodyPart: "waist" },
+  { label: "Cardio",     bodyPart: "cardio" },
+];
+
 interface DraftExercise {
   reId: string | null;
   exerciseId: string;
@@ -34,14 +47,16 @@ export default function EditRoutinePage() {
   const [libraryExercises, setLibraryExercises] = useState<Exercise[]>([]);
   const [libLoading, setLibLoading] = useState(false);
   const [libQuery, setLibQuery] = useState("");
+  const [libMuscle, setLibMuscle] = useState("");
   const libSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const loadLibrary = useCallback(async (q: string) => {
+  const loadLibrary = useCallback(async (q: string, bodyPart: string) => {
     setLibLoading(true);
     try {
-      const result = q
-        ? await searchExercises({ q, limit: 50 })
-        : await fetchExercises({ limit: 50, offset: 0 });
+      const searchTerm = q || bodyPart;
+      const result = searchTerm
+        ? await searchExercises({ q: searchTerm, limit: 80 })
+        : await fetchExercises({ limit: 80, offset: 0 });
       setLibraryExercises(result.exercises);
     } catch {
       setLibraryExercises([]);
@@ -50,14 +65,14 @@ export default function EditRoutinePage() {
     }
   }, []);
 
-  useEffect(() => { loadLibrary(""); }, [loadLibrary]);
+  useEffect(() => { loadLibrary("", ""); }, [loadLibrary]);
 
   useEffect(() => {
     if (libSearchTimer.current) clearTimeout(libSearchTimer.current);
-    if (!libQuery) { loadLibrary(""); return; }
-    libSearchTimer.current = setTimeout(() => loadLibrary(libQuery), 300);
+    if (!libQuery) { loadLibrary("", libMuscle); return; }
+    libSearchTimer.current = setTimeout(() => loadLibrary(libQuery, libMuscle), 300);
     return () => { if (libSearchTimer.current) clearTimeout(libSearchTimer.current); };
-  }, [libQuery, loadLibrary]);
+  }, [libQuery, libMuscle, loadLibrary]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -262,6 +277,18 @@ export default function EditRoutinePage() {
               value={libQuery}
               onChange={e => setLibQuery(e.target.value)}
             />
+          </div>
+          <div className={styles.libChips}>
+            {MUSCLE_CHIPS.map((chip) => (
+              <button
+                key={chip.bodyPart}
+                type="button"
+                className={[styles.libChip, libMuscle === chip.bodyPart ? styles.libChipActive : ""].join(" ")}
+                onClick={() => { setLibMuscle(chip.bodyPart); setLibQuery(""); }}
+              >
+                {chip.label}
+              </button>
+            ))}
           </div>
           <div className={styles.libList}>
             {libLoading ? (

@@ -203,6 +203,40 @@
 }
 .libSearchInput::placeholder { color: var(--text-tertiary); }
 
+.libChips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 12px 10px;
+  flex-shrink: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.libChips::-webkit-scrollbar { display: none; }
+
+.libChip {
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease,
+              transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.libChip:active { transform: scale(0.92); }
+.libChipActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
 .libLoading { display: flex; justify-content: center; padding: 24px; }
 
 .libList {
