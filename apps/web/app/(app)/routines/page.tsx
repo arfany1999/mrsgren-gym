@@ -13,7 +13,7 @@ import styles from "./page.module.css";
 type Tab = "mine" | "library";
 
 export default function RoutinesPage() {
-  const { supabase, user, profile } = useAuth();
+  const { supabase, user } = useAuth();
   const { startWorkout } = useWorkout();
   const router = useRouter();
 
