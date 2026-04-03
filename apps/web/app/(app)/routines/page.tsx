@@ -225,23 +225,11 @@ export default function RoutinesPage() {
             <div key={r.id} className={styles.card}>
               <Link href={`/routines/${r.id}`} className={styles.cardLink}>
                 <h3 className={styles.cardTitle}>{r.title}</h3>
-                <p className={styles.cardMeta}>
-                  {r.routineExercises.length} exercise{r.routineExercises.length !== 1 ? "s" : ""}
+                <p className={styles.cardDesc}>
+                  {r.routineExercises.length === 0
+                    ? "No exercises"
+                    : r.routineExercises.map((re) => re.exercise.name).join(", ")}
                 </p>
-                <div className={styles.cardExList}>
-                  {r.routineExercises.slice(0, 5).map((re) => (
-                    <p key={re.id} className={styles.cardExLine}>
-                      <span
-                        className={styles.cardExDot}
-                        style={{ background: getMuscleColor(re.exercise.muscleGroups) }}
-                      />
-                      {re.exercise.name}
-                    </p>
-                  ))}
-                  {r.routineExercises.length > 5 && (
-                    <p className={styles.cardExMore}>+{r.routineExercises.length - 5} more</p>
-                  )}
-                </div>
               </Link>
 
               {/* 3-dots menu */}
@@ -297,23 +285,13 @@ export default function RoutinesPage() {
                 </div>
               )}
 
-              <div className={styles.cardActions}>
-                {showLibrary ? (
+              {showLibrary && (
+                <div className={styles.cardActions}>
                   <Button variant="secondary" size="sm" onClick={() => handleCopy(r.id)} fullWidth>
                     Copy to My Routines
                   </Button>
-                ) : (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleStart(r.id)}
-                    loading={startingId === r.id}
-                    fullWidth
-                  >
-                    Start Routine
-                  </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

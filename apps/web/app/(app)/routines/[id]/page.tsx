@@ -145,24 +145,33 @@ export default function RoutineDetailPage() {
             </div>
           </div>
 
-          {/* Muscle breakdown */}
+          {/* Muscle breakdown — Hevy style: Muscle | bar | Sets count */}
           {allMuscles.length > 0 && (
             <div className={styles.muscleBreakdown}>
-              {allMuscles.slice(0, 6).map((m) => {
-                const count = routine.routineExercises.filter((re) =>
-                  re.exercise.muscleGroups.map((g) => g.toLowerCase()).includes(m)
-                ).length;
-                const pct = Math.round((count / routine.routineExercises.length) * 100);
+              <div className={styles.muscleHeader}>
+                <span>Muscle</span>
+                <span>Sets</span>
+              </div>
+              {allMuscles.slice(0, 7).map((m) => {
+                const setsForMuscle = routine.routineExercises
+                  .filter((re) => re.exercise.muscleGroups.map((g) => g.toLowerCase()).includes(m))
+                  .reduce((sum, re) => sum + re.setsConfig.length, 0);
+                const maxSets = Math.max(...allMuscles.map((mm) =>
+                  routine.routineExercises
+                    .filter((re) => re.exercise.muscleGroups.map((g) => g.toLowerCase()).includes(mm))
+                    .reduce((s, re) => s + re.setsConfig.length, 0)
+                ));
+                const pct = maxSets > 0 ? Math.round((setsForMuscle / maxSets) * 100) : 0;
                 return (
                   <div key={m} className={styles.muscleRow}>
-                    <span className={styles.muscleName}>{m}</span>
+                    <span className={styles.muscleName}>{m.charAt(0).toUpperCase() + m.slice(1)}</span>
                     <div className={styles.muscleBarWrap}>
                       <div
                         className={styles.muscleBar}
-                        style={{ width: `${pct}%`, background: getMuscleColor([m]) }}
+                        style={{ width: `${pct}%`, background: "#3a9bdc" }}
                       />
                     </div>
-                    <span className={styles.musclePct}>{pct}%</span>
+                    <span className={styles.musclePct}>{setsForMuscle}</span>
                   </div>
                 );
               })}
@@ -176,22 +185,31 @@ export default function RoutineDetailPage() {
             <p className={styles.noEx}>No exercises yet. Edit the routine to add exercises.</p>
           ) : (
             routine.routineExercises.map((re) => {
-              const color = getMuscleColor(re.exercise.muscleGroups);
-              const abbr = getMuscleAbbr(re.exercise.muscleGroups);
               const sets = re.setsConfig.length;
+              // Build "N sets · X-Y reps" label like Hevy
+              const repsValues = re.setsConfig.map((s) => s.reps).filter((r): r is number => r != null);
+              const minReps = repsValues.length ? Math.min(...repsValues) : null;
+              const maxReps = repsValues.length ? Math.max(...repsValues) : null;
+              const repsLabel = minReps != null
+                ? minReps === maxReps ? `${minReps} reps` : `${minReps}-${maxReps} reps`
+                : null;
+              const metaLabel = [
+                sets > 0 ? `${sets} set${sets !== 1 ? "s" : ""}` : null,
+                repsLabel,
+              ].filter(Boolean).join(" · ");
+
               return (
                 <div key={re.id} className={styles.exRow}>
-                  <div className={styles.exIcon} style={{ background: `${color}22`, border: `1.5px solid ${color}55` }}>
-                    <span style={{ color, fontWeight: 700, fontSize: 12 }}>{abbr}</span>
+                  <div className={styles.exIcon}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="9" width="4" height="6" rx="1" stroke="#666" strokeWidth="1.5"/>
+                      <rect x="17" y="9" width="4" height="6" rx="1" stroke="#666" strokeWidth="1.5"/>
+                      <rect x="7" y="10.5" width="10" height="3" rx="1.5" stroke="#666" strokeWidth="1.5"/>
+                    </svg>
                   </div>
                   <div className={styles.exInfo}>
                     <p className={styles.exName}>{re.exercise.name}</p>
-                    <p className={styles.exMeta}>
-                      {sets > 0 ? `${sets} set${sets !== 1 ? "s" : ""}` : "—"}
-                      {re.exercise.muscleGroups.length > 0 && (
-                        <span className={styles.exMuscles}> · {re.exercise.muscleGroups.join(", ")}</span>
-                      )}
-                    </p>
+                    <p className={styles.exMeta}>{metaLabel || "—"}</p>
                   </div>
                 </div>
               );
