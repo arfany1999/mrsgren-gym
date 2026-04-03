@@ -18,7 +18,7 @@ interface RoutineExerciseDraft {
 }
 
 export default function NewRoutinePage() {
-  const { supabase, user, profile } = useAuth();
+  const { supabase, user } = useAuth();
   const router = useRouter();
 
   const [title, setTitle] = useState("");
@@ -117,19 +117,19 @@ export default function NewRoutinePage() {
 
     setLoading(true);
     try {
-      await ensureOwnProfileRow();
-      const candidateUserIds = await resolveCandidateUserIds();
-      const { routine, lastErr } = await createRoutineWithFallbacks(
-        title.trim(),
-        description.trim() || null,
-        candidateUserIds
-      );
+      const { data: routine, error: routineErr } = await supabase
+        .from("routines")
+        .insert({
+          user_id: user.id,
+          title: title.trim(),
+          description: description.trim() || null,
+          is_public: false,
+        })
+        .select()
+        .single();
 
-      if (!routine) {
-        throw new Error(lastErr ?? "Failed to create routine");
-      }
+      if (routineErr || !routine) throw new Error(routineErr?.message ?? "Failed to create routine");
 
-      // Add exercises
       if (exercises.length > 0) {
         const { error: exErr } = await supabase.from("routine_exercises").insert(
           exercises.map((ex, i) => ({
@@ -155,148 +155,6 @@ export default function NewRoutinePage() {
     } finally {
       setLoading(false);
     }
-  }
-
-  async function resolveCandidateUserIds() {
-    const ids = new Set<string>();
-    if (profile?.id) ids.add(profile.id);
-    if (user?.id) ids.add(user.id);
-
-    const email = user?.email ?? profile?.email ?? null;
-    const username =
-      profile?.username ??
-      ((user?.user_metadata?.username as string | undefined) ?? null);
-
-    if (email) {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", email)
-        .limit(5);
-      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
-    }
-
-    if (username) {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .limit(5);
-      (data ?? []).forEach((row: { id: string }) => ids.add(row.id));
-    }
-
-    return Array.from(ids);
-  }
-
-  async function ensureOwnProfileRow() {
-    if (!user?.id) return;
-    const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-    await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: user.id,
-          email: user.email ?? null,
-          name:
-            (meta.name as string) ||
-            (meta.full_name as string) ||
-            user.email?.split("@")[0] ||
-            "Athlete",
-          username: (meta.username as string) || user.email?.split("@")[0] || null,
-        },
-        { onConflict: "id" }
-      );
-  }
-
-  async function createRoutineWithFallbacks(
-    routineTitle: string,
-    routineDescription: string | null,
-    candidateUserIds: string[]
-  ) {
-    let routine: { id: string } | null = null;
-    let lastErr: string | null = null;
-
-    // 1) Try explicit owner ids first
-    for (const candidateUserId of candidateUserIds) {
-      const byTitle = await supabase
-        .from("routines")
-        .insert({
-          user_id: candidateUserId,
-          title: routineTitle,
-          description: routineDescription,
-        })
-        .select()
-        .single();
-      if (byTitle.data?.id) {
-        routine = byTitle.data;
-        break;
-      }
-
-      const missingTitleColumn = Boolean(
-        byTitle.error?.message?.includes("title") && byTitle.error?.message?.includes("schema cache")
-      );
-      const userFkError = Boolean(byTitle.error?.message?.includes("routines_user_id_fkey"));
-      lastErr = byTitle.error?.message ?? lastErr;
-
-      if (missingTitleColumn) {
-        const byName = await supabase
-          .from("routines")
-          .insert({
-            user_id: candidateUserId,
-            name: routineTitle,
-            description: routineDescription,
-          })
-          .select()
-          .single();
-        if (byName.data?.id) {
-          routine = byName.data;
-          break;
-        }
-        lastErr = byName.error?.message ?? lastErr;
-        if (userFkError || byName.error?.message?.includes("routines_user_id_fkey")) continue;
-      } else if (userFkError) {
-        continue;
-      }
-    }
-
-    // 2) Last resort: insert without user_id so DB default/trigger can assign owner
-    if (!routine) {
-      const byTitleNoOwner = await supabase
-        .from("routines")
-        .insert({
-          title: routineTitle,
-          description: routineDescription,
-        })
-        .select()
-        .single();
-
-      if (byTitleNoOwner.data?.id) {
-        routine = byTitleNoOwner.data;
-      } else {
-        const missingTitleColumn = Boolean(
-          byTitleNoOwner.error?.message?.includes("title") &&
-          byTitleNoOwner.error?.message?.includes("schema cache")
-        );
-        lastErr = byTitleNoOwner.error?.message ?? lastErr;
-        if (missingTitleColumn) {
-          const byNameNoOwner = await supabase
-            .from("routines")
-            .insert({
-              name: routineTitle,
-              description: routineDescription,
-            })
-            .select()
-            .single();
-          if (byNameNoOwner.data?.id) {
-            routine = byNameNoOwner.data;
-          } else {
-            lastErr = byNameNoOwner.error?.message ?? lastErr;
-          }
-        }
-      }
-    }
-
-    return { routine, lastErr };
   }
 
   return (
