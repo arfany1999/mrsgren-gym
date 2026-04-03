@@ -19,7 +19,6 @@ export default function ActiveWorkoutPage() {
   const {
     activeWorkout,
     exercises,
-    elapsedSeconds,
     addExercise,
     removeExercise,
     addSet,

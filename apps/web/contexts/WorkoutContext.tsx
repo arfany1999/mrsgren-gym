@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -46,7 +47,6 @@ export interface ActiveWorkout {
 interface WorkoutContextValue {
   activeWorkout: ActiveWorkout | null;
   exercises: ActiveExercise[];
-  elapsedSeconds: number;
   showPrBanner: boolean;
   prExerciseName: string;
   router: ReturnType<typeof useRouter>;
@@ -89,32 +89,12 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     null
   );
   const [exercises, setExercises] = useState<ActiveExercise[]>([]);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [showPrBanner, setShowPrBanner] = useState(false);
   const [prExerciseName, setPrExerciseName] = useState("");
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  function stopTimer() { /* no-op — timer is local to WorkoutTimer component */ }
 
-  function startTimer(startedAt: string) {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    const base = Math.floor(
-      (Date.now() - new Date(startedAt).getTime()) / 1000
-    );
-    setElapsedSeconds(base);
-    intervalRef.current = setInterval(() => {
-      setElapsedSeconds((s) => s + 1);
-    }, 1000);
-  }
-
-  function stopTimer() {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setElapsedSeconds(0);
-  }
-
-  useEffect(() => () => stopTimer(), []);
+  useEffect(() => () => { /* cleanup on unmount */ }, []);
 
   // Restore active workout from localStorage
   useEffect(() => {
@@ -124,18 +104,19 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function fetchPreviousPerformance(
-    exerciseId: string,
+  // Batched: 3 queries total regardless of exercise count (was 3 per exercise)
+  async function fetchAllPreviousPerformance(
+    exerciseIds: string[],
     currentWorkoutId: string
-  ): Promise<Array<{ reps: string; weightKg: string }>> {
+  ): Promise<Map<string, Array<{ reps: string; weightKg: string }>>> {
+    if (exerciseIds.length === 0) return new Map();
     try {
       const { data: wes } = await supabase
         .from("workout_exercises")
-        .select("id, workout_id")
-        .eq("exercise_id", exerciseId)
-        .neq("workout_id", currentWorkoutId)
-        .limit(30);
-      if (!wes || wes.length === 0) return [];
+        .select("id, exercise_id, workout_id")
+        .in("exercise_id", exerciseIds)
+        .neq("workout_id", currentWorkoutId);
+      if (!wes || wes.length === 0) return new Map();
 
       const workoutIds = [...new Set(wes.map((we) => we.workout_id as string))];
       const { data: pastWorkouts } = await supabase
@@ -143,28 +124,53 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         .select("id, finished_at")
         .in("id", workoutIds)
         .not("finished_at", "is", null)
-        .order("finished_at", { ascending: false })
-        .limit(1);
-      if (!pastWorkouts || pastWorkouts.length === 0) return [];
+        .order("finished_at", { ascending: false });
+      if (!pastWorkouts || pastWorkouts.length === 0) return new Map();
 
-      const latestWorkoutId = (pastWorkouts[0]?.id ?? "") as string;
-      if (!latestWorkoutId) return [];
-      const latestWe = wes.find((we) => we.workout_id === latestWorkoutId);
-      if (!latestWe) return [];
+      const weIdsToFetch: string[] = [];
+      const weIdToExerciseId = new Map<string, string>();
+      for (const exerciseId of exerciseIds) {
+        const exerciseWes = wes.filter((we) => (we.exercise_id as string) === exerciseId);
+        for (const pw of pastWorkouts) {
+          const match = exerciseWes.find((we) => (we.workout_id as string) === (pw.id as string));
+          if (match) {
+            weIdsToFetch.push(match.id as string);
+            weIdToExerciseId.set(match.id as string, exerciseId);
+            break;
+          }
+        }
+      }
+      if (weIdsToFetch.length === 0) return new Map();
 
-      const { data: sets } = await supabase
+      const { data: allSets } = await supabase
         .from("workout_sets")
-        .select("weight, reps, order_index")
-        .eq("workout_exercise_id", latestWe.id)
-        .order("order_index", { ascending: true });
+        .select("workout_exercise_id, weight, reps, order_index")
+        .in("workout_exercise_id", weIdsToFetch)
+        .order("order_index");
 
-      return (sets ?? []).map((s) => ({
-        reps: s.reps !== null ? String(s.reps) : "",
-        weightKg: s.weight !== null ? String(s.weight) : "",
-      }));
+      const result = new Map<string, Array<{ reps: string; weightKg: string }>>();
+      for (const weId of weIdsToFetch) {
+        const exerciseId = weIdToExerciseId.get(weId)!;
+        result.set(exerciseId, (allSets ?? [])
+          .filter((s) => (s.workout_exercise_id as string) === weId)
+          .map((s) => ({
+            reps: s.reps !== null ? String(s.reps) : "",
+            weightKg: s.weight !== null ? String(s.weight) : "",
+          })));
+      }
+      return result;
     } catch {
-      return [];
+      return new Map();
     }
+  }
+
+  // Single-exercise version (used when adding an exercise mid-workout)
+  async function fetchPreviousPerformance(
+    exerciseId: string,
+    currentWorkoutId: string
+  ): Promise<Array<{ reps: string; weightKg: string }>> {
+    const map = await fetchAllPreviousPerformance([exerciseId], currentWorkoutId);
+    return map.get(exerciseId) ?? [];
   }
 
   async function fetchWorkoutExercises(workoutId: string): Promise<ActiveExercise[]> {
@@ -206,11 +212,12 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    // Fetch previous performance for all exercises in parallel
-    const prevData = await Promise.all(
-      baseExercises.map((ex) => fetchPreviousPerformance(ex.exerciseId, workoutId))
+    // Fetch previous performance for all exercises in 3 queries (batched)
+    const prevMap = await fetchAllPreviousPerformance(
+      baseExercises.map((ex) => ex.exerciseId),
+      workoutId
     );
-    return baseExercises.map((ex, i) => ({ ...ex, previousSets: prevData[i] ?? [] }));
+    return baseExercises.map((ex) => ({ ...ex, previousSets: prevMap.get(ex.exerciseId) ?? [] }));
   }
 
   const loadActiveWorkout = useCallback(
@@ -232,7 +239,6 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       });
       const mapped = await fetchWorkoutExercises(workout.id);
       setExercises(mapped);
-      startTimer(workout.started_at);
       setActiveWorkoutId(id);
     },
     [supabase] // eslint-disable-line react-hooks/exhaustive-deps
@@ -326,7 +332,6 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       });
       const mapped = await fetchWorkoutExercises(workout.id);
       setExercises(mapped);
-      startTimer(workout.started_at);
       setActiveWorkoutId(workout.id);
     },
     [supabase, user] // eslint-disable-line react-hooks/exhaustive-deps
@@ -607,29 +612,28 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const clearPrBanner = useCallback(() => setShowPrBanner(false), []);
 
+  const value = useMemo(() => ({
+    activeWorkout,
+    exercises,
+    showPrBanner,
+    prExerciseName,
+    router,
+    startWorkout,
+    loadActiveWorkout,
+    finishWorkout,
+    discardWorkout,
+    updateTitle,
+    addExercise,
+    removeExercise,
+    addSet,
+    updateSetField,
+    saveSet,
+    deleteSet,
+    clearPrBanner,
+  }), [activeWorkout, exercises, showPrBanner, prExerciseName, router, startWorkout, loadActiveWorkout, finishWorkout, discardWorkout, updateTitle, addExercise, removeExercise, addSet, updateSetField, saveSet, deleteSet, clearPrBanner]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <WorkoutContext.Provider
-      value={{
-        activeWorkout,
-        exercises,
-        elapsedSeconds,
-        showPrBanner,
-        prExerciseName,
-        router,
-        startWorkout,
-        loadActiveWorkout,
-        finishWorkout,
-        discardWorkout,
-        updateTitle,
-        addExercise,
-        removeExercise,
-        addSet,
-        updateSetField,
-        saveSet,
-        deleteSet,
-        clearPrBanner,
-      }}
-    >
+    <WorkoutContext.Provider value={value}>
       {children}
     </WorkoutContext.Provider>
   );

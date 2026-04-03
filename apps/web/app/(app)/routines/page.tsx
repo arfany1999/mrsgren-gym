@@ -67,21 +67,22 @@ export default function RoutinesPage() {
     try {
       const mine = await supabase
         .from("routines")
-        .select("*, routine_exercises(*, exercises(*))")
+        .select("id, title, name, description, user_id, is_public, created_at, updated_at, folder_id, routine_exercises(id, exercise_id, order_index, sets, reps, weight, exercises(id, name, muscle_groups))")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
-
-      const lib = await supabase
-        .from("routines")
-        .select("*, routine_exercises(*, exercises(*))")
-        .eq("is_public", true)
-        .neq("user_id", user!.id);
-
       setMyRoutines((mine.data ?? []).map(mapRoutine));
-      setLibrary(lib.error ? [] : (lib.data ?? []).map(mapRoutine));
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadLibrary() {
+    const lib = await supabase
+      .from("routines")
+      .select("id, title, name, description, user_id, is_public, created_at, updated_at, folder_id, routine_exercises(id, exercise_id, order_index, sets, reps, weight, exercises(id, name, muscle_groups))")
+      .eq("is_public", true)
+      .neq("user_id", user!.id);
+    setLibrary(lib.error ? [] : (lib.data ?? []).map(mapRoutine));
   }
 
   async function handleStart(routineId: string) {
@@ -194,7 +195,7 @@ export default function RoutinesPage() {
 
         <div className={styles.quick}>
           <Link href="/routines/new" className={styles.quickCard}>New Routine</Link>
-          <button type="button" className={styles.quickCard} onClick={() => setShowLibrary(true)}>Explore</button>
+          <button type="button" className={styles.quickCard} onClick={() => { setShowLibrary(true); if (library.length === 0) loadLibrary(); }}>Explore</button>
         </div>
 
         <div className={styles.mineHead}>
