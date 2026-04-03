@@ -244,9 +244,13 @@ function mapRoutine(row: Record<string, unknown>): Routine {
       .map((re) => {
         const ex = (re.exercises as Record<string, unknown>) ?? {};
         const setsCount = (re.sets as number) ?? 3;
-        const setsConfig = Array.isArray(re.sets_config)
-          ? re.sets_config
-          : Array.from({ length: setsCount }, () => ({ setType: "normal" as const, reps: null, weightKg: null }));
+        const defaultReps = (re.reps as number) ?? null;
+        const defaultWeight = (re.weight as number) ?? null;
+        const setsConfig = Array.from({ length: setsCount }, () => ({
+          setType: "normal" as const,
+          reps: defaultReps,
+          weightKg: defaultWeight,
+        }));
         return {
           id: re.id as string,
           routineId: re.routine_id as string,

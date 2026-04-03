@@ -266,7 +266,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           supabase.from("routines").select("name").eq("id", routineId).single(),
           supabase
             .from("routine_exercises")
-            .select("exercise_id, order_index, sets, sets_config")
+            .select("exercise_id, order_index, sets, reps, weight")
             .eq("routine_id", routineId)
             .order("order_index"),
         ]);
@@ -288,7 +288,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
             )
             .select("id, exercise_id, order_index");
 
-          // Pre-create workout_sets from sets_config so user just ticks them off
+          // Pre-create workout_sets from reps/weight so user just ticks them off
           if (insertedWEs && insertedWEs.length > 0) {
             const allSetRows: Array<Record<string, unknown>> = [];
             for (const we of insertedWEs as Array<Record<string, unknown>>) {
@@ -298,21 +298,19 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
               );
               if (!re) continue;
               const setsCount = (re.sets as number) ?? 3;
-              type SetsConfigEntry = { setType?: string; reps?: number | null; weightKg?: number | null };
-              const setsConfig: SetsConfigEntry[] = Array.isArray(re.sets_config)
-                ? (re.sets_config as SetsConfigEntry[])
-                : Array.from({ length: setsCount }, () => ({ reps: null, weightKg: null }));
+              const defaultReps = (re.reps as number) ?? null;
+              const defaultWeight = (re.weight as number) ?? null;
 
-              setsConfig.forEach((s, idx) => {
+              for (let idx = 0; idx < setsCount; idx++) {
                 allSetRows.push({
                   workout_exercise_id: we.id,
-                  reps: s.reps ?? null,
-                  weight: s.weightKg ?? null,
-                  set_type: s.setType ?? "normal",
+                  reps: defaultReps,
+                  weight: defaultWeight,
+                  set_type: "normal",
                   is_completed: false,
                   order_index: idx,
                 });
-              });
+              }
             }
             if (allSetRows.length > 0) {
               await supabase.from("workout_sets").insert(allSetRows);

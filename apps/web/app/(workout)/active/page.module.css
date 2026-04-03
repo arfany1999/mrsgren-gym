@@ -38,6 +38,16 @@
   overflow: hidden;
 }
 
+.workoutName {
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .titleBtn {
   display: flex;
   align-items: center;
@@ -64,6 +74,12 @@
   text-align: center;
   width: 160px;
   outline: none;
+}
+
+/* ── Bottom Finish ───────────────────────────────────────────── */
+.bottomFinish {
+  padding: var(--sp-4) var(--sp-4) var(--sp-6);
+  margin-top: var(--sp-2);
 }
 
 /* ── Live Stats Bar ──────────────────────────────────────────── */

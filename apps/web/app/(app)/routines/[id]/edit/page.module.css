@@ -107,10 +107,8 @@
   padding: 12px 14px 10px;
 }
 
-.dragHandle { opacity: 0.4; cursor: grab; flex-shrink: 0; }
-
 .exIconCircle {
-  width: 38px; height: 38px; border-radius: 50%;
+  width: 36px; height: 36px; border-radius: 50%;
   background: #111;
   border: 1px solid rgba(255,255,255,0.1);
   display: flex; align-items: center; justify-content: center;
@@ -125,86 +123,54 @@
   letter-spacing: -0.01em;
 }
 
-.exMenuBtn {
+.exRemoveBtn {
   background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px;
   display: flex; align-items: center; flex-shrink: 0;
 }
 
-/* ── Sets table ──────────────────────────────────────────────── */
-.setsTable {
-  padding: 0 14px;
+/* ── Sets/Reps/Weight fields ─────────────────────────────────── */
+.exFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 0 14px 14px;
 }
 
-.setsHeader {
-  display: grid;
-  grid-template-columns: 36px 1fr 1fr 28px;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 600;
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  padding: 4px 0 6px;
-  border-bottom: 0.5px solid rgba(255,255,255,0.06);
 }
 
-.setRow {
-  display: grid;
-  grid-template-columns: 36px 1fr 1fr 28px;
-  gap: 8px;
-  align-items: center;
-  padding: 5px 0;
-  border-bottom: 0.5px solid rgba(255,255,255,0.04);
-}
-
-.setRow:last-child { border-bottom: none; }
-
-.setNum {
-  width: 28px; height: 28px; border-radius: 8px;
+.fieldInput {
   background: rgba(255,255,255,0.07);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; color: var(--text-secondary);
-}
-
-.setInput {
-  background: rgba(255,255,255,0.06);
-  border: none;
-  border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 14px;
-  font-weight: 500;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-primary);
   outline: none;
   width: 100%;
   text-align: center;
 }
-.setInput::placeholder { color: var(--text-tertiary); }
-.setInput:focus { background: rgba(255,255,255,0.1); }
+.fieldInput::placeholder { color: var(--text-tertiary); font-weight: 400; font-size: 13px; }
+.fieldInput:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); }
 
-.removeSetBtn {
-  background: none; border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  padding: 4px; border-radius: 6px; opacity: 0.5;
-}
-.removeSetBtn:hover { opacity: 1; }
-
-/* ── Add Set button ──────────────────────────────────────────── */
-.addSetBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 12px;
-  background: none;
-  border: none;
-  border-top: 0.5px solid rgba(255,255,255,0.06);
+.emptyHint {
   font-size: 14px;
-  font-weight: 650;
-  color: var(--accent);
-  cursor: pointer;
-  margin-top: 4px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 24px 0;
 }
-.addSetBtn:active { background: var(--accent-dim); }
 
 /* ── Library panel ───────────────────────────────────────────── */
 .libraryHeader {

@@ -9,21 +9,15 @@ import { fetchExercises, searchExercises } from "@/lib/exercisedb";
 import type { Exercise } from "@/types/api";
 import styles from "./page.module.css";
 
-interface SetDraft {
-  kg: string;
-  reps: string;
-}
-
 interface DraftExercise {
   reId: string | null;
   exerciseId: string;
   name: string;
-  muscleGroups: string[];
-  sets: SetDraft[];
+  sets: string;
+  reps: string;
+  weight: string;
   orderIndex: number;
 }
-
-const DEFAULT_SET: SetDraft = { kg: "", reps: "" };
 
 export default function EditRoutinePage() {
   const { id } = useParams<{ id: string }>();
@@ -56,9 +50,7 @@ export default function EditRoutinePage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadLibrary("");
-  }, [loadLibrary]);
+  useEffect(() => { loadLibrary(""); }, [loadLibrary]);
 
   useEffect(() => {
     if (libSearchTimer.current) clearTimeout(libSearchTimer.current);
@@ -80,24 +72,17 @@ export default function EditRoutinePage() {
       setTitle((data.title as string) ?? (data.name as string) ?? "");
       const res = ((data.routine_exercises as Record<string, unknown>[]) ?? [])
         .slice()
-        .sort((a, b) => ((a.order_index ?? a.order ?? 0) as number) - ((b.order_index ?? b.order ?? 0) as number));
+        .sort((a, b) => ((a.order_index ?? 0) as number) - ((b.order_index ?? 0) as number));
 
       setExercises(res.map((re, i) => {
         const ex = (re.exercises as Record<string, unknown>) ?? {};
-        const setsCount = (re.sets as number) ?? 3;
-        const setsConfig = Array.isArray(re.sets_config) ? re.sets_config : null;
-        const sets: SetDraft[] = setsConfig
-          ? (setsConfig as Array<{ weightKg?: number; reps?: number }>).map((s) => ({
-              kg: s.weightKg != null ? String(s.weightKg) : "",
-              reps: s.reps != null ? String(s.reps) : "",
-            }))
-          : Array.from({ length: setsCount }, () => ({ ...DEFAULT_SET }));
         return {
           reId: re.id as string,
           exerciseId: re.exercise_id as string,
-          name: ex.name as string,
-          muscleGroups: (ex.muscle_groups as string[]) ?? [],
-          sets,
+          name: (ex.name as string) ?? "",
+          sets: String((re.sets as number) ?? 4),
+          reps: String((re.reps as number) ?? 12),
+          weight: (re.weight as number) != null ? String(re.weight) : "",
           orderIndex: i,
         };
       }));
@@ -110,81 +95,35 @@ export default function EditRoutinePage() {
 
   async function handleAddFromLibrary(exercise: Exercise) {
     setError("");
+    if (exercises.some(e => e.name.toLowerCase() === exercise.name.toLowerCase())) return;
     try {
       let exerciseId = "";
       const { data: existing } = await supabase
-        .from("exercises")
-        .select("id")
-        .ilike("name", exercise.name)
-        .limit(1)
-        .maybeSingle();
-
+        .from("exercises").select("id").ilike("name", exercise.name).limit(1).maybeSingle();
       if (existing?.id) {
         exerciseId = existing.id;
       } else {
-        const { data: inserted } = await supabase
-          .from("exercises")
-          .insert({ name: exercise.name, muscle_groups: exercise.muscleGroups })
-          .select("id")
-          .single();
-        if (!inserted) {
-          const { data: fb } = await supabase
-            .from("exercises")
-            .insert({ name: exercise.name })
-            .select("id")
-            .single();
-          if (!fb) { setError("Could not add exercise"); return; }
-          exerciseId = fb.id;
-        } else {
-          exerciseId = inserted.id;
-        }
+        const { data: ins } = await supabase
+          .from("exercises").insert({ name: exercise.name, muscle_groups: exercise.muscleGroups }).select("id").single();
+        if (!ins) { setError("Could not add exercise"); return; }
+        exerciseId = ins.id;
       }
-
-      if (exercises.some((e) => e.exerciseId === exerciseId)) return;
-      setExercises((prev) => [
-        ...prev,
-        {
-          reId: null,
-          exerciseId,
-          name: exercise.name,
-          muscleGroups: exercise.muscleGroups ?? [],
-          sets: [{ ...DEFAULT_SET }, { ...DEFAULT_SET }, { ...DEFAULT_SET }],
-          orderIndex: prev.length,
-        },
-      ]);
+      setExercises(prev => [...prev, {
+        reId: null, exerciseId, name: exercise.name,
+        sets: "4", reps: "12", weight: "",
+        orderIndex: prev.length,
+      }]);
     } catch {
       setError("Failed to add exercise");
     }
   }
 
   function removeExercise(idx: number) {
-    setExercises((prev) =>
-      prev.filter((_, i) => i !== idx).map((e, i) => ({ ...e, orderIndex: i }))
-    );
+    setExercises(prev => prev.filter((_, i) => i !== idx).map((e, i) => ({ ...e, orderIndex: i })));
   }
 
-  function addSet(exIdx: number) {
-    setExercises((prev) =>
-      prev.map((e, i) => i === exIdx ? { ...e, sets: [...e.sets, { ...DEFAULT_SET }] } : e)
-    );
-  }
-
-  function removeSet(exIdx: number, setIdx: number) {
-    setExercises((prev) =>
-      prev.map((e, i) => i === exIdx
-        ? { ...e, sets: e.sets.filter((_, si) => si !== setIdx) }
-        : e
-      )
-    );
-  }
-
-  function updateSet(exIdx: number, setIdx: number, field: "kg" | "reps", value: string) {
-    setExercises((prev) =>
-      prev.map((e, i) => i === exIdx
-        ? { ...e, sets: e.sets.map((s, si) => si === setIdx ? { ...s, [field]: value } : s) }
-        : e
-      )
-    );
+  function updateField(idx: number, field: "sets" | "reps" | "weight", value: string) {
+    setExercises(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e));
   }
 
   async function handleSave() {
@@ -200,20 +139,11 @@ export default function EditRoutinePage() {
           routine_id: id,
           exercise_id: ex.exerciseId,
           order_index: i,
-          sets: ex.sets.length,
-          sets_config: ex.sets.map((s) => ({
-            setType: "normal",
-            reps: s.reps ? parseInt(s.reps) : null,
-            weightKg: s.kg ? parseFloat(s.kg) : null,
-          })),
+          sets: parseInt(ex.sets) || 4,
+          reps: parseInt(ex.reps) || 12,
+          weight: ex.weight ? parseFloat(ex.weight) : null,
         }));
-        const { error: exErr } = await supabase.from("routine_exercises").insert(rows);
-        if (exErr) {
-          // Fallback: try without sets_config
-          const rowsFallback = rows.map(({ sets_config: _sc, ...rest }) => rest);
-          const { error: fbErr } = await supabase.from("routine_exercises").insert(rowsFallback);
-          if (fbErr) throw new Error(fbErr.message);
-        }
+        await supabase.from("routine_exercises").insert(rows);
       }
 
       router.replace(`/routines/${id}`);
@@ -233,7 +163,7 @@ export default function EditRoutinePage() {
         showBack
         rightAction={
           <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Update Routine"}
+            {saving ? "Saving…" : "Save"}
           </button>
         }
       />
@@ -254,20 +184,14 @@ export default function EditRoutinePage() {
 
           {error && <p className={styles.error}>{error}</p>}
 
+          {exercises.length === 0 && (
+            <p className={styles.emptyHint}>Add exercises from the library →</p>
+          )}
+
           {/* Exercise blocks */}
           {exercises.map((ex, exIdx) => (
             <div key={`${ex.exerciseId}-${exIdx}`} className={styles.exBlock}>
               <div className={styles.exHeader}>
-                <div className={styles.dragHandle}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <circle cx="9" cy="5" r="1.5" fill="var(--text-tertiary)" />
-                    <circle cx="15" cy="5" r="1.5" fill="var(--text-tertiary)" />
-                    <circle cx="9" cy="12" r="1.5" fill="var(--text-tertiary)" />
-                    <circle cx="15" cy="12" r="1.5" fill="var(--text-tertiary)" />
-                    <circle cx="9" cy="19" r="1.5" fill="var(--text-tertiary)" />
-                    <circle cx="15" cy="19" r="1.5" fill="var(--text-tertiary)" />
-                  </svg>
-                </div>
                 <div className={styles.exIconCircle}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <rect x="3" y="9" width="4" height="6" rx="1" stroke="#555" strokeWidth="1.5"/>
@@ -276,55 +200,48 @@ export default function EditRoutinePage() {
                   </svg>
                 </div>
                 <p className={styles.exName}>{ex.name}</p>
-                <button type="button" className={styles.exMenuBtn} onClick={() => removeExercise(exIdx)} aria-label="Remove">
+                <button type="button" className={styles.exRemoveBtn} onClick={() => removeExercise(exIdx)} aria-label="Remove">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M18 6L6 18M6 6l12 12" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
                 </button>
               </div>
 
-              {/* Sets table */}
-              <div className={styles.setsTable}>
-                <div className={styles.setsHeader}>
-                  <span>SET</span>
-                  <span>KG</span>
-                  <span>REPS</span>
-                  <span />
+              <div className={styles.exFields}>
+                <div className={styles.field}>
+                  <label className={styles.fieldLabel}>Sets</label>
+                  <input
+                    className={styles.fieldInput}
+                    type="number"
+                    min="1"
+                    value={ex.sets}
+                    onChange={e => updateField(exIdx, "sets", e.target.value)}
+                    placeholder="4"
+                  />
                 </div>
-                {ex.sets.map((set, setIdx) => (
-                  <div key={setIdx} className={styles.setRow}>
-                    <span className={styles.setNum}>{setIdx + 1}</span>
-                    <input
-                      className={styles.setInput}
-                      type="number"
-                      value={set.kg}
-                      onChange={(e) => updateSet(exIdx, setIdx, "kg", e.target.value)}
-                      placeholder="—"
-                    />
-                    <input
-                      className={styles.setInput}
-                      type="number"
-                      value={set.reps}
-                      onChange={(e) => updateSet(exIdx, setIdx, "reps", e.target.value)}
-                      placeholder="—"
-                    />
-                    <button
-                      type="button"
-                      className={styles.removeSetBtn}
-                      onClick={() => removeSet(exIdx, setIdx)}
-                      aria-label="Remove set"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 6L6 18M6 6l12 12" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                <div className={styles.field}>
+                  <label className={styles.fieldLabel}>Reps</label>
+                  <input
+                    className={styles.fieldInput}
+                    type="number"
+                    min="1"
+                    value={ex.reps}
+                    onChange={e => updateField(exIdx, "reps", e.target.value)}
+                    placeholder="12"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.fieldLabel}>Weight (kg)</label>
+                  <input
+                    className={styles.fieldInput}
+                    type="number"
+                    min="0"
+                    value={ex.weight}
+                    onChange={e => updateField(exIdx, "weight", e.target.value)}
+                    placeholder="optional"
+                  />
+                </div>
               </div>
-
-              <button type="button" className={styles.addSetBtn} onClick={() => addSet(exIdx)}>
-                + Add Set
-              </button>
             </div>
           ))}
         </div>
@@ -343,21 +260,15 @@ export default function EditRoutinePage() {
               className={styles.libSearchInput}
               placeholder="Search Exercises"
               value={libQuery}
-              onChange={(e) => setLibQuery(e.target.value)}
+              onChange={e => setLibQuery(e.target.value)}
             />
           </div>
-
           <div className={styles.libList}>
             {libLoading ? (
               <div className={styles.libLoading}><Spinner size={20} /></div>
             ) : (
-              libraryExercises.map((ex) => (
-                <button
-                  key={ex.id}
-                  type="button"
-                  className={styles.libItem}
-                  onClick={() => handleAddFromLibrary(ex)}
-                >
+              libraryExercises.map(ex => (
+                <button key={ex.id} type="button" className={styles.libItem} onClick={() => handleAddFromLibrary(ex)}>
                   <div className={styles.libIcon}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <rect x="3" y="9" width="4" height="6" rx="1" stroke="#555" strokeWidth="1.5"/>
@@ -373,8 +284,8 @@ export default function EditRoutinePage() {
                   </div>
                   <div className={styles.libAdd}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" fill="var(--accent)" />
-                      <path d="M12 7v10M7 12h10" stroke="#000" strokeWidth="2" strokeLinecap="round" />
+                      <circle cx="12" cy="12" r="10" fill="var(--accent)"/>
+                      <path d="M12 7v10M7 12h10" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
                   </div>
                 </button>
