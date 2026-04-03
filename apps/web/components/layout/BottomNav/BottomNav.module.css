@@ -39,8 +39,8 @@
 
 .label {
   font-size: 11px;
-  font-weight: var(--fw-medium);
-  color: var(--text-tertiary);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.65);
   transition: color var(--transition-fast);
   letter-spacing: 0.1px;
 }
