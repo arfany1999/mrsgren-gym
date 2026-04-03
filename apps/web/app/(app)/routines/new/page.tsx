@@ -121,7 +121,7 @@ export default function NewRoutinePage() {
         .from("routines")
         .insert({
           user_id: user.id,
-          title: title.trim(),
+          name: title.trim(),
           description: description.trim() || null,
         })
         .select()
