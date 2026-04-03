@@ -15,17 +15,16 @@
 .chartLabel { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
 .chartRange { font-size: 16px; font-weight: 700; color: #2f8cff; letter-spacing: -0.01em; }
 .bars { height: 130px; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid var(--separator); padding-bottom: 8px; }
-.bar { width: 28px; height: 62px; border-radius: 6px 6px 0 0; background: #178dff; }
-.tall { height: 112px; }
-.mid { height: 76px; }
-.low { height: 38px; }
 .segmented { display: flex; gap: 8px; margin-top: 12px; }
 .segBtn { flex: 1; height: 40px; border-radius: 20px; border: none; background: #181a1f; color: var(--text-primary); font-size: 16px; font-weight: 650; }
 .segActive { background: #1d8fe9; color: #fff; }
 .dashboard { padding: 0 16px; margin-top: 8px; }
 .sectionTitle { font-size: 34px; letter-spacing: -0.03em; font-weight: 730; margin-bottom: 10px; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
-.tile { height: 56px; border-radius: 11px; background: #181a1f; display: flex; align-items: center; padding: 0 14px; font-size: 17px; font-weight: 650; color: var(--text-primary); }
+.tile { height: 56px; border-radius: 11px; background: #181a1f; display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 17px; font-weight: 650; color: var(--text-primary); text-decoration: none; cursor: pointer; transition: background 0.15s; }
+.tile:active { background: #22262e; }
+.tileIcon { font-size: 20px; }
+.bar { width: 28px; border-radius: 6px 6px 0 0; background: #178dff; transition: height 0.3s ease; }
 .section { padding: var(--sp-4) var(--sp-4) 0; }
 .sectionLabel { font-size: 15px; font-weight: 700; color: var(--text-secondary); margin-bottom: var(--sp-2); }
 .card { background: #181a1f; border-radius: 12px; overflow: hidden; }

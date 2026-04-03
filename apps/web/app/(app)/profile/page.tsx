@@ -1,17 +1,78 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { formatDateFull } from "@/lib/formatters";
 import styles from "./page.module.css";
 
+type Segment = "Duration" | "Volume" | "Reps";
+
 export default function ProfilePage() {
   const { profile, user, supabase, logout } = useAuth();
   const [totalWorkouts, setTotalWorkouts] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [activeSegment, setActiveSegment] = useState<Segment>("Duration");
+  const [chartValues, setChartValues] = useState<number[]>([0, 0, 0, 0]);
+  const [chartLabel, setChartLabel] = useState("0 hours this week");
+
+  const fetchChartData = useCallback(async (segment: Segment) => {
+    const now = new Date();
+    const from = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString();
+
+    if (segment === "Reps") {
+      const { data } = await supabase
+        .from("workouts")
+        .select("started_at, workout_exercises(workout_sets(reps))")
+        .not("finished_at", "is", null)
+        .gte("started_at", from);
+
+      const weeks = [0, 0, 0, 0];
+      (data ?? []).forEach((w: Record<string, unknown>) => {
+        const weeksAgo = Math.min(
+          Math.floor((now.getTime() - new Date(w.started_at as string).getTime()) / (7 * 24 * 60 * 60 * 1000)),
+          3
+        );
+        const wes = (w.workout_exercises as Record<string, unknown>[]) ?? [];
+        wes.forEach((we) => {
+          const sets = (we.workout_sets as Record<string, unknown>[]) ?? [];
+          sets.forEach((s) => { weeks[weeksAgo] += (s.reps as number) ?? 0; });
+        });
+      });
+      const vals = [...weeks].reverse();
+      setChartValues(vals);
+      setChartLabel(`${(vals[3] ?? 0).toLocaleString()} reps this week`);
+    } else {
+      const { data } = await supabase
+        .from("workouts")
+        .select("started_at, duration_secs, total_volume")
+        .not("finished_at", "is", null)
+        .gte("started_at", from);
+
+      const weeks = [0, 0, 0, 0];
+      (data ?? []).forEach((w: Record<string, unknown>) => {
+        const weeksAgo = Math.min(
+          Math.floor((now.getTime() - new Date(w.started_at as string).getTime()) / (7 * 24 * 60 * 60 * 1000)),
+          3
+        );
+        if (segment === "Duration") {
+          weeks[weeksAgo] += ((w.duration_secs as number) ?? 0) / 3600;
+        } else {
+          weeks[weeksAgo] += (w.total_volume as number) ?? 0;
+        }
+      });
+      const vals = [...weeks].reverse();
+      setChartValues(vals);
+      if (segment === "Duration") {
+        setChartLabel(`${(vals[3] ?? 0).toFixed(1)} hours this week`);
+      } else {
+        setChartLabel(`${Math.round(vals[3] ?? 0).toLocaleString()} kg this week`);
+      }
+    }
+  }, [supabase]);
 
   useEffect(() => {
     async function load() {
@@ -21,20 +82,22 @@ export default function ProfilePage() {
           .select("id", { count: "exact", head: true })
           .not("finished_at", "is", null);
         setTotalWorkouts(count ?? 0);
+        await fetchChartData("Duration");
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [supabase]);
+  }, [supabase, fetchChartData]);
+
+  async function handleSegment(seg: Segment) {
+    setActiveSegment(seg);
+    await fetchChartData(seg);
+  }
 
   async function handleLogout() {
     setLoggingOut(true);
-    try {
-      await logout();
-    } finally {
-      setLoggingOut(false);
-    }
+    try { await logout(); } finally { setLoggingOut(false); }
   }
 
   const joinDate = user?.created_at ? formatDateFull(user.created_at) : "—";
@@ -51,6 +114,15 @@ export default function ProfilePage() {
     null;
   const displayEmail = profile?.email || user?.email || "—";
 
+  const maxVal = Math.max(...chartValues, 1);
+
+  const TILES = [
+    { label: "Statistics", href: "/statistics", icon: "📊" },
+    { label: "Exercises",  href: "/exercises",  icon: "🏋️" },
+    { label: "Measures",   href: "/measures",   icon: "📏" },
+    { label: "Calendar",   href: "/workouts",   icon: "📅" },
+  ];
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -66,12 +138,12 @@ export default function ProfilePage() {
               <path d="M12 4v12M8 8l4-4 4 4M5 14v4a2 2 0 002 2h10a2 2 0 002-2v-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <button type="button" className={styles.iconBtn} aria-label="Settings">
+          <Link href="/settings" className={styles.iconBtn} aria-label="Settings">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/>
               <path d="M19 12a7 7 0 00-.07-1l2-1.5-2-3.5-2.4 1a7.6 7.6 0 00-1.7-1L14.5 3h-5l-.34 2.5a7.6 7.6 0 00-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 000 2l-2 1.5 2 3.5 2.4-1a7.6 7.6 0 001.7 1L9.5 21h5l.34-2.5a7.6 7.6 0 001.7-1l2.4 1 2-3.5-2-1.5c.05-.33.07-.66.07-1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
             </svg>
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -93,29 +165,41 @@ export default function ProfilePage() {
 
       <section className={styles.chartCard}>
         <div className={styles.chartHeader}>
-          <p className={styles.chartLabel}>0 hours this week</p>
-          <p className={styles.chartRange}>Last 3 months</p>
+          <p className={styles.chartLabel}>{chartLabel}</p>
+          <p className={styles.chartRange}>Last 4 weeks</p>
         </div>
         <div className={styles.bars}>
-          <span className={styles.bar} />
-          <span className={[styles.bar, styles.tall].join(" ")} />
-          <span className={[styles.bar, styles.mid].join(" ")} />
-          <span className={[styles.bar, styles.low].join(" ")} />
+          {chartValues.map((val, i) => (
+            <span
+              key={i}
+              className={styles.bar}
+              style={{ height: `${Math.max((val / maxVal) * 112, val > 0 ? 8 : 0)}px` }}
+            />
+          ))}
         </div>
         <div className={styles.segmented}>
-          <button type="button" className={[styles.segBtn, styles.segActive].join(" ")}>Duration</button>
-          <button type="button" className={styles.segBtn}>Volume</button>
-          <button type="button" className={styles.segBtn}>Reps</button>
+          {(["Duration", "Volume", "Reps"] as Segment[]).map((seg) => (
+            <button
+              key={seg}
+              type="button"
+              className={[styles.segBtn, activeSegment === seg ? styles.segActive : ""].join(" ")}
+              onClick={() => handleSegment(seg)}
+            >
+              {seg}
+            </button>
+          ))}
         </div>
       </section>
 
       <section className={styles.dashboard}>
         <h3 className={styles.sectionTitle}>Dashboard</h3>
         <div className={styles.grid}>
-          <div className={styles.tile}>Statistics</div>
-          <div className={styles.tile}>Exercises</div>
-          <div className={styles.tile}>Measures</div>
-          <div className={styles.tile}>Calendar</div>
+          {TILES.map(({ label, href, icon }) => (
+            <Link key={label} href={href} className={styles.tile}>
+              <span className={styles.tileIcon}>{icon}</span>
+              {label}
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -149,12 +233,7 @@ export default function ProfilePage() {
       )}
 
       <div className={styles.logoutSection}>
-        <Button
-          variant="danger"
-          fullWidth
-          onClick={handleLogout}
-          loading={loggingOut}
-        >
+        <Button variant="danger" fullWidth onClick={handleLogout} loading={loggingOut}>
           Log Out
         </Button>
       </div>

@@ -1,0 +1,26 @@
+.page { padding-bottom: var(--sp-8); background: #000; min-height: 100vh; }
+.center { display: flex; justify-content: center; padding: 60px 0; }
+.addBtn { background: none; border: none; color: #2f8cff; font-size: 16px; font-weight: 650; padding: 4px 0; cursor: pointer; }
+
+.form { margin: var(--sp-3) var(--sp-4); background: #181a1f; border-radius: 14px; padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); }
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+.formField { display: flex; flex-direction: column; gap: 4px; }
+.fieldLabel { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+.unit { font-weight: 400; }
+.fieldInput { background: #22262e; border: none; border-radius: 8px; padding: 10px 12px; color: var(--text-primary); font-size: 16px; width: 100%; outline: none; }
+.fieldInput:focus { box-shadow: 0 0 0 2px #2f8cff55; }
+.error { color: #ff4d4d; font-size: 14px; }
+
+.empty { text-align: center; padding: 60px 24px 0; color: var(--text-primary); font-size: 17px; font-weight: 600; }
+.emptyHint { color: var(--text-secondary); font-size: 14px; margin-top: 6px; font-weight: 400; }
+
+.list { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); }
+.card { background: #181a1f; border-radius: 14px; padding: 14px 16px; }
+.cardHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.cardDate { font-size: 15px; color: var(--text-secondary); }
+.cardWeight { font-size: 22px; font-weight: 730; letter-spacing: -0.02em; color: var(--text-primary); }
+.cardBody { display: flex; flex-wrap: wrap; gap: 12px 20px; }
+.cardStat { display: flex; flex-direction: column; }
+.cardStatVal { font-size: 16px; font-weight: 650; color: var(--text-primary); }
+.cardStatLabel { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.cardNotes { font-size: 13px; color: var(--text-secondary); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--separator); }

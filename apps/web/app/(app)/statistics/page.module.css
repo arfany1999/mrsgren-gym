@@ -1,0 +1,20 @@
+.page { padding-bottom: var(--sp-8); background: #000; min-height: 100vh; }
+.center { display: flex; justify-content: center; padding: 60px 0; }
+
+.statGrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) 0; }
+.statCard { background: #181a1f; border-radius: 14px; padding: 18px 14px 14px; }
+.statValue { font-size: 28px; font-weight: 740; letter-spacing: -0.03em; color: var(--text-primary); }
+.statLabel { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+.section { padding: var(--sp-6) var(--sp-4) 0; }
+.sectionTitle { font-size: 20px; font-weight: 720; letter-spacing: -0.02em; margin-bottom: var(--sp-3); }
+.empty { color: var(--text-secondary); font-size: 15px; text-align: center; padding: var(--sp-6) 0; }
+
+.prList { display: flex; flex-direction: column; gap: var(--sp-2); }
+.prRow { background: #181a1f; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+.prInfo { min-width: 0; }
+.prExercise { font-size: 16px; font-weight: 650; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prMeta { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.prRight { text-align: right; flex-shrink: 0; margin-left: 12px; }
+.pr1rm { font-size: 18px; font-weight: 720; color: #2f8cff; letter-spacing: -0.02em; }
+.pr1rmLabel { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
