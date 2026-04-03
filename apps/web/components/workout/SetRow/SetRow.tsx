@@ -40,28 +40,34 @@ export function SetRow({ set, index, weId, prevSet, onUpdateField, onSave, onDel
       </div>
 
       {/* Weight */}
-      <input
-        ref={weightRef}
-        className={styles.numInput}
-        type="tel"
-        inputMode="decimal"
-        placeholder="0"
-        value={set.weightKg}
-        onChange={(e) => onUpdateField("weightKg", e.target.value)}
-        onFocus={(e) => e.target.select()}
-      />
+      <div className={styles.inputWrap}>
+        <input
+          ref={weightRef}
+          className={styles.numInput}
+          type="tel"
+          inputMode="decimal"
+          placeholder="0"
+          value={set.weightKg}
+          onChange={(e) => onUpdateField("weightKg", e.target.value)}
+          onFocus={(e) => e.target.select()}
+        />
+        <span className={styles.inputLabel}>kg</span>
+      </div>
 
       {/* Reps */}
-      <input
-        ref={repsRef}
-        className={styles.numInput}
-        type="tel"
-        inputMode="numeric"
-        placeholder="0"
-        value={set.reps}
-        onChange={(e) => onUpdateField("reps", e.target.value)}
-        onFocus={(e) => e.target.select()}
-      />
+      <div className={styles.inputWrap}>
+        <input
+          ref={repsRef}
+          className={styles.numInput}
+          type="tel"
+          inputMode="numeric"
+          placeholder="0"
+          value={set.reps}
+          onChange={(e) => onUpdateField("reps", e.target.value)}
+          onFocus={(e) => e.target.select()}
+        />
+        <span className={styles.inputLabel}>reps</span>
+      </div>
 
       {/* PR badge */}
       {set.isPr && <span className={styles.prBadge}>PR</span>}
@@ -74,7 +80,7 @@ export function SetRow({ set, index, weId, prevSet, onUpdateField, onSave, onDel
         type="button"
         aria-label={set.isSaved ? "Set saved" : "Save set"}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path d="M5 12l5 5L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>

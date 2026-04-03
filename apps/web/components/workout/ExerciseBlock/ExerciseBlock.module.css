@@ -101,9 +101,9 @@
 /* ── Column labels ───────────────────────────────────────── */
 .colLabels {
   display: grid;
-  grid-template-columns: 40px 52px 1fr 1fr 40px;
-  gap: var(--sp-2);
-  padding: 4px var(--sp-4);
+  grid-template-columns: 40px 52px 1fr 1fr 48px;
+  gap: 6px;
+  padding: 4px 12px;
   font-size: 10px;
   font-weight: var(--fw-semibold);
   color: var(--text-tertiary);
