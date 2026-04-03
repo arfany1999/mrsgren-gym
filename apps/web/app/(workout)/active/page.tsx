@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { ExerciseBlock } from "@/components/workout/ExerciseBlock/ExerciseBlock";
@@ -14,6 +14,8 @@ import { getActiveWorkoutId } from "@/lib/storage";
 import type { ActiveSet, ActiveExercise } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./page.module.css";
+
+const REST_SECONDS = 90;
 
 export default function ActiveWorkoutPage() {
   const router = useRouter();
@@ -41,6 +43,32 @@ export default function ActiveWorkoutPage() {
   const [discarding, setDiscarding] = useState(false);
   const [report, setReport] = useState<{ id: string; title: string; secs: number; exercises: ActiveExercise[] } | null>(null);
 
+  // Rest timer
+  const [restLeft, setRestLeft] = useState(0);
+  const restRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startRest = useCallback(() => {
+    if (restRef.current) clearInterval(restRef.current);
+    setRestLeft(REST_SECONDS);
+    restRef.current = setInterval(() => {
+      setRestLeft((s) => {
+        if (s <= 1) {
+          clearInterval(restRef.current!);
+          restRef.current = null;
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }, []);
+
+  const stopRest = useCallback(() => {
+    if (restRef.current) { clearInterval(restRef.current); restRef.current = null; }
+    setRestLeft(0);
+  }, []);
+
+  useEffect(() => () => { if (restRef.current) clearInterval(restRef.current); }, []);
+
   useEffect(() => {
     if (!activeWorkout && !getActiveWorkoutId()) {
       router.replace("/");
@@ -49,11 +77,15 @@ export default function ActiveWorkoutPage() {
 
   if (!activeWorkout) return null;
 
+  // Live stats
   const totalSets = exercises.reduce((sum, e) => sum + e.sets.filter((s) => s.isSaved).length, 0);
+  const totalVolume = exercises.reduce((sum, e) =>
+    sum + e.sets.filter((s) => s.isSaved).reduce((v, s) => v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0
+  );
 
   async function handleFinish() {
     setFinishing(true);
-    // Capture summary before context clears
+    stopRest();
     const summaryTitle = activeWorkout?.title ?? "Workout";
     const summaryExercises = [...exercises];
     const summarySecs = elapsedSeconds;
@@ -72,6 +104,7 @@ export default function ActiveWorkoutPage() {
 
   async function handleDiscard() {
     setDiscarding(true);
+    stopRest();
     try {
       await discardWorkout();
     } finally {
@@ -86,17 +119,24 @@ export default function ActiveWorkoutPage() {
     updateTitle(title);
   }
 
+  async function handleSaveSet(weId: string, idx: number) {
+    await saveSet(weId, idx);
+    startRest();
+  }
+
+  function fmtRest(s: number) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `0:${String(sec).padStart(2, "0")}`;
+  }
+
   return (
     <div className={styles.page}>
       <PRBanner />
 
       {/* Top Bar */}
       <div className={styles.topBar}>
-        <button
-          className={styles.discardBtn}
-          onClick={() => setDiscardOpen(true)}
-          type="button"
-        >
+        <button className={styles.discardBtn} onClick={() => setDiscardOpen(true)} type="button">
           Discard
         </button>
 
@@ -126,14 +166,43 @@ export default function ActiveWorkoutPage() {
           <WorkoutTimer />
         </div>
 
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => setFinishOpen(true)}
-        >
+        <Button variant="primary" size="sm" onClick={() => setFinishOpen(true)}>
           Finish
         </Button>
       </div>
+
+      {/* Live Stats Bar */}
+      <div className={styles.statsBar}>
+        <div className={styles.statChip}>
+          <span className={styles.chipVal}>{totalSets}</span>
+          <span className={styles.chipLbl}>Sets</span>
+        </div>
+        <div className={styles.statDivider} />
+        <div className={styles.statChip}>
+          <span className={styles.chipVal}>
+            {totalVolume > 0 ? `${Math.round(totalVolume).toLocaleString()} kg` : "—"}
+          </span>
+          <span className={styles.chipLbl}>Volume</span>
+        </div>
+        <div className={styles.statDivider} />
+        <div className={styles.statChip}>
+          <span className={styles.chipVal}>{exercises.length}</span>
+          <span className={styles.chipLbl}>Exercises</span>
+        </div>
+      </div>
+
+      {/* Rest Timer Banner */}
+      {restLeft > 0 && (
+        <div className={styles.restBanner}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+            <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span className={styles.restTime}>{fmtRest(restLeft)}</span>
+          <span className={styles.restLabel}>Rest</span>
+          <button type="button" className={styles.restSkip} onClick={stopRest}>Skip</button>
+        </div>
+      )}
 
       {/* Exercises */}
       <div className={styles.content}>
@@ -152,7 +221,7 @@ export default function ActiveWorkoutPage() {
               onUpdateField={(idx, field, value) =>
                 updateSetField(ex.weId, idx, field as keyof ActiveSet, value as string | SetType | boolean | number)
               }
-              onSaveSet={(idx) => saveSet(ex.weId, idx)}
+              onSaveSet={(idx) => handleSaveSet(ex.weId, idx)}
               onDeleteSet={(setId) => deleteSet(ex.weId, setId)}
               onRemove={() => removeExercise(ex.weId)}
             />
@@ -167,7 +236,6 @@ export default function ActiveWorkoutPage() {
         </button>
       </div>
 
-      {/* Exercise Picker */}
       <ExercisePicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
@@ -185,14 +253,16 @@ export default function ActiveWorkoutPage() {
             <span className={styles.statValue}>{totalSets}</span>
             <span className={styles.statLabel}>Sets logged</span>
           </div>
+          {totalVolume > 0 && (
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>{Math.round(totalVolume).toLocaleString()}</span>
+              <span className={styles.statLabel}>kg volume</span>
+            </div>
+          )}
         </div>
         <div className={styles.modalActions}>
-          <Button variant="secondary" onClick={() => setFinishOpen(false)} fullWidth>
-            Keep Going
-          </Button>
-          <Button variant="primary" onClick={handleFinish} loading={finishing} fullWidth>
-            Finish Workout
-          </Button>
+          <Button variant="secondary" onClick={() => setFinishOpen(false)} fullWidth>Keep Going</Button>
+          <Button variant="primary" onClick={handleFinish} loading={finishing} fullWidth>Finish Workout</Button>
         </div>
       </Modal>
 
@@ -200,12 +270,8 @@ export default function ActiveWorkoutPage() {
       <Modal open={discardOpen} onClose={() => setDiscardOpen(false)} title="Discard Workout?">
         <p className={styles.modalText}>This workout will be permanently deleted. This cannot be undone.</p>
         <div className={styles.modalActions}>
-          <Button variant="secondary" onClick={() => setDiscardOpen(false)} fullWidth>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDiscard} loading={discarding} fullWidth>
-            Discard
-          </Button>
+          <Button variant="secondary" onClick={() => setDiscardOpen(false)} fullWidth>Cancel</Button>
+          <Button variant="danger" onClick={handleDiscard} loading={discarding} fullWidth>Discard</Button>
         </div>
       </Modal>
 

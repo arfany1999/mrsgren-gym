@@ -76,6 +76,28 @@
 
 .menuItem:active { background: var(--bg-overlay); }
 
+/* ── Note field ──────────────────────────────────────────── */
+.noteWrap {
+  padding: 0 var(--sp-4) 6px;
+}
+
+.noteInput {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  resize: none;
+  line-height: 1.4;
+  font-family: inherit;
+  overflow: hidden;
+}
+
+.noteInput::placeholder {
+  color: var(--text-tertiary);
+}
+
 /* ── Column labels ───────────────────────────────────────── */
 .colLabels {
   display: grid;

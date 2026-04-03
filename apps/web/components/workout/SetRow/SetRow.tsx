@@ -10,12 +10,13 @@ interface SetRowProps {
   set: ActiveSet;
   index: number;
   weId: string;
+  prevSet?: { reps: string; weightKg: string };
   onUpdateField: (field: keyof ActiveSet, value: string | SetType | boolean | number) => void;
   onSave: () => void;
   onDelete: (setId: string) => void;
 }
 
-export function SetRow({ set, index, weId, onUpdateField, onSave, onDelete }: SetRowProps) {
+export function SetRow({ set, index, weId, prevSet, onUpdateField, onSave, onDelete }: SetRowProps) {
   const weightRef = useRef<HTMLInputElement>(null);
   const repsRef = useRef<HTMLInputElement>(null);
 
@@ -31,8 +32,12 @@ export function SetRow({ set, index, weId, onUpdateField, onSave, onDelete }: Se
         />
       </div>
 
-      {/* Previous best placeholder */}
-      <div className={styles.prev}>—</div>
+      {/* Previous best */}
+      <div className={styles.prev}>
+        {prevSet && (prevSet.weightKg || prevSet.reps)
+          ? `${prevSet.weightKg || "–"}×${prevSet.reps || "–"}`
+          : "—"}
+      </div>
 
       {/* Weight */}
       <input

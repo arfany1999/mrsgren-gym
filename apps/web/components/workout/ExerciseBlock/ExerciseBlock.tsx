@@ -24,6 +24,7 @@ export function ExerciseBlock({
   onRemove,
 }: ExerciseBlockProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [note, setNote] = useState("");
 
   return (
     <div className={styles.block}>
@@ -65,6 +66,17 @@ export function ExerciseBlock({
         </div>
       </div>
 
+      {/* Note field */}
+      <div className={styles.noteWrap}>
+        <textarea
+          className={styles.noteInput}
+          placeholder="Add a note..."
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={1}
+        />
+      </div>
+
       {/* Column labels */}
       {exercise.sets.length > 0 && (
         <div className={styles.colLabels}>
@@ -83,6 +95,7 @@ export function ExerciseBlock({
           set={set}
           index={idx}
           weId={exercise.weId}
+          prevSet={exercise.previousSets[idx]}
           onUpdateField={(field, value) => onUpdateField(idx, field, value)}
           onSave={() => onSaveSet(idx)}
           onDelete={onDeleteSet}

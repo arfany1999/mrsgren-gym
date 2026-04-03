@@ -34,6 +34,7 @@ export interface ActiveExercise {
   name: string;
   muscleGroups: string[];
   sets: ActiveSet[];
+  previousSets: Array<{ reps: string; weightKg: string }>;
 }
 
 export interface ActiveWorkout {
@@ -123,6 +124,49 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function fetchPreviousPerformance(
+    exerciseId: string,
+    currentWorkoutId: string
+  ): Promise<Array<{ reps: string; weightKg: string }>> {
+    try {
+      const { data: wes } = await supabase
+        .from("workout_exercises")
+        .select("id, workout_id")
+        .eq("exercise_id", exerciseId)
+        .neq("workout_id", currentWorkoutId)
+        .limit(30);
+      if (!wes || wes.length === 0) return [];
+
+      const workoutIds = [...new Set(wes.map((we) => we.workout_id as string))];
+      const { data: pastWorkouts } = await supabase
+        .from("workouts")
+        .select("id, finished_at")
+        .in("id", workoutIds)
+        .not("finished_at", "is", null)
+        .order("finished_at", { ascending: false })
+        .limit(1);
+      if (!pastWorkouts || pastWorkouts.length === 0) return [];
+
+      const latestWorkoutId = (pastWorkouts[0]?.id ?? "") as string;
+      if (!latestWorkoutId) return [];
+      const latestWe = wes.find((we) => we.workout_id === latestWorkoutId);
+      if (!latestWe) return [];
+
+      const { data: sets } = await supabase
+        .from("workout_sets")
+        .select("weight, reps, order_index")
+        .eq("workout_exercise_id", latestWe.id)
+        .order("order_index", { ascending: true });
+
+      return (sets ?? []).map((s) => ({
+        reps: s.reps !== null ? String(s.reps) : "",
+        weightKg: s.weight !== null ? String(s.weight) : "",
+      }));
+    } catch {
+      return [];
+    }
+  }
+
   async function fetchWorkoutExercises(workoutId: string): Promise<ActiveExercise[]> {
     const { data: wes } = await supabase
       .from("workout_exercises")
@@ -139,7 +183,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       .in("workout_exercise_id", weIds)
       .order("order_index");
 
-    return wes.map((we: Record<string, unknown>) => {
+    const baseExercises = wes.map((we: Record<string, unknown>) => {
       const exercise = we.exercises as unknown as Record<string, unknown>;
       const weSets = (sets ?? []).filter(
         (s: Record<string, unknown>) => s.workout_exercise_id === we.id
@@ -158,8 +202,15 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           isPr: (s.is_pr as boolean) ?? false,
           isSaved: true,
         })),
+        previousSets: [] as Array<{ reps: string; weightKg: string }>,
       };
     });
+
+    // Fetch previous performance for all exercises in parallel
+    const prevData = await Promise.all(
+      baseExercises.map((ex) => fetchPreviousPerformance(ex.exerciseId, workoutId))
+    );
+    return baseExercises.map((ex, i) => ({ ...ex, previousSets: prevData[i] ?? [] }));
   }
 
   const loadActiveWorkout = useCallback(
@@ -336,6 +387,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error || !we) return;
+      const prevSets = await fetchPreviousPerformance(exerciseUuid, activeWorkout.id);
       setExercises((prev) => [
         ...prev,
         {
@@ -344,6 +396,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           name: exercise.name,
           muscleGroups: exercise.muscleGroups,
           sets: [],
+          previousSets: prevSets,
         },
       ]);
     },
