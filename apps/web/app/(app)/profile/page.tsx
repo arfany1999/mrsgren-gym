@@ -39,7 +39,7 @@ export default function ProfilePage() {
         const wes = (w.workout_exercises as Record<string, unknown>[]) ?? [];
         wes.forEach((we) => {
           const sets = (we.workout_sets as Record<string, unknown>[]) ?? [];
-          sets.forEach((s) => { weeks[weeksAgo] += (s.reps as number) ?? 0; });
+          sets.forEach((s) => { weeks[weeksAgo] = (weeks[weeksAgo] ?? 0) + ((s.reps as number) ?? 0); });
         });
       });
       const vals = [...weeks].reverse();
@@ -59,9 +59,9 @@ export default function ProfilePage() {
           3
         );
         if (segment === "Duration") {
-          weeks[weeksAgo] += ((w.duration_secs as number) ?? 0) / 3600;
+          weeks[weeksAgo] = (weeks[weeksAgo] ?? 0) + (((w.duration_secs as number) ?? 0) / 3600);
         } else {
-          weeks[weeksAgo] += (w.total_volume as number) ?? 0;
+          weeks[weeksAgo] = (weeks[weeksAgo] ?? 0) + ((w.total_volume as number) ?? 0);
         }
       });
       const vals = [...weeks].reverse();
