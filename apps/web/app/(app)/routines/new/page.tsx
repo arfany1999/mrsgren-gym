@@ -134,12 +134,8 @@ export default function NewRoutinePage() {
           exercises.map((ex, i) => ({
             routine_id: routine.id,
             exercise_id: ex.exerciseId,
-            order: i,
-            sets_config: Array.from({ length: ex.sets }, () => ({
-              setType: "normal",
-              reps: null,
-              weightKg: null,
-            })),
+            order_index: i,
+            sets: ex.sets,
           }))
         );
         if (exErr) {

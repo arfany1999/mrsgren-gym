@@ -126,18 +126,18 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   async function fetchWorkoutExercises(workoutId: string): Promise<ActiveExercise[]> {
     const { data: wes } = await supabase
       .from("workout_exercises")
-      .select("id, exercise_id, order, exercises(id, name)")
+      .select("id, exercise_id, order_index, exercises(id, name)")
       .eq("workout_id", workoutId)
-      .order("order");
+      .order("order_index");
 
     if (!wes) return [];
 
     const weIds = wes.map((we: Record<string, unknown>) => we.id as string);
     const { data: sets } = await supabase
-      .from("sets")
+      .from("workout_sets")
       .select("*")
       .in("workout_exercise_id", weIds)
-      .order("created_at");
+      .order("order_index");
 
     return wes.map((we: Record<string, unknown>) => {
       const exercise = we.exercises as unknown as Record<string, unknown>;
@@ -152,10 +152,10 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         sets: weSets.map((s: Record<string, unknown>) => ({
           id: s.id as string,
           reps: s.reps !== null ? String(s.reps) : "",
-          weightKg: s.weight_kg !== null ? String(s.weight_kg) : "",
+          weightKg: s.weight !== null ? String(s.weight) : "",
           setType: (s.set_type as SetType) ?? "normal",
           rpe: (s.rpe as number) ?? undefined,
-          isPr: false,
+          isPr: (s.is_pr as boolean) ?? false,
           isSaved: true,
         })),
       };
@@ -211,16 +211,16 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       if (routineId) {
         const { data: routineExercises } = await supabase
           .from("routine_exercises")
-          .select("exercise_id, order")
+          .select("exercise_id, order_index")
           .eq("routine_id", routineId)
-          .order("order");
+          .order("order_index");
 
         if (routineExercises && routineExercises.length > 0) {
           await supabase.from("workout_exercises").insert(
             routineExercises.map((re: Record<string, unknown>) => ({
               workout_id: workout.id,
               exercise_id: re.exercise_id,
-              order: re.order,
+              order_index: re.order_index,
             }))
           );
         }
@@ -330,7 +330,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         .insert({
           workout_id: activeWorkout.id,
           exercise_id: exerciseUuid,
-          order: nextOrder,
+          order_index: nextOrder,
         })
         .select("id, exercise_id")
         .single();
@@ -414,14 +414,20 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       const weightKg =
         parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : null;
 
+      const existingSets = exercise.sets.filter((s) => s.isSaved);
+      const orderIndex = existingSets.length;
+
       const { data: savedSet, error } = await supabase
-        .from("sets")
+        .from("workout_sets")
         .insert({
           workout_exercise_id: weId,
           reps,
-          weight_kg: weightKg,
+          weight: weightKg,
           set_type: set.setType,
           rpe: set.rpe ?? null,
+          is_pr: false,
+          is_completed: true,
+          order_index: orderIndex,
         })
         .select()
         .single();
@@ -432,8 +438,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       let isPr = false;
       if (reps && weightKg && weightKg > 0) {
         const { data: prevSets } = await supabase
-          .from("sets")
-          .select("weight_kg, reps, workout_exercises!inner(exercise_id)")
+          .from("workout_sets")
+          .select("weight, reps, workout_exercises!inner(exercise_id)")
           .eq("workout_exercises.exercise_id", exercise.exerciseId)
           .not("id", "eq", savedSet.id);
 
@@ -442,13 +448,17 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
             0,
             ...prevSets.map(
               (s: Record<string, unknown>) =>
-                ((s.weight_kg as number) ?? 0) *
+                ((s.weight as number) ?? 0) *
                 (1 + ((s.reps as number) ?? 0) / 30)
             )
           );
           const current1RM = weightKg * (1 + reps / 30);
           isPr = current1RM > prevMax && prevSets.length > 0;
         }
+      }
+
+      if (isPr) {
+        await supabase.from("workout_sets").update({ is_pr: true }).eq("id", savedSet.id);
       }
 
       setExercises((prev) =>
@@ -464,8 +474,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
             isPr,
             reps: savedSet.reps !== null ? String(savedSet.reps) : set.reps,
             weightKg:
-              savedSet.weight_kg !== null
-                ? String(savedSet.weight_kg)
+              savedSet.weight !== null
+                ? String(savedSet.weight)
                 : set.weightKg,
           };
           return { ...e, sets };
@@ -483,7 +493,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const deleteSet = useCallback(
     async (weId: string, setId: string) => {
-      await supabase.from("sets").delete().eq("id", setId);
+      await supabase.from("workout_sets").delete().eq("id", setId);
       setExercises((prev) =>
         prev.map((e) =>
           e.weId === weId
