@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Path aliases are handled via tsconfig.json "paths"
-  // Next.js automatically picks them up
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
+  },
   images: {
     remotePatterns: [
       {

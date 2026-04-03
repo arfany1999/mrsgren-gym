@@ -27,7 +27,7 @@ export default function WorkoutsPage() {
 
       const { data, count } = await supabase
         .from("workouts")
-        .select("*, workout_exercises(*, exercises(*), sets(*))", { count: "exact" })
+        .select("id, title, started_at, finished_at, user_id, routine_id, notes, is_public, workout_exercises(id, workout_id, exercise_id, order_index, exercises(id, name, muscle_groups), workout_sets(id, workout_exercise_id, reps, weight, set_type, rpe, created_at))", { count: "exact" })
         .not("finished_at", "is", null)
         .order("started_at", { ascending: false })
         .range(from, to);
@@ -106,7 +106,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
     isPublic: (row.is_public as boolean) ?? false,
     workoutExercises: wes.map((we) => {
       const ex = (we.exercises as Record<string, unknown>) ?? {};
-      const sets = (we.sets as Record<string, unknown>[]) ?? [];
+      const sets = (we.workout_sets as Record<string, unknown>[]) ?? [];
       return {
         id: we.id as string,
         workoutId: we.workout_id as string,
@@ -127,7 +127,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
           id: s.id as string,
           workoutExerciseId: s.workout_exercise_id as string,
           reps: (s.reps as number) ?? null,
-          weightKg: (s.weight_kg as number) ?? null,
+          weightKg: (s.weight as number) ?? null,
           setType: (s.set_type as SetType) ?? "normal",
           rpe: (s.rpe as number) ?? null,
           createdAt: s.created_at as string,

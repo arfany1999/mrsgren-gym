@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { ExerciseBlock } from "@/components/workout/ExerciseBlock/ExerciseBlock";
@@ -43,9 +43,15 @@ export default function ActiveWorkoutPage() {
 
   if (!activeWorkout) return null;
 
-  const totalSets = exercises.reduce((sum, e) => sum + e.sets.filter(s => s.isSaved).length, 0);
-  const totalVolume = exercises.reduce((sum, e) =>
-    sum + e.sets.filter(s => s.isSaved).reduce((v, s) => v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0
+  const totalSets = useMemo(
+    () => exercises.reduce((sum, e) => sum + e.sets.filter(s => s.isSaved).length, 0),
+    [exercises]
+  );
+  const totalVolume = useMemo(
+    () => exercises.reduce((sum, e) =>
+      sum + e.sets.filter(s => s.isSaved).reduce((v, s) => v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0
+    ),
+    [exercises]
   );
 
   async function handleFinish() {
