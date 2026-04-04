@@ -10,7 +10,10 @@ import {
   EXERCISES,
   MUSCLE_GROUPS,
   getMeasurementType,
+  getGroupedExercises,
+  EQUIPMENT_LABELS,
   type MeasurementType,
+  type ExerciseDef,
 } from "@/lib/exercises-data";
 import styles from "./page.module.css";
 
@@ -74,12 +77,18 @@ export default function EditRoutinePage() {
   // Scroll refs
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // ── Filtered exercise list ───────────────────────────────────
-  const filteredExercises = EXERCISES.filter(ex => {
+  // ── Exercise lists ───────────────────────────────────────────
+  // Flat search results (used when query is active)
+  const searchResults = EXERCISES.filter(ex => {
     const matchMuscle = !selectedMuscle || ex.muscle === selectedMuscle;
     const matchQuery  = !query || ex.name.toLowerCase().includes(query.toLowerCase());
     return matchMuscle && matchQuery;
   });
+
+  // Grouped by equipment (used when a muscle is selected with no search query)
+  const groupedExercises = selectedMuscle && !query
+    ? getGroupedExercises(selectedMuscle)
+    : null;
 
   // ── Load existing routine ────────────────────────────────────
   const load = useCallback(async () => {
@@ -513,52 +522,94 @@ export default function EditRoutinePage() {
 
         {/* Exercise list */}
         <div className={styles.sheetList}>
-          {filteredExercises.length === 0 ? (
-            <p className={styles.sheetEmpty}>No exercises found</p>
+          {groupedExercises ? (
+            /* ── Grouped by equipment (muscle selected, no search) ── */
+            groupedExercises.length === 0 ? (
+              <p className={styles.sheetEmpty}>No exercises found</p>
+            ) : (
+              groupedExercises.map(group => (
+                <div key={group.equipment} className={styles.equipGroup}>
+                  <div className={styles.equipHeader}>
+                    <span className={styles.equipLine} />
+                    <span className={styles.equipLabel}>{group.label}</span>
+                    <span className={styles.equipLine} />
+                  </div>
+                  {group.exercises.map(def => (
+                    <SheetItem
+                      key={def.name}
+                      def={def}
+                      alreadyAdded={exercises.some(e => e.name.toLowerCase() === def.name.toLowerCase())}
+                      onAdd={() => handleAdd(def)}
+                    />
+                  ))}
+                </div>
+              ))
+            )
           ) : (
-            filteredExercises.map(def => {
-              const alreadyAdded = exercises.some(e => e.name.toLowerCase() === def.name.toLowerCase());
-              return (
-                <button
+            /* ── Flat search results ── */
+            searchResults.length === 0 ? (
+              <p className={styles.sheetEmpty}>No exercises found</p>
+            ) : (
+              searchResults.map(def => (
+                <SheetItem
                   key={def.name}
-                  type="button"
-                  className={[styles.sheetItem, alreadyAdded ? styles.sheetItemAdded : ""].join(" ")}
-                  onClick={() => !alreadyAdded && handleAdd(def)}
-                  disabled={alreadyAdded}
-                >
-                  <div className={styles.sheetItemIcon}>
-                    <ExerciseAnimation name={def.name} muscles={[def.muscle]} variant="thumb" />
-                  </div>
-                  <div className={styles.sheetItemInfo}>
-                    <p className={styles.sheetItemName}>{def.name}</p>
-                    <p className={styles.sheetItemMeta}>
-                      <span className={styles.sheetItemMuscle}>
-                        {def.muscle.charAt(0).toUpperCase() + def.muscle.slice(1)}
-                      </span>
-                      <span className={styles.sheetItemTypePill} data-type={def.type}>
-                        {typeLabel(def.type)}
-                      </span>
-                    </p>
-                  </div>
-                  <div className={styles.sheetItemAction}>
-                    {alreadyAdded ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 13l4 4L19 7" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    ) : (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="var(--accent)"/>
-                        <path d="M12 7v10M7 12h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
-                    )}
-                  </div>
-                </button>
-              );
-            })
+                  def={def}
+                  alreadyAdded={exercises.some(e => e.name.toLowerCase() === def.name.toLowerCase())}
+                  onAdd={() => handleAdd(def)}
+                />
+              ))
+            )
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Reusable exercise row inside the sheet ────────────────────
+function SheetItem({
+  def,
+  alreadyAdded,
+  onAdd,
+}: {
+  def: ExerciseDef;
+  alreadyAdded: boolean;
+  onAdd: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={[styles.sheetItem, alreadyAdded ? styles.sheetItemAdded : ""].join(" ")}
+      onClick={() => !alreadyAdded && onAdd()}
+      disabled={alreadyAdded}
+    >
+      <div className={styles.sheetItemIcon}>
+        <ExerciseAnimation name={def.name} muscles={[def.muscle]} variant="thumb" />
+      </div>
+      <div className={styles.sheetItemInfo}>
+        <p className={styles.sheetItemName}>{def.name}</p>
+        <p className={styles.sheetItemMeta}>
+          <span className={styles.sheetItemMuscle}>
+            {def.muscle.charAt(0).toUpperCase() + def.muscle.slice(1)}
+          </span>
+          <span className={styles.sheetItemTypePill} data-type={def.type}>
+            {typeLabel(def.type)}
+          </span>
+        </p>
+      </div>
+      <div className={styles.sheetItemAction}>
+        {alreadyAdded ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M5 13l4 4L19 7" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        ) : (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="var(--accent)"/>
+            <path d="M12 7v10M7 12h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        )}
+      </div>
+    </button>
   );
 }
 
