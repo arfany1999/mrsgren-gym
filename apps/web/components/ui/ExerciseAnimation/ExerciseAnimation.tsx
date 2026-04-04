@@ -1,71 +1,92 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
-import { findExerciseId, imageUrlById } from "@/lib/freeExerciseDb";
 import styles from "./ExerciseAnimation.module.css";
 
 interface Props {
   name: string;
   muscles: string[];
-  /** "full" = large hero (detail page). "thumb" = small thumbnail (list). */
   variant?: "full" | "thumb";
 }
 
+const MUSCLE_GRADIENTS: Record<string, [string, string]> = {
+  chest:       ["#e05c5c", "#f97316"],
+  lats:        ["#5b7cf8", "#818cf8"],
+  back:        ["#5b7cf8", "#818cf8"],
+  shoulders:   ["#a78bfa", "#c084fc"],
+  biceps:      ["#f59e0b", "#fbbf24"],
+  triceps:     ["#f97316", "#fb923c"],
+  quadriceps:  ["#10b981", "#34d399"],
+  quads:       ["#10b981", "#34d399"],
+  hamstrings:  ["#059669", "#10b981"],
+  glutes:      ["#0d9488", "#14b8a6"],
+  calves:      ["#0891b2", "#22d3ee"],
+  abdominals:  ["#eab308", "#fde047"],
+  abs:         ["#eab308", "#fde047"],
+  core:        ["#eab308", "#fde047"],
+  traps:       ["#6366f1", "#818cf8"],
+  forearms:    ["#d97706", "#f59e0b"],
+  cardio:      ["#ec4899", "#f472b6"],
+};
+
+function getMuscleGradient(muscles: string[]): [string, string] {
+  for (const m of muscles) {
+    const key = m.toLowerCase();
+    if (MUSCLE_GRADIENTS[key]) return MUSCLE_GRADIENTS[key];
+  }
+  // hash the first muscle name for a consistent colour
+  const name = (muscles[0] ?? "").toLowerCase();
+  const all = Object.values(MUSCLE_GRADIENTS);
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return all[Math.abs(h) % all.length] ?? ["#5b7cf8", "#818cf8"];
+}
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "EX";
+  if (words.length === 1) return (words[0] ?? "").substring(0, 2).toUpperCase();
+  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase();
+}
+
+function getMuscleLabel(muscles: string[]): string {
+  if (!muscles.length) return "";
+  const m = muscles[0] ?? "";
+  return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+}
+
 export function ExerciseAnimation({ name, muscles, variant = "full" }: Props) {
-  const [frame0, setFrame0] = useState<string | null>(null);
-  const [frame1, setFrame1] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [from, to] = getMuscleGradient(muscles);
+  const initials = getInitials(name);
+  const muscleLabel = getMuscleLabel(muscles);
 
-  useEffect(() => {
-    let cancelled = false;
-    findExerciseId(name).then((id) => {
-      if (cancelled) return;
-      if (!id) { setFailed(true); return; }
-      setFrame0(imageUrlById(id, 0));
-      setFrame1(imageUrlById(id, 1));
-    });
-    return () => { cancelled = true; };
-  }, [name]);
-
-  // Still resolving → show skeleton pulse
-  if (!frame0 && !failed) {
+  if (variant === "thumb") {
     return (
-      <div className={variant === "full" ? styles.skeletonFull : styles.skeletonThumb} />
+      <div
+        className={styles.thumb}
+        style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
+        aria-label={name}
+      >
+        <span className={styles.thumbInitials}>{initials}</span>
+      </div>
     );
   }
 
-  // No match found → fall back to MuscleMap
-  if (failed || !frame0) {
-    return (
-      <MuscleMap
-        muscles={muscles}
-        variant={variant === "full" ? "full" : "compact"}
-      />
-    );
-  }
-
+  // full variant — hero card for exercise detail page
   return (
-    <div className={variant === "full" ? styles.wrapFull : styles.wrapThumb}>
-      {/* Frame 0 — start position */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={frame0}
-        alt={`${name} — position 1`}
-        className={styles.frame0}
-        onError={() => setFailed(true)}
-        draggable={false}
-      />
-      {/* Frame 1 — end position */}
-      {frame1 && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={frame1}
-          alt={`${name} — position 2`}
-          className={styles.frame1}
-          draggable={false}
-        />
-      )}
+    <div className={styles.full} style={{ "--from": from, "--to": to } as React.CSSProperties}>
+      <div className={styles.fullGlow} />
+      <div className={styles.fullContent}>
+        <span className={styles.fullInitials}>{initials}</span>
+        <p className={styles.fullName}>{name}</p>
+        {muscleLabel && (
+          <span
+            className={styles.fullMuscle}
+            style={{ background: `${from}26`, color: from, border: `1px solid ${from}40` }}
+          >
+            {muscleLabel}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

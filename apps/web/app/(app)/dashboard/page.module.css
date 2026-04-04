@@ -1,12 +1,16 @@
 .page {
   min-height: 100dvh;
   background: #000;
-  padding-bottom: calc(var(--bottom-nav-height) + 24px);
+  padding-bottom: calc(var(--bottom-nav-height) + 32px);
   animation: pageIn 0.2s ease both;
 }
 
+/* ── Header ──────────────────────────────────────────────────── */
 .header {
-  padding: 20px 20px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 0;
 }
 
 .title {
@@ -16,6 +20,56 @@
   color: #fff;
 }
 
+.newBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  line-height: 1;
+  transition: background var(--transition-fast);
+}
+.newBtn:hover { background: rgba(255,255,255,0.13); }
+
+/* ── Quick start row ─────────────────────────────────────────── */
+.quickStart {
+  padding: 16px 20px 0;
+}
+
+.emptyBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: rgba(91,124,248,0.1);
+  border: 1px solid rgba(91,124,248,0.22);
+  border-radius: 16px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.emptyBtn:hover   { background: rgba(91,124,248,0.16); }
+.emptyBtn:active  { transform: scale(0.98); }
+.emptyBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.emptyBtnIcon {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* ── States ──────────────────────────────────────────────────── */
 .loading {
   display: flex;
   justify-content: center;
@@ -27,90 +81,137 @@
   flex-direction: column;
   align-items: center;
   padding: 80px 32px;
-  gap: 6px;
+  gap: 8px;
   text-align: center;
 }
-.emptyTitle { font-size: 17px; font-weight: 700; color: #fff; }
+.emptyTitle { font-size: 18px; font-weight: 700; color: #fff; }
 .emptySub   { font-size: 14px; color: rgba(255,255,255,0.35); }
-
-/* ── Workout list ─────────────────────────────────────────── */
-.list {
-  padding: 8px 0;
-}
-
-.item {
-  padding: 18px 20px;
-  border-bottom: 0.5px solid rgba(255,255,255,0.07);
-  cursor: pointer;
-  animation: cardIn 0.25s ease both;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 120ms ease;
-}
-.item:active { background: rgba(255,255,255,0.04); }
-.item:last-child { border-bottom: none; }
-
-.itemTop {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 5px;
-}
-
-.workoutName {
-  font-size: 17px;
-  font-weight: 700;
+.createLink {
+  margin-top: 8px;
+  padding: 12px 28px;
+  background: var(--accent);
+  border-radius: 14px;
   color: #fff;
-  letter-spacing: -0.2px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 150ms ease;
+}
+.createLink:hover { opacity: 0.88; }
+
+/* ── Routine grid ────────────────────────────────────────────── */
+.grid {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--from) 18%, #0f1118),
+    color-mix(in srgb, var(--to) 12%, #0f1118)
+  );
+  border: 0.5px solid rgba(255,255,255,0.08);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+  animation: cardIn 0.3s ease both;
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Subtle radial glow in top-left */
+.cardGlow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 20% 20%,
+    rgba(255,255,255,0.06) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+.cardBody {
+  position: relative;
+  z-index: 1;
+  padding: 18px 18px 0;
+}
+
+.cardLink {
+  display: block;
+  text-decoration: none;
+  margin-bottom: 14px;
+}
+
+.cardTitle {
+  font-size: 19px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.3px;
+  margin-bottom: 6px;
   line-height: 1.2;
 }
 
-.timeAgo {
-  font-size: 12px;
-  color: rgba(255,255,255,0.3);
-  flex-shrink: 0;
-}
-
-.meta {
+.cardMeta {
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-bottom: 10px;
-}
-
-.metaItem {
   font-size: 13px;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.45);
   font-weight: 500;
+  margin-bottom: 12px;
 }
 
 .metaDot {
-  font-size: 12px;
   color: rgba(255,255,255,0.2);
 }
 
-/* ── Exercise pills ───────────────────────────────────────── */
-.exercises {
+/* ── Exercise pills ───────────────────────────────────────────── */
+.pills {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.exPill {
+.pill {
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255,255,255,0.55);
-  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.08);
   border-radius: 20px;
-  padding: 4px 10px;
+  padding: 4px 11px;
   white-space: nowrap;
 }
 
-.exMore {
+.pillMore {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-dim);
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.1);
   border-radius: 20px;
   padding: 4px 10px;
 }
+
+/* ── Start button ─────────────────────────────────────────────── */
+.startBtn {
+  display: block;
+  width: calc(100% + 36px);
+  margin: 14px -18px 0;
+  padding: 14px 18px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+  letter-spacing: 0.1px;
+  text-align: center;
+  border-top: 0.5px solid rgba(255,255,255,0.1);
+  transition: opacity 150ms ease, transform 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.startBtn:hover  { opacity: 0.88; }
+.startBtn:active { transform: scale(0.99); }
+.startBtn:disabled { opacity: 0.45; cursor: not-allowed; }

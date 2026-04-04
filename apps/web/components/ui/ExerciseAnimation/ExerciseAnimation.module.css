@@ -1,82 +1,84 @@
-/* ── Full hero (exercise detail page) ───────────────────────── */
-.wrapFull {
-  position: relative;
-  width: 260px;
-  height: 260px;
-  border-radius: 20px;
-  overflow: hidden;
-  background: #0d0d0d;
+/* ── Thumb variant ───────────────────────────────────────────── */
+.thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
-/* ── Thumb (list rows / picker) ─────────────────────────────── */
-.wrapThumb {
-  position: relative;
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #1a1a1e;
-  flex-shrink: 0;
+.thumbInitials {
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
 
-/* ── Both frames stacked ────────────────────────────────────── */
-.frame0,
-.frame1 {
-  position: absolute;
-  inset: 0;
+/* ── Full hero variant ────────────────────────────────────────── */
+.full {
+  position: relative;
   width: 100%;
+  height: 220px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--from), var(--to));
+}
+
+/* Soft radial highlight */
+.fullGlow {
+  position: absolute;
+  top: -30%;
+  left: -15%;
+  width: 130%;
+  height: 130%;
+  background: radial-gradient(
+    ellipse at 40% 35%,
+    rgba(255, 255, 255, 0.14) 0%,
+    transparent 62%
+  );
+  pointer-events: none;
+}
+
+.fullContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   height: 100%;
-  object-fit: cover;
+  gap: 10px;
+  padding: 20px;
 }
 
-/* Frame 0: visible first half, hidden second half */
-.frame0 {
-  animation: showA 1.8s steps(1, end) infinite;
+.fullInitials {
+  font-size: 58px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -3px;
+  line-height: 1;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
 }
 
-/* Frame 1: hidden first half, visible second half */
-.frame1 {
-  animation: showB 1.8s steps(1, end) infinite;
+.fullName {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: -0.2px;
+  text-align: center;
+  line-height: 1.3;
 }
 
-@keyframes showA {
-  0%   { opacity: 1; }
-  50%  { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-@keyframes showB {
-  0%   { opacity: 0; }
-  50%  { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* ── Skeleton loaders ───────────────────────────────────────── */
-.skeletonFull {
-  width: 260px;
-  height: 260px;
+.fullMuscle {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 14px;
   border-radius: 20px;
-  background: linear-gradient(90deg, #1a1a1e 25%, #26262c 50%, #1a1a1e 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease infinite;
-}
-
-.skeletonThumb {
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
-  background: linear-gradient(90deg, #1a1a1e 25%, #26262c 50%, #1a1a1e 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease infinite;
-}
-
-@keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .frame0 { animation: none; opacity: 1; }
-  .frame1 { animation: none; opacity: 0; }
+  letter-spacing: 0.2px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
