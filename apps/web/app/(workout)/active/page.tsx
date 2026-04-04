@@ -80,19 +80,14 @@ export default function ActiveWorkoutPage() {
 
       const id = await finishWorkout();
       if (id) {
-        // Count distinct training days (including today's just-finished workout)
+        // Count total completed workouts (this one is already saved by finishWorkout)
         let dayNumber = 1;
         try {
-          const { data: dayData } = await supabase
+          const { count } = await supabase
             .from("workouts")
-            .select("started_at")
+            .select("id", { count: "exact", head: true })
             .not("finished_at", "is", null);
-          const distinctDays = new Set(
-            (dayData ?? []).map((w: Record<string, unknown>) =>
-              new Date(w.started_at as string).toDateString()
-            )
-          );
-          dayNumber = Math.max(distinctDays.size, 1);
+          dayNumber = Math.max(count ?? 1, 1);
         } catch { /* fallback to 1 */ }
 
         setDone(true);
