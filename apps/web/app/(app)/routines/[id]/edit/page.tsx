@@ -11,17 +11,17 @@ import type { FreeExercise } from "@/lib/freeExerciseDb";
 import styles from "./page.module.css";
 
 const MUSCLE_CHIPS = [
-  { label: "All",        bodyPart: "" },
-  { label: "Chest",      bodyPart: "chest" },
-  { label: "Lats",       bodyPart: "lats" },
-  { label: "Shoulders",  bodyPart: "shoulders" },
-  { label: "Biceps",     bodyPart: "biceps" },
-  { label: "Triceps",    bodyPart: "triceps" },
-  { label: "Abs",        bodyPart: "abdominals" },
-  { label: "Quads",      bodyPart: "quadriceps" },
-  { label: "Hamstrings", bodyPart: "hamstrings" },
-  { label: "Glutes",     bodyPart: "glutes" },
-  { label: "Calves",     bodyPart: "calves" },
+  { label: "All",        bodyPart: "",             emoji: "💪" },
+  { label: "Chest",      bodyPart: "chest",        emoji: "🫀" },
+  { label: "Back",       bodyPart: "lats",         emoji: "🔙" },
+  { label: "Shoulders",  bodyPart: "shoulders",    emoji: "🏋️" },
+  { label: "Biceps",     bodyPart: "biceps",       emoji: "💪" },
+  { label: "Triceps",    bodyPart: "triceps",      emoji: "🦾" },
+  { label: "Abs",        bodyPart: "abdominals",   emoji: "🎯" },
+  { label: "Quads",      bodyPart: "quadriceps",   emoji: "🦵" },
+  { label: "Hamstrings", bodyPart: "hamstrings",   emoji: "🦿" },
+  { label: "Glutes",     bodyPart: "glutes",       emoji: "🍑" },
+  { label: "Calves",     bodyPart: "calves",       emoji: "🦵" },
 ];
 
 interface DraftExercise {
@@ -45,12 +45,19 @@ export default function EditRoutinePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Library panel
+  // Bottom sheet state
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Library state
   const [libraryExercises, setLibraryExercises] = useState<FreeExercise[]>([]);
   const [libLoading, setLibLoading] = useState(false);
   const [libQuery, setLibQuery] = useState("");
   const [libMuscle, setLibMuscle] = useState("");
   const libSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Refs for scrolling to last exercise
+  const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const mainRef = useRef<HTMLDivElement>(null);
 
   const loadLibrary = useCallback(async (q: string, bodyPart: string) => {
     setLibLoading(true);
@@ -93,7 +100,7 @@ export default function EditRoutinePage() {
         .slice()
         .sort((a, b) => ((a.order_index ?? 0) as number) - ((b.order_index ?? 0) as number));
 
-      setExercises(res.map((re, i) => {
+      const mapped = res.map((re, i) => {
         const ex = (re.exercises as Record<string, unknown>) ?? {};
         return {
           reId: re.id as string,
@@ -104,7 +111,13 @@ export default function EditRoutinePage() {
           weight: (re.weight as number) != null ? String(re.weight) : "",
           orderIndex: i,
         };
-      }));
+      });
+
+      setExercises(mapped);
+      // Auto-open sheet if brand new routine (no exercises)
+      if (mapped.length === 0) {
+        setSheetOpen(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -112,9 +125,21 @@ export default function EditRoutinePage() {
 
   useEffect(() => { load(); }, [load]);
 
+  function openSheet() {
+    setLibQuery("");
+    setSheetOpen(true);
+  }
+
+  function closeSheet() {
+    setSheetOpen(false);
+  }
+
   async function handleAddFromLibrary(exercise: FreeExercise) {
     setError("");
-    if (exercises.some(e => e.name.toLowerCase() === exercise.name.toLowerCase())) return;
+    if (exercises.some(e => e.name.toLowerCase() === exercise.name.toLowerCase())) {
+      closeSheet();
+      return;
+    }
     try {
       let exerciseId = "";
       const { data: existing } = await supabase
@@ -127,11 +152,29 @@ export default function EditRoutinePage() {
         if (!ins) { setError("Could not add exercise"); return; }
         exerciseId = ins.id;
       }
-      setExercises(prev => [...prev, {
-        reId: null, exerciseId, name: exercise.name,
-        sets: "4", reps: "12", weight: "",
-        orderIndex: prev.length,
-      }]);
+
+      setExercises(prev => {
+        const next = [...prev, {
+          reId: null, exerciseId, name: exercise.name,
+          sets: "4", reps: "12", weight: "",
+          orderIndex: prev.length,
+        }];
+        return next;
+      });
+
+      closeSheet();
+
+      // Scroll to newly added exercise after render
+      setTimeout(() => {
+        const lastRef = exerciseRefs.current[exerciseRefs.current.length - 1];
+        if (lastRef) {
+          lastRef.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Focus the sets input
+          const setsInput = lastRef.querySelector("input[placeholder='4']") as HTMLInputElement | null;
+          setsInput?.focus();
+        }
+      }, 120);
+
     } catch {
       setError("Failed to add exercise");
     }
@@ -187,29 +230,40 @@ export default function EditRoutinePage() {
         }
       />
 
-      <div className={styles.layout}>
-        {/* Main area */}
-        <div className={styles.main}>
-          {/* Title */}
-          <div className={styles.titleWrap}>
-            <label className={styles.titleLabel}>Routine Title</label>
-            <input
-              className={styles.titleInput}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Routine name"
-            />
+      <div className={styles.main} ref={mainRef}>
+        {/* Title */}
+        <div className={styles.titleWrap}>
+          <label className={styles.titleLabel}>Routine Title</label>
+          <input
+            className={styles.titleInput}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Push Day, Leg Day…"
+          />
+        </div>
+
+        {error && <p className={styles.error}>{error}</p>}
+
+        {/* Exercise blocks */}
+        {exercises.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="9" width="4" height="6" rx="1" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
+                <rect x="17" y="9" width="4" height="6" rx="1" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
+                <rect x="7" y="10.5" width="10" height="3" rx="1.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
+              </svg>
+            </div>
+            <p className={styles.emptyTitle}>No exercises yet</p>
+            <p className={styles.emptySub}>Tap below to add your first exercise</p>
           </div>
-
-          {error && <p className={styles.error}>{error}</p>}
-
-          {exercises.length === 0 && (
-            <p className={styles.emptyHint}>Add exercises from the library →</p>
-          )}
-
-          {/* Exercise blocks */}
-          {exercises.map((ex, exIdx) => (
-            <div key={`${ex.exerciseId}-${exIdx}`} className={styles.exBlock}>
+        ) : (
+          exercises.map((ex, exIdx) => (
+            <div
+              key={`${ex.exerciseId}-${exIdx}`}
+              className={styles.exBlock}
+              ref={el => { exerciseRefs.current[exIdx] = el; }}
+            >
               <div className={styles.exHeader}>
                 <div className={styles.exIconCircle}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -262,63 +316,118 @@ export default function EditRoutinePage() {
                 </div>
               </div>
             </div>
+          ))
+        )}
+
+        {/* Add Exercise button */}
+        <button type="button" className={styles.addExBtn} onClick={openSheet}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="var(--accent)" opacity="0.15"/>
+            <path d="M12 7v10M7 12h10" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round"/>
+          </svg>
+          Add Exercise
+        </button>
+      </div>
+
+      {/* ── Bottom Sheet Overlay ─────────────────────────────────── */}
+      {sheetOpen && (
+        <div className={styles.sheetBackdrop} onClick={closeSheet} />
+      )}
+      <div className={[styles.sheet, sheetOpen ? styles.sheetOpen : ""].join(" ")}>
+        {/* Handle */}
+        <div className={styles.sheetHandle} />
+
+        {/* Sheet header */}
+        <div className={styles.sheetHeader}>
+          <span className={styles.sheetTitle}>Add Exercise</span>
+          <button type="button" className={styles.sheetClose} onClick={closeSheet} aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className={styles.sheetSearch}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="var(--text-tertiary)" strokeWidth="2"/>
+            <path d="M21 21l-4.35-4.35" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <input
+            className={styles.sheetSearchInput}
+            placeholder="Search exercises…"
+            value={libQuery}
+            onChange={e => setLibQuery(e.target.value)}
+            autoComplete="off"
+          />
+          {libQuery && (
+            <button type="button" className={styles.sheetSearchClear} onClick={() => setLibQuery("")}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Muscle chips — large, prominent grid */}
+        <div className={styles.chipGrid}>
+          {MUSCLE_CHIPS.map((chip) => (
+            <button
+              key={chip.bodyPart}
+              type="button"
+              className={[styles.chip, libMuscle === chip.bodyPart ? styles.chipActive : ""].join(" ")}
+              onClick={() => { setLibMuscle(chip.bodyPart); setLibQuery(""); }}
+            >
+              <span className={styles.chipEmoji}>{chip.emoji}</span>
+              <span className={styles.chipLabel}>{chip.label}</span>
+            </button>
           ))}
         </div>
 
-        {/* Library panel */}
-        <div className={styles.library}>
-          <div className={styles.libraryHeader}>
-            <span className={styles.libraryTitle}>Library</span>
-          </div>
-          <div className={styles.libSearch}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="8" stroke="var(--text-tertiary)" strokeWidth="2"/>
-              <path d="M21 21l-4.35-4.35" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <input
-              className={styles.libSearchInput}
-              placeholder="Search Exercises"
-              value={libQuery}
-              onChange={e => setLibQuery(e.target.value)}
-            />
-          </div>
-          <div className={styles.libChips}>
-            {MUSCLE_CHIPS.map((chip) => (
-              <button
-                key={chip.bodyPart}
-                type="button"
-                className={[styles.libChip, libMuscle === chip.bodyPart ? styles.libChipActive : ""].join(" ")}
-                onClick={() => { setLibMuscle(chip.bodyPart); setLibQuery(""); }}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-          <div className={styles.libList}>
-            {libLoading ? (
-              <div className={styles.libLoading}><Spinner size={20} /></div>
-            ) : (
-              libraryExercises.map(ex => (
-                <button key={ex.id} type="button" className={styles.libItem} onClick={() => handleAddFromLibrary(ex)}>
-                  <div className={styles.libIcon}>
+        {/* Exercise list */}
+        <div className={styles.sheetList}>
+          {libLoading ? (
+            <div className={styles.sheetLoading}><Spinner size={24} /></div>
+          ) : libraryExercises.length === 0 ? (
+            <p className={styles.sheetEmpty}>No exercises found</p>
+          ) : (
+            libraryExercises.map(ex => {
+              const alreadyAdded = exercises.some(e => e.name.toLowerCase() === ex.name.toLowerCase());
+              return (
+                <button
+                  key={ex.id}
+                  type="button"
+                  className={[styles.sheetItem, alreadyAdded ? styles.sheetItemAdded : ""].join(" ")}
+                  onClick={() => !alreadyAdded && handleAddFromLibrary(ex)}
+                  disabled={alreadyAdded}
+                >
+                  <div className={styles.sheetItemIcon}>
                     <ExerciseAnimation name={ex.name} muscles={ex.primaryMuscles} variant="thumb" />
                   </div>
-                  <div className={styles.libInfo}>
-                    <p className={styles.libName}>{ex.name}</p>
+                  <div className={styles.sheetItemInfo}>
+                    <p className={styles.sheetItemName}>{ex.name}</p>
                     {ex.primaryMuscles.length > 0 && (
-                      <p className={styles.libMuscle}>{ex.primaryMuscles[0]?.charAt(0).toUpperCase()}{ex.primaryMuscles[0]?.slice(1)}</p>
+                      <p className={styles.sheetItemMuscle}>
+                        {ex.primaryMuscles[0]?.charAt(0).toUpperCase()}{ex.primaryMuscles[0]?.slice(1)}
+                      </p>
                     )}
                   </div>
-                  <div className={styles.libAdd}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" fill="var(--accent)"/>
-                      <path d="M12 7v10M7 12h10" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
+                  <div className={styles.sheetItemAction}>
+                    {alreadyAdded ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 13l4 4L19 7" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" fill="var(--accent)"/>
+                        <path d="M12 7v10M7 12h10" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                    )}
                   </div>
                 </button>
-              ))
-            )}
-          </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
