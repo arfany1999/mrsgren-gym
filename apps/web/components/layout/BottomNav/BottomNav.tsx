@@ -51,14 +51,20 @@ export function BottomNav() {
 
   return (
     <nav className={styles.nav} role="navigation" aria-label="Main navigation">
-      {TABS.map(({ href, label, Icon }) => (
-        <Link key={href} href={href} className={styles.tab}>
-          <Icon active={isActive(href)} />
-          <span className={[styles.label, isActive(href) ? styles.activeLabel : ""].join(" ")}>
-            {label}
-          </span>
-        </Link>
-      ))}
+      {TABS.map(({ href, label, Icon }) => {
+        const active = isActive(href);
+        return (
+          <Link key={href} href={href} className={[styles.tab, active ? styles.activeTab : ""].join(" ")}>
+            <span className={styles.tabIcon}>
+              <Icon active={active} />
+            </span>
+            <span className={[styles.label, active ? styles.activeLabel : ""].join(" ")}>
+              {label}
+            </span>
+            {active && <span className={styles.activeIndicator} />}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

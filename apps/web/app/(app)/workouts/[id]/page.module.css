@@ -1,4 +1,9 @@
-.page { padding-bottom: var(--sp-8); }
+.page {
+  padding-bottom: var(--sp-8);
+  background: var(--bg-primary);
+  min-height: 100dvh;
+  animation: pageIn 0.2s ease both;
+}
 
 .loading {
   display: flex;
@@ -6,7 +11,12 @@
   padding: var(--sp-12) 0;
 }
 
-.content { padding: var(--sp-4); }
+.content {
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
 .deleteBtn {
   background: none;
@@ -15,32 +25,39 @@
   display: flex;
   align-items: center;
   padding: var(--sp-1);
+  color: var(--accent-red);
+  border-radius: 8px;
+  transition: background var(--transition-fast);
 }
 
-/* ── Summary ─────────────────────────────────────────────────── */
+.deleteBtn:hover { background: rgba(255, 69, 58, 0.08); }
+
+/* ── Summary card ────────────────────────────────────────────── */
 .summary {
   background: var(--bg-surface);
-  border-radius: var(--radius-md);
+  border-radius: var(--card-radius);
+  border: 0.5px solid var(--border-color);
+  box-shadow: var(--card-shadow);
   padding: var(--sp-4);
-  margin-bottom: var(--sp-4);
 }
 
 .summaryMeta {
   margin-bottom: var(--sp-4);
-  border-bottom: 1px solid var(--separator);
+  border-bottom: 0.5px solid var(--separator);
   padding-bottom: var(--sp-3);
 }
 
 .summaryDate {
   font-size: var(--text-md);
-  font-weight: var(--fw-semibold);
+  font-weight: 800;
   color: var(--text-primary);
+  letter-spacing: -0.3px;
 }
 
 .summaryTime {
   font-size: var(--text-sm);
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .summaryStats {
@@ -52,29 +69,33 @@
 .stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .statVal {
   font-size: var(--text-lg);
-  font-weight: var(--fw-bold);
+  font-weight: 800;
   color: var(--text-primary);
+  letter-spacing: -0.3px;
 }
 
 .statLabel {
   font-size: var(--text-xs);
+  font-weight: 600;
   color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 .notes {
   margin-top: var(--sp-3);
   padding-top: var(--sp-3);
-  border-top: 1px solid var(--separator);
+  border-top: 0.5px solid var(--separator);
 }
 
 .notesLabel {
   font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -87,30 +108,34 @@
   line-height: 1.5;
 }
 
-/* ── Exercises ───────────────────────────────────────────────── */
+/* ── Exercise blocks ─────────────────────────────────────────── */
 .exercises {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: 10px;
 }
 
 .exerciseBlock {
   background: var(--bg-surface);
-  border-radius: var(--radius-md);
+  border-radius: var(--card-radius);
+  border: 0.5px solid var(--border-color);
+  box-shadow: var(--card-shadow);
   padding: var(--sp-4);
 }
 
 .exName {
   font-size: var(--text-base);
-  font-weight: var(--fw-semibold);
+  font-weight: 800;
   color: var(--accent);
   margin-bottom: 2px;
+  letter-spacing: -0.2px;
 }
 
 .exMuscles {
   font-size: var(--text-xs);
   color: var(--text-tertiary);
   text-transform: capitalize;
+  font-weight: 500;
   margin-bottom: var(--sp-3);
 }
 
@@ -131,16 +156,18 @@
 
 .setWeightReps {
   font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .setsHeader {
   font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
   padding-bottom: var(--sp-1);
-  border-bottom: 1px solid var(--separator);
+  border-bottom: 0.5px solid var(--separator);
   margin-bottom: var(--sp-1);
 }
 
@@ -148,17 +175,19 @@
   font-size: var(--text-sm);
   color: var(--text-primary);
   padding: var(--sp-1) 0;
+  border-radius: 6px;
 }
 
 .setNum {
   font-size: var(--text-xs);
   color: var(--text-tertiary);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
 }
 
 .setType {
   font-size: var(--text-xs);
-  font-weight: var(--fw-bold);
+  font-weight: 800;
+  letter-spacing: 0.2px;
 }
 
 .setType.normal  { color: var(--text-tertiary); }
@@ -171,12 +200,14 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: flex-end;
   justify-content: center;
   animation: fadeIn 0.25s ease both;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 @keyframes fadeIn {
@@ -187,9 +218,10 @@
 .reportCard {
   width: 100%;
   max-width: 480px;
-  background: #17191e;
-  border-radius: 24px 24px 0 0;
-  padding: 32px 24px 36px;
+  background: var(--bg-elevated);
+  border-radius: 28px 28px 0 0;
+  border-top: 0.5px solid var(--border-color);
+  padding: 32px 24px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -222,7 +254,7 @@
   font-size: 28px;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.5px;
   margin: 0;
 }
 
@@ -243,8 +275,9 @@
   display: flex;
   gap: 0;
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  border: 0.5px solid var(--border-color);
   overflow: hidden;
   margin-bottom: 8px;
 }
@@ -254,8 +287,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 14px 8px;
-  border-right: 0.5px solid rgba(255,255,255,0.08);
+  padding: 16px 8px;
+  border-right: 0.5px solid var(--separator);
 }
 
 .reportStat:last-child {
@@ -265,17 +298,18 @@
 .reportStatVal {
   font-size: 18px;
   font-weight: 800;
-  color: #34d399;
-  letter-spacing: -0.02em;
+  color: var(--accent-green);
+  letter-spacing: -0.3px;
   white-space: nowrap;
 }
 
 .reportStatLbl {
   font-size: 10px;
+  font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  margin-top: 2px;
+  margin-top: 3px;
   text-align: center;
 }
 
@@ -284,6 +318,7 @@
   font-size: var(--text-sm);
   color: var(--text-secondary);
   text-align: center;
+  line-height: 1.5;
 }
 
 .modalActions {

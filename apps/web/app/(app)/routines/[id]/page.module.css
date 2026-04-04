@@ -1,4 +1,9 @@
-.page { min-height: 100dvh; background: #000; padding-bottom: var(--sp-10); animation: pageIn 0.2s ease both; }
+.page {
+  min-height: 100dvh;
+  background: var(--bg-primary);
+  padding-bottom: var(--sp-10);
+  animation: pageIn 0.2s ease both;
+}
 
 .loading {
   display: flex;
@@ -10,7 +15,7 @@
   padding: var(--sp-4);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: 12px;
 }
 
 .desc {
@@ -29,53 +34,57 @@
   flex: 1;
 }
 
-/* ── Routine Summary ─────────────────────────────────────────── */
+/* ── Routine Summary Card ────────────────────────────────────── */
 .summary {
-  background: #17191e;
-  border-radius: 16px;
-  padding: 16px;
+  background: var(--bg-surface);
+  border-radius: var(--card-radius);
+  border: 0.5px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  padding: 18px 16px;
 }
 
 .summaryTitle {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 14px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
 }
 
 .summaryStats {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .summaryStat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
 
 .summaryVal {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.5px;
 }
 
 .summaryLbl {
   font-size: 11px;
+  font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  font-weight: 600;
 }
 
 .summaryDivider {
   width: 1px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.1);
+  height: 36px;
+  background: var(--separator);
 }
 
 /* ── Muscle breakdown ────────────────────────────────────────── */
@@ -83,31 +92,31 @@
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 4px;
-  padding-top: 4px;
-  border-top: 0.5px solid rgba(255,255,255,0.08);
+  margin-bottom: 10px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--separator);
 }
 
 .muscleBreakdown {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .muscleRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .muscleName {
   font-size: 12px;
+  font-weight: 600;
   color: var(--text-secondary);
-  font-weight: 500;
   width: 80px;
   flex-shrink: 0;
   text-transform: capitalize;
@@ -115,8 +124,8 @@
 
 .muscleBarWrap {
   flex: 1;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  height: 5px;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -124,23 +133,25 @@
 .muscleBar {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.4s ease;
+  transition: width 0.5s cubic-bezier(0.34, 1.2, 0.64, 1);
   min-width: 4px;
 }
 
 .musclePct {
   font-size: 11px;
+  font-weight: 700;
   color: var(--text-tertiary);
-  font-weight: 600;
   width: 32px;
   text-align: right;
   flex-shrink: 0;
 }
 
-/* ── Exercise List ───────────────────────────────────────────── */
+/* ── Exercise List Card ──────────────────────────────────────── */
 .exerciseList {
-  background: #17191e;
-  border-radius: 16px;
+  background: var(--bg-surface);
+  border-radius: var(--card-radius);
+  border: 0.5px solid var(--border-color);
+  box-shadow: var(--card-shadow);
   overflow: hidden;
 }
 
@@ -155,33 +166,41 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--separator);
+  transition: background var(--transition-fast);
 }
 
 .exRow:last-child {
   border-bottom: none;
 }
 
+.exRow:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .exIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #1a1a1a;
-  border: 1px solid rgba(255,255,255,0.1);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.exInfo { flex: 1; min-width: 0; }
+.exInfo {
+  flex: 1;
+  min-width: 0;
+}
 
 .exName {
-  font-size: 16px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.2px;
   line-height: 1.2;
 }
 
@@ -193,7 +212,9 @@
 }
 
 .exMuscles {
+  font-size: 12px;
   color: var(--text-tertiary);
   font-weight: 400;
   text-transform: capitalize;
+  margin-top: 1px;
 }

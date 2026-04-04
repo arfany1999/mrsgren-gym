@@ -1,148 +1,441 @@
-.page { padding-bottom: var(--sp-8); animation: pageIn 0.2s ease both; background: #000; }
-.header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 10px; }
-.headLeft { display: flex; align-items: center; gap: 8px; }
-.title { font-size: 30px; line-height: 1; letter-spacing: -0.04em; font-weight: 750; color: var(--text-primary); }
-.pro { background: #ffd928; color: #000; border-radius: 13px; padding: 3px 9px; font-size: 12px; font-weight: 700; }
-.content { padding: 0 16px; }
-.startEmpty { width: 100%; height: 56px; border: none; border-radius: 12px; background: #17191e; color: var(--text-primary); display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 17px; font-weight: 550; margin-bottom: 14px; cursor: pointer; transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), background 150ms ease; will-change: transform; -webkit-tap-highlight-color: transparent; }
-.startEmpty:active { transform: scale(0.97); background: #20222a; }
-.plus { font-size: 34px; line-height: 1; color: var(--text-secondary); }
-.sectionHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.sectionHead h2 { font-size: 20px; letter-spacing: -0.04em; font-weight: 740; color: var(--text-primary); }
-.addBtn { width: 30px; height: 30px; border: 1px solid var(--separator); border-radius: 8px; text-decoration: none; color: var(--text-primary); display: flex; align-items: center; justify-content: center; font-size: 24px; }
-.quick { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin-bottom: 12px; }
-.quickCard { height: 56px; background: #17191e; border: none; border-radius: 12px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 17px; font-weight: 650; cursor: pointer; transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), background 150ms ease; will-change: transform; -webkit-tap-highlight-color: transparent; }
-.quickCard:active { transform: scale(0.96); background: #20222a; }
-.mineHead { margin: 4px 0 8px; color: #979aa3; font-size: 15px; letter-spacing: -0.01em; font-weight: 650; }
-.backMineInline { background: none; border: none; color: var(--accent); font-size: 15px; font-weight: 650; padding: 0; cursor: pointer; }
+.page {
+  background: var(--bg-primary);
+  min-height: 100dvh;
+  animation: pageIn 0.2s ease both;
+}
 
-/* Card list */
-.list { padding: 0 var(--sp-4); display: flex; flex-direction: column; gap: 8px; }
-.card { background: #17191e; border-radius: 14px; padding: 14px 14px 14px; position: relative; transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), background 150ms ease; will-change: transform; }
-.card:active { transform: scale(0.98); background: #1c1e26; }
-.cardLink { text-decoration: none; display: block; padding-right: 44px; margin-bottom: 12px; }
-.cardTitle { font-size: 17px; line-height: 1.2; letter-spacing: -0.01em; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
-.cardDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
-.cardActions { margin-top: 10px; }
-.cardActions :global(button) { border-radius: 11px; }
-.cardTop { position: relative; }
-.startRoutineBtn {
+/* ── Header ──────────────────────────────────────────────────── */
+.header {
+  padding: 18px 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.pro {
+  background: linear-gradient(135deg, #f7c948, #f0a030);
+  color: #000;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Content ─────────────────────────────────────────────────── */
+.content {
+  padding: 16px 12px 0;
+}
+
+/* ── Start Empty ─────────────────────────────────────────────── */
+.startEmpty {
   width: 100%;
-  height: 44px;
-  border-radius: 11px;
-  background: var(--accent);
-  border: none;
-  color: #fff;
+  padding: 16px;
+  background: rgba(91, 124, 248, 0.1);
+  border: 1px solid rgba(91, 124, 248, 0.25);
+  border-radius: var(--card-radius);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 4px;
-  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
+  text-align: left;
+  transition: background 150ms ease;
+  margin-bottom: 20px;
+  letter-spacing: -0.1px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.startEmpty:hover { background: rgba(91, 124, 248, 0.16); }
+.startEmpty:active { transform: scale(0.98); }
+
+.plus {
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+/* ── Section head ────────────────────────────────────────────── */
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sectionHead h2 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+}
+
+.addBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--text-primary);
+  text-decoration: none;
+  line-height: 1;
+  transition: background var(--transition-fast);
+  border: none;
+  cursor: pointer;
+}
+
+.addBtn:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* ── Quick actions ───────────────────────────────────────────── */
+.quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.quickCard {
+  padding: 16px;
+  background: var(--bg-surface);
+  border-radius: var(--card-radius);
+  border: 0.5px solid var(--border-color);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, transform 150ms ease;
+  letter-spacing: -0.1px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.quickCard:hover { background: var(--bg-elevated); }
+.quickCard:active { transform: scale(0.97); }
+
+/* ── Mine head ───────────────────────────────────────────────── */
+.mineHead {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+  letter-spacing: 0.2px;
+}
+
+.backMineInline {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ── States ──────────────────────────────────────────────────── */
+.loadingCenter {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 24px;
+  gap: 8px;
+  text-align: center;
+}
+
+.emptyTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.emptySub {
+  font-size: 14px;
+  color: var(--text-tertiary);
+}
+
+/* ── Card list ───────────────────────────────────────────────── */
+.list {
+  padding: 0 12px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  background: var(--bg-surface);
+  border-radius: var(--card-radius);
+  border: 0.5px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform;
   -webkit-tap-highlight-color: transparent;
 }
-.startRoutineBtn:active { transform: scale(0.97); }
-.startRoutineBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* 3-dots menu */
-.menuWrap { position: absolute; right: 12px; top: 10px; z-index: 10; }
-.more { background: none; border: none; color: var(--text-secondary); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
-.more:hover, .more:active { background: rgba(255,255,255,0.08); }
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  padding: 14px 14px 0;
+}
+
+.cardLink {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+  margin-bottom: 4px;
+}
+
+.cardDesc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+/* ── Dropdown menu ───────────────────────────────────────────── */
+.menuWrap {
+  position: relative;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.more {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.more:hover,
+.more:active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
 
 .dropdown {
   position: absolute;
+  top: 34px;
   right: 0;
-  top: 36px;
-  width: 190px;
-  background: #1e2128;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--border-color);
+  border-radius: 14px;
+  min-width: 160px;
+  z-index: 50;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   animation: dropIn 0.15s ease both;
-  z-index: 50;
 }
+
 @keyframes dropIn {
   from { opacity: 0; transform: translateY(-6px) scale(0.97); }
   to   { opacity: 1; transform: none; }
 }
+
 .dropItem {
-  width: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  width: 100%;
+  padding: 13px 16px;
   background: none;
   border: none;
-  color: var(--text-primary);
-  font-size: 15px;
-  font-weight: 500;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 0.5px solid var(--separator);
   text-align: left;
-  transition: background 0.12s;
+  transition: background var(--transition-fast);
 }
-.dropItem:hover { background: rgba(255,255,255,0.06); }
-.dropItem + .dropItem { border-top: 0.5px solid rgba(255,255,255,0.07); }
-.dropDanger { color: #ff4d4f; }
 
-/* Loading / empty */
-.loadingCenter { display: flex; justify-content: center; padding: var(--sp-12) 0; }
-.empty { display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); padding: var(--sp-10) var(--sp-6); text-align: center; }
-.emptyTitle { font-size: var(--text-md); font-weight: 700; color: var(--text-primary); }
-.emptySub { font-size: var(--text-sm); color: var(--text-secondary); }
+.dropItem:last-child { border-bottom: none; }
+.dropItem:hover { background: rgba(255, 255, 255, 0.05); }
 
-/* Rename / Delete modals */
+.dropDanger { color: var(--accent-red); }
+
+/* ── Start routine btn ───────────────────────────────────────── */
+.startRoutineBtn {
+  width: 100%;
+  padding: 13px;
+  margin-top: 12px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  transition: opacity 150ms ease;
+  border-top: 0.5px solid rgba(91, 124, 248, 0.3);
+  letter-spacing: -0.1px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.startRoutineBtn:hover { opacity: 0.9; }
+.startRoutineBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cardActions {
+  padding: 12px 14px 14px;
+}
+
+/* ── Modals ──────────────────────────────────────────────────── */
 .modalOverlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.7);
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: overlayFade 0.2s ease both;
 }
+
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .modal {
-  width: 100%; max-width: 340px;
-  background: #1e2128;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 18px;
-  padding: 22px 20px 18px;
+  background: var(--bg-elevated);
+  border-radius: 20px;
+  border: 0.5px solid var(--border-color);
+  padding: 24px;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   animation: modalSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
 @keyframes modalSpring {
   0%   { transform: scale(0.88) translateY(12px); opacity: 0; }
   60%  { transform: scale(1.02) translateY(-2px); opacity: 1; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
-.modalOverlay {
-  animation: overlayFade 0.2s ease both;
+
+.modalTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.2px;
 }
-@keyframes overlayFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+
+.modalText {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.5;
 }
-.modalTitle { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; }
-.modalText { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+
 .modalInput {
-  width: 100%; height: 44px; border-radius: 10px;
-  background: rgba(255,255,255,0.06);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  color: var(--text-primary); font-size: 16px;
-  padding: 0 12px; outline: none; margin-bottom: 16px; box-sizing: border-box;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
-.modalInput:focus { border-color: var(--accent); }
-.modalActions { display: flex; gap: 10px; }
+
+.modalInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91, 124, 248, 0.12);
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+}
+
 .modalCancel {
-  flex: 1; height: 44px; border-radius: 11px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: transparent; color: var(--text-primary);
-  font-size: 15px; font-weight: 600; cursor: pointer;
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: background var(--transition-fast);
 }
+
+.modalCancel:hover { background: rgba(255, 255, 255, 0.1); }
+
 .modalSave {
-  flex: 1; height: 44px; border-radius: 11px; border: none;
-  background: var(--accent); color: #fff;
-  font-size: 15px; font-weight: 700; cursor: pointer;
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  transition: opacity 150ms ease;
 }
-.modalSave:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.modalSave:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .modalDelete {
-  flex: 1; height: 44px; border-radius: 11px; border: none;
-  background: #ff4d4f; color: #fff;
-  font-size: 15px; font-weight: 700; cursor: pointer;
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--accent-red);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  transition: opacity 150ms ease;
 }
-.modalDelete:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.modalDelete:disabled { opacity: 0.5; cursor: not-allowed; }

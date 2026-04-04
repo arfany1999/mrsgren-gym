@@ -1,5 +1,5 @@
 /* ============================================================
-   HEVY GYM TRACKER — Global Design System
+   HEVY GYM TRACKER — Global Design System (Premium Redesign)
    ============================================================ */
 
 /* ── Reset ─────────────────────────────────────────────────── */
@@ -17,7 +17,7 @@ html {
 }
 
 body {
-  background: #0a0a0a;
+  background: #080910;
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
     "Helvetica Neue", Arial, sans-serif;
@@ -30,29 +30,34 @@ body {
 /* ── Color Tokens ───────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg-primary:     #000000;
-  --bg-surface:     #1c1c1e;
-  --bg-elevated:    #2c2c2e;
-  --bg-overlay:     #3a3a3c;
+  --bg-primary:     #080910;
+  --bg-surface:     #0f1118;
+  --bg-elevated:    #161922;
+  --bg-overlay:     #1e2130;
 
   /* Accent Colors */
-  --accent:         #0a84ff;
-  --accent-dim:     rgba(10, 132, 255, 0.12);
+  --accent:         #5b7cf8;
+  --accent-dim:     rgba(91, 124, 248, 0.12);
   --accent-red:     #ff453a;
   --accent-red-dim: rgba(255, 69, 58, 0.15);
   --accent-orange:  #ff9f0a;
   --accent-yellow:  #ffd60a;
-  --accent-blue:    #0a84ff;
+  --accent-green:   #30d158;
+  --accent-blue:    #5b7cf8;
 
   /* Text */
-  --text-primary:   #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.6);
-  --text-tertiary:  rgba(255, 255, 255, 0.3);
-  --text-disabled:  rgba(255, 255, 255, 0.2);
+  --text-primary:   #f5f6fa;
+  --text-secondary: rgba(245, 246, 250, 0.55);
+  --text-tertiary:  rgba(245, 246, 250, 0.28);
+  --text-disabled:  rgba(245, 246, 250, 0.18);
 
   /* Borders / Separators */
-  --border-color:   rgba(255, 255, 255, 0.10);
-  --separator:      rgba(255, 255, 255, 0.06);
+  --border-color:   rgba(255, 255, 255, 0.07);
+  --separator:      rgba(255, 255, 255, 0.05);
+
+  /* Card */
+  --card-radius:    18px;
+  --card-shadow:    0 2px 20px rgba(0, 0, 0, 0.4);
 
   /* Set Type Colors */
   --set-normal:    var(--text-secondary);
@@ -89,16 +94,16 @@ body {
 
   /* Border Radius */
   --radius-xs:   4px;
-  --radius-sm:   8px;
-  --radius-md:   12px;
-  --radius-lg:   16px;
-  --radius-xl:   20px;
+  --radius-sm:   10px;
+  --radius-md:   14px;
+  --radius-lg:   18px;
+  --radius-xl:   22px;
   --radius-full: 9999px;
 
   /* Layout */
   --app-max-width:     430px;
-  --bottom-nav-height: 83px;
-  --top-bar-height:    44px;
+  --bottom-nav-height: 80px;
+  --top-bar-height:    52px;
 
   /* Transitions */
   --transition-fast:   120ms ease;
@@ -110,7 +115,7 @@ body {
 
 /* ── Typography ─────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: var(--fw-semibold);
+  font-weight: var(--fw-bold);
   line-height: 1.2;
 }
 
@@ -134,13 +139,17 @@ input, textarea, select {
   background: var(--bg-elevated);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   outline: none;
   -webkit-appearance: none;
   appearance: none;
 }
 
-input:focus, textarea:focus { border-color: var(--accent); }
+input:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91, 124, 248, 0.12);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
 input::placeholder, textarea::placeholder { color: var(--text-tertiary); }
 
 /* Hide number spinners */
@@ -243,11 +252,3 @@ a:active {
 
 /* Global smooth scroll */
 * { scroll-behavior: smooth; }
-
-/* Input focus ring glow */
-input:focus,
-textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
