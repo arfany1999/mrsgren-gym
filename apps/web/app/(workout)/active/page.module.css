@@ -12,8 +12,11 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--sp-3) var(--sp-4);
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--separator);
+  background: rgba(243, 237, 225, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 1px 0 rgba(26, 21, 16, 0.07);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -24,7 +27,7 @@
   background: none;
   border: none;
   font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
+  font-weight: 800;
   color: var(--accent-red);
   cursor: pointer;
   white-space: nowrap;
@@ -40,7 +43,7 @@
 
 .workoutName {
   font-size: var(--text-base);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--text-primary);
   max-width: 100%;
   overflow: hidden;
@@ -52,7 +55,7 @@
   display: flex;
   align-items: center;
   font-size: var(--text-base);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--text-primary);
   background: none;
   border: none;
@@ -65,12 +68,12 @@
 
 .titleInput {
   font-size: var(--text-base);
-  font-weight: var(--fw-semibold);
-  background: var(--bg-elevated);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-xs);
+  font-weight: 700;
+  background: rgba(255,255,255,0.55);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
-  padding: 2px var(--sp-2);
+  padding: 4px var(--sp-2);
   text-align: center;
   width: 160px;
   outline: none;
@@ -89,8 +92,10 @@
   justify-content: center;
   gap: 0;
   padding: 10px var(--sp-4) 8px;
-  background: var(--bg-surface);
-  border-bottom: 0.5px solid var(--separator);
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid rgba(26,21,16,0.07);
 }
 
 .statChip {
@@ -128,9 +133,9 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: rgba(52, 211, 153, 0.12);
-  border-bottom: 1px solid rgba(52, 211, 153, 0.25);
-  color: #34d399;
+  background: rgba(34, 168, 90, 0.12);
+  border-bottom: 1px solid rgba(34, 168, 90, 0.2);
+  color: #1a8a4a;
   position: sticky;
   top: 96px;
   z-index: 15;
@@ -156,13 +161,15 @@
 }
 
 .restSkip {
-  background: none;
-  border: 1px solid rgba(52, 211, 153, 0.5);
-  border-radius: 8px;
-  color: #34d399;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(34, 168, 90, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 10px;
+  color: #1a8a4a;
   font-size: 13px;
-  font-weight: 700;
-  padding: 4px 12px;
+  font-weight: 800;
+  padding: 6px 14px;
   cursor: pointer;
 }
 
@@ -185,13 +192,11 @@
   text-align: center;
 }
 
-.emptyIcon {
-  font-size: 48px;
-}
+.emptyIcon { font-size: 48px; }
 
 .emptyTitle {
   font-size: var(--text-lg);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -208,19 +213,22 @@
   gap: var(--sp-2);
   width: calc(100% - 32px);
   margin: var(--sp-3) var(--sp-4) 0;
-  padding: var(--sp-4);
-  background: var(--bg-surface);
-  border: none;
-  border-radius: var(--radius-md);
+  padding: var(--sp-4) var(--sp-5);
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  border-radius: 18px;
   font-size: var(--text-base);
-  font-weight: var(--fw-semibold);
+  font-weight: 800;
   color: var(--accent);
   cursor: pointer;
   transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .addExerciseBtn:active {
-  background: var(--bg-elevated);
+  background: rgba(255,255,255,0.6);
   transform: scale(0.98);
 }
 

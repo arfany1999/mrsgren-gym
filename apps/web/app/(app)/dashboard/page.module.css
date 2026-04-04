@@ -1,6 +1,6 @@
 .page {
   min-height: 100dvh;
-  background: #000;
+  background: var(--bg-primary);
   padding-bottom: calc(var(--bottom-nav-height) + 32px);
   animation: pageIn 0.2s ease both;
 }
@@ -17,15 +17,19 @@
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -0.6px;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .newBtn {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--glass-shadow);
+  color: var(--text-primary);
   font-size: 22px;
   font-weight: 300;
   display: flex;
@@ -33,9 +37,9 @@
   justify-content: center;
   text-decoration: none;
   line-height: 1;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
 }
-.newBtn:hover { background: rgba(255,255,255,0.13); }
+.newBtn:hover { background: rgba(255, 255, 255, 0.65); }
 
 /* ── Quick start row ─────────────────────────────────────────── */
 .quickStart {
@@ -48,26 +52,26 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 20px;
-  background: rgba(91,124,248,0.1);
-  border: 1px solid rgba(91,124,248,0.22);
-  border-radius: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  border-radius: 18px;
   color: var(--accent);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.1px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
   cursor: pointer;
   transition: background 150ms ease, transform 150ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-.emptyBtn:hover   { background: rgba(91,124,248,0.16); }
+.emptyBtn:hover   { background: rgba(255,255,255,0.6); }
 .emptyBtn:active  { transform: scale(0.98); }
 .emptyBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.emptyBtnIcon {
-  font-size: 13px;
-  opacity: 0.85;
-}
+.emptyBtnIcon { font-size: 13px; opacity: 0.8; }
 
 /* ── States ──────────────────────────────────────────────────── */
 .loading {
@@ -84,16 +88,20 @@
   gap: 8px;
   text-align: center;
 }
-.emptyTitle { font-size: 18px; font-weight: 700; color: #fff; }
-.emptySub   { font-size: 14px; color: rgba(255,255,255,0.35); }
+.emptyTitle { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.emptySub   { font-size: 14px; color: var(--text-tertiary); }
 .createLink {
   margin-top: 8px;
-  padding: 12px 28px;
-  background: var(--accent);
-  border-radius: 14px;
+  padding: 14px 32px;
+  background: rgba(74, 110, 245, 0.9);
+  border: 1px solid rgba(74, 110, 245, 0.5);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 4px 18px rgba(74, 110, 245, 0.28), inset 0 1px 0 rgba(255,255,255,0.22);
+  border-radius: 16px;
   color: #fff;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   text-decoration: none;
   transition: opacity 150ms ease;
 }
@@ -109,29 +117,27 @@
 
 .card {
   position: relative;
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
-  background: linear-gradient(145deg,
-    color-mix(in srgb, var(--from) 18%, #0f1118),
-    color-mix(in srgb, var(--to) 12%, #0f1118)
-  );
-  border: 0.5px solid rgba(255,255,255,0.08);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.85);
   animation: cardIn 0.3s ease both;
   will-change: transform;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Subtle radial glow in top-left */
+/* Gradient accent strip on left side */
 .cardGlow {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse at 20% 20%,
-    rgba(255,255,255,0.06) 0%,
-    transparent 60%
-  );
-  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--from), var(--to));
+  border-radius: 22px 0 0 22px;
 }
 
 .cardBody {
@@ -149,7 +155,7 @@
 .cardTitle {
   font-size: 19px;
   font-weight: 800;
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: -0.3px;
   margin-bottom: 6px;
   line-height: 1.2;
@@ -160,14 +166,12 @@
   align-items: center;
   gap: 5px;
   font-size: 13px;
-  color: rgba(255,255,255,0.45);
-  font-weight: 500;
+  color: var(--text-tertiary);
+  font-weight: 600;
   margin-bottom: 12px;
 }
 
-.metaDot {
-  color: rgba(255,255,255,0.2);
-}
+.metaDot { color: var(--border-color); }
 
 /* ── Exercise pills ───────────────────────────────────────────── */
 .pills {
@@ -179,18 +183,19 @@
 .pill {
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255,255,255,0.6);
-  background: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+  background: rgba(26, 21, 16, 0.07);
   border-radius: 20px;
   padding: 4px 11px;
   white-space: nowrap;
+  border: 0.5px solid rgba(26,21,16,0.08);
 }
 
 .pillMore {
   font-size: 12px;
   font-weight: 700;
-  color: rgba(255,255,255,0.7);
-  background: rgba(255,255,255,0.1);
+  color: var(--accent);
+  background: var(--accent-dim);
   border-radius: 20px;
   padding: 4px 10px;
 }
@@ -200,15 +205,15 @@
   display: block;
   width: calc(100% + 36px);
   margin: 14px -18px 0;
-  padding: 14px 18px;
+  padding: 16px 18px;
   border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.95);
-  letter-spacing: 0.1px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.1px;
   text-align: center;
-  border-top: 0.5px solid rgba(255,255,255,0.1);
   transition: opacity 150ms ease, transform 150ms ease;
   -webkit-tap-highlight-color: transparent;
 }

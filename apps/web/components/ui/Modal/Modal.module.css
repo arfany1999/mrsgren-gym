@@ -1,9 +1,12 @@
 .modal {
   width: calc(100% - 48px);
   max-width: 340px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  background: rgba(243, 237, 225, 0.92);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+  border-radius: var(--radius-xl);
   padding: 0;
   outline: none;
   animation: modalSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -16,8 +19,9 @@
 }
 
 .modal::backdrop {
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(6px);
+  background: rgba(26, 21, 16, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   animation: fadeIn 0.2s ease both;
 }
 
@@ -35,7 +39,7 @@
 
 .title {
   font-size: var(--text-md);
-  font-weight: var(--fw-semibold);
+  font-weight: 800;
   color: var(--text-primary);
   text-align: center;
 }

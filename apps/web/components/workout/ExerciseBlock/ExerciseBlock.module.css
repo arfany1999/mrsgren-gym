@@ -1,6 +1,10 @@
 .block {
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-lg);
   margin: 0 var(--sp-4) var(--sp-3);
   overflow: visible;
   animation: blockIn 0.32s cubic-bezier(0.34, 1.4, 0.64, 1) both;
@@ -24,7 +28,7 @@
 
 .name {
   font-size: var(--text-base);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--accent);
 }
 
@@ -39,8 +43,8 @@
 .menuWrapper { position: relative; }
 
 .menuBtn {
-  background: none;
-  border: none;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.65);
   cursor: pointer;
   padding: var(--sp-1);
   display: flex;
@@ -48,21 +52,24 @@
   justify-content: center;
   border-radius: var(--radius-full);
   transition: background var(--transition-fast);
+  width: 30px;
+  height: 30px;
 }
-
-.menuBtn:active { background: var(--bg-elevated); }
+.menuBtn:active { background: rgba(255,255,255,0.7); }
 
 .menu {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background: var(--bg-elevated);
-  border: 0.5px solid var(--border-color);
+  background: rgba(243, 237, 225, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: var(--radius-md);
   overflow: hidden;
   z-index: 30;
   min-width: 180px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
   animation: fadeIn 0.12s ease;
 }
 
@@ -73,19 +80,17 @@
   width: 100%;
   padding: var(--sp-3) var(--sp-4);
   font-size: var(--text-sm);
+  font-weight: 700;
   color: var(--accent-red);
   background: none;
   border: none;
   cursor: pointer;
   text-align: left;
 }
-
-.menuItem:active { background: var(--bg-overlay); }
+.menuItem:active { background: rgba(26, 21, 16, 0.04); }
 
 /* ── Note field ──────────────────────────────────────────── */
-.noteWrap {
-  padding: 0 var(--sp-4) 6px;
-}
+.noteWrap { padding: 0 var(--sp-4) 6px; }
 
 .noteInput {
   width: 100%;
@@ -99,10 +104,7 @@
   font-family: inherit;
   overflow: hidden;
 }
-
-.noteInput::placeholder {
-  color: var(--text-tertiary);
-}
+.noteInput::placeholder { color: var(--text-tertiary); }
 
 /* ── Column labels ───────────────────────────────────────── */
 .colLabels {
@@ -111,7 +113,7 @@
   gap: 6px;
   padding: 4px 12px;
   font-size: 10px;
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--text-tertiary);
   text-align: center;
   letter-spacing: 0.4px;
@@ -125,18 +127,17 @@
   justify-content: center;
   gap: var(--sp-2);
   width: 100%;
-  padding: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
+  font-weight: 800;
   color: var(--accent);
-  background: none;
+  background: rgba(255,255,255,0.3);
   border: none;
-  border-top: 0.5px solid var(--separator);
+  border-top: 0.5px solid rgba(26,21,16,0.07);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   cursor: pointer;
-  margin-top: var(--sp-1);
   transition: background var(--transition-fast);
 }
-
 .addSetBtn:active { background: var(--accent-dim); }
 
 @keyframes fadeIn {

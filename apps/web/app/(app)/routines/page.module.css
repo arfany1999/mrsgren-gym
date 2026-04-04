@@ -1,5 +1,5 @@
 .page {
-  background: #000;
+  background: var(--bg-primary);
   min-height: 100dvh;
   animation: pageIn 0.2s ease both;
 }
@@ -16,17 +16,6 @@
   color: var(--text-primary);
 }
 
-.pro {
-  background: linear-gradient(135deg, #f7c948, #f0a030);
-  color: #000;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 6px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
 /* ── Content ─────────────────────────────────────────────────── */
 .content {
   padding: 16px 12px 0;
@@ -35,25 +24,27 @@
 /* ── Start Empty ─────────────────────────────────────────────── */
 .startEmpty {
   width: 100%;
-  padding: 16px;
-  background: rgba(91, 124, 248, 0.1);
-  border: 1px solid rgba(91, 124, 248, 0.25);
+  padding: 18px 16px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
   border-radius: var(--card-radius);
   display: flex;
   align-items: center;
   gap: 10px;
   color: var(--accent);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   cursor: pointer;
   text-align: left;
   transition: background 150ms ease;
   margin-bottom: 20px;
-  letter-spacing: -0.1px;
+  letter-spacing: -0.2px;
   -webkit-tap-highlight-color: transparent;
 }
-
-.startEmpty:hover { background: rgba(91, 124, 248, 0.16); }
+.startEmpty:hover  { background: rgba(255, 255, 255, 0.6); }
 .startEmpty:active { transform: scale(0.98); }
 
 .plus {
@@ -78,10 +69,14 @@
 }
 
 .addBtn {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--glass-shadow);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,11 +85,9 @@
   text-decoration: none;
   line-height: 1;
   transition: background var(--transition-fast);
-  border: none;
   cursor: pointer;
 }
-
-.addBtn:hover { background: rgba(255, 255, 255, 0.12); }
+.addBtn:hover { background: rgba(255, 255, 255, 0.65); }
 
 /* ── Quick actions ───────────────────────────────────────────── */
 .quick {
@@ -105,12 +98,15 @@
 }
 
 .quickCard {
-  padding: 16px;
-  background: var(--bg-surface);
+  padding: 18px 16px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
   border-radius: var(--card-radius);
-  border: 0.5px solid var(--border-color);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
   text-decoration: none;
   text-align: center;
@@ -122,8 +118,7 @@
   letter-spacing: -0.1px;
   -webkit-tap-highlight-color: transparent;
 }
-
-.quickCard:hover { background: var(--bg-elevated); }
+.quickCard:hover  { background: rgba(255, 255, 255, 0.6); }
 .quickCard:active { transform: scale(0.97); }
 
 /* ── Mine head ───────────────────────────────────────────────── */
@@ -140,7 +135,7 @@
   border: none;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent);
 }
 
@@ -180,11 +175,13 @@
 }
 
 .card {
-  background: var(--bg-surface);
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
   border-radius: var(--card-radius);
-  border: 0.5px solid var(--border-color);
   overflow: hidden;
-  box-shadow: var(--card-shadow);
   transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform;
   -webkit-tap-highlight-color: transparent;
@@ -193,7 +190,7 @@
 .cardTop {
   display: flex;
   align-items: flex-start;
-  padding: 14px 14px 0;
+  padding: 16px 14px 0;
 }
 
 .cardLink {
@@ -227,35 +224,38 @@
 }
 
 .more {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: none;
-  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-tertiary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast);
 }
-
 .more:hover,
 .more:active {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.65);
   color: var(--text-secondary);
 }
 
 .dropdown {
   position: absolute;
-  top: 34px;
+  top: 36px;
   right: 0;
-  background: var(--bg-elevated);
-  border: 0.5px solid var(--border-color);
-  border-radius: 14px;
-  min-width: 160px;
+  background: rgba(243, 237, 225, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  min-width: 170px;
   z-index: 50;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255,255,255,0.9);
   overflow: hidden;
   animation: dropIn 0.15s ease both;
 }
@@ -270,41 +270,39 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 13px 16px;
+  padding: 14px 16px;
   background: none;
   border: none;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
-  border-bottom: 0.5px solid var(--separator);
+  border-bottom: 0.5px solid rgba(26, 21, 16, 0.07);
   text-align: left;
   transition: background var(--transition-fast);
 }
-
 .dropItem:last-child { border-bottom: none; }
-.dropItem:hover { background: rgba(255, 255, 255, 0.05); }
+.dropItem:hover { background: rgba(26, 21, 16, 0.04); }
 
 .dropDanger { color: var(--accent-red); }
 
 /* ── Start routine btn ───────────────────────────────────────── */
 .startRoutineBtn {
   width: 100%;
-  padding: 13px;
-  margin-top: 12px;
-  background: var(--accent);
+  padding: 15px;
+  margin-top: 14px;
+  background: rgba(74, 110, 245, 0.88);
   border: none;
+  border-top: 1px solid rgba(74, 110, 245, 0.5);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   color: #fff;
-  transition: opacity 150ms ease;
-  border-top: 0.5px solid rgba(91, 124, 248, 0.3);
   letter-spacing: -0.1px;
+  transition: opacity 150ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-
-.startRoutineBtn:hover { opacity: 0.9; }
+.startRoutineBtn:hover    { opacity: 0.9; }
 .startRoutineBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .cardActions {
@@ -316,13 +314,13 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(26, 21, 16, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 24px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   animation: overlayFade 0.2s ease both;
 }
 
@@ -332,13 +330,15 @@
 }
 
 .modal {
-  background: var(--bg-elevated);
-  border-radius: 20px;
-  border: 0.5px solid var(--border-color);
+  background: rgba(243, 237, 225, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 22px;
   padding: 24px;
   width: 100%;
   max-width: 320px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255,255,255,0.9);
   animation: modalSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -365,20 +365,20 @@
 
 .modalInput {
   width: 100%;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1.5px solid var(--border-color);
-  border-radius: 12px;
-  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  padding: 14px 14px;
   font-size: 15px;
+  font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 16px;
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
-
 .modalInput:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(91, 124, 248, 0.12);
+  box-shadow: 0 0 0 3px rgba(74, 110, 245, 0.14);
 }
 
 .modalActions {
@@ -388,45 +388,47 @@
 
 .modalCancel {
   flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.07);
-  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--glass-shadow);
   cursor: pointer;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
   transition: background var(--transition-fast);
 }
-
-.modalCancel:hover { background: rgba(255, 255, 255, 0.1); }
+.modalCancel:hover { background: rgba(255, 255, 255, 0.6); }
 
 .modalSave {
   flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--accent);
-  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(74, 110, 245, 0.9);
+  border: 1px solid rgba(74, 110, 245, 0.5);
+  box-shadow: 0 4px 16px rgba(74, 110, 245, 0.28), inset 0 1px 0 rgba(255,255,255,0.2);
   cursor: pointer;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: #fff;
   transition: opacity 150ms ease;
 }
-
 .modalSave:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .modalDelete {
   flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--accent-red);
-  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(229, 62, 62, 0.88);
+  border: 1px solid rgba(229, 62, 62, 0.5);
+  box-shadow: 0 4px 16px rgba(229, 62, 62, 0.22), inset 0 1px 0 rgba(255,255,255,0.15);
   cursor: pointer;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: #fff;
   transition: opacity 150ms ease;
 }
-
 .modalDelete:disabled { opacity: 0.5; cursor: not-allowed; }
