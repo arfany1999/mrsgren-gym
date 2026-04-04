@@ -38,7 +38,6 @@ function IconProfile({ active }: { active: boolean }) {
 
 const TABS = [
   { href: "/dashboard", label: "Home",    Icon: IconHome },
-  { href: "/routines",  label: "Workout", Icon: IconWorkout },
   { href: "/profile",   label: "Profile", Icon: IconProfile },
 ];
 

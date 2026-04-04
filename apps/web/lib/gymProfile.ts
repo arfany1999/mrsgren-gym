@@ -77,3 +77,45 @@ export function estimateCalories(
     : WEIGHT_TRAINING_MET;
   return Math.round(met * weightKg * durationHours);
 }
+
+// ── Workout report history (per-email in localStorage) ───────────────────────
+
+export interface WorkoutReportExercise {
+  name: string;
+  sets: number;
+  calories: number;
+  setSummary: string;
+}
+
+export interface WorkoutReportEntry {
+  id: string;           // workoutId
+  date: string;         // ISO date string
+  title: string;
+  durationMins: number;
+  totalCalories: number;
+  dayNumber: number;    // e.g. 87 → "Day 87"
+  totalSets: number;
+  totalVolume: number;  // kg
+  exercises: WorkoutReportExercise[];
+}
+
+function reportKey(email: string) {
+  return `gym_reports_${email.toLowerCase()}`;
+}
+
+export function getReports(email: string): WorkoutReportEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(reportKey(email));
+    return raw ? (JSON.parse(raw) as WorkoutReportEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveReport(email: string, report: WorkoutReportEntry): void {
+  if (typeof window === "undefined") return;
+  const existing = getReports(email);
+  const deduped = [report, ...existing.filter(r => r.id !== report.id)];
+  localStorage.setItem(reportKey(email), JSON.stringify(deduped.slice(0, 200)));
+}

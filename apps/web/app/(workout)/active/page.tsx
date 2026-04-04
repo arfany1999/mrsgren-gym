@@ -19,7 +19,7 @@ import styles from "./page.module.css";
 
 export default function ActiveWorkoutPage() {
   const router  = useRouter();
-  const { user } = useAuth();
+  const { user, supabase } = useAuth();
   const {
     activeWorkout,
     exercises,
@@ -40,7 +40,7 @@ export default function ActiveWorkoutPage() {
   const [done,        setDone]        = useState(false);
 
   // Report state
-  const [report, setReport] = useState<{ workoutId: string; durationMins: number } | null>(null);
+  const [report, setReport] = useState<{ workoutId: string; durationMins: number; dayNumber: number } | null>(null);
   const startedAtRef = useRef<string | null>(null);
 
   // Track when workout started
@@ -80,8 +80,23 @@ export default function ActiveWorkoutPage() {
 
       const id = await finishWorkout();
       if (id) {
+        // Count distinct training days (including today's just-finished workout)
+        let dayNumber = 1;
+        try {
+          const { data: dayData } = await supabase
+            .from("workouts")
+            .select("started_at")
+            .not("finished_at", "is", null);
+          const distinctDays = new Set(
+            (dayData ?? []).map((w: Record<string, unknown>) =>
+              new Date(w.started_at as string).toDateString()
+            )
+          );
+          dayNumber = Math.max(distinctDays.size, 1);
+        } catch { /* fallback to 1 */ }
+
         setDone(true);
-        setReport({ workoutId: id, durationMins: Math.max(durationMins, 1) });
+        setReport({ workoutId: id, durationMins: Math.max(durationMins, 1), dayNumber });
       } else {
         router.replace("/");
       }
@@ -114,7 +129,9 @@ export default function ActiveWorkoutPage() {
         title={activeWorkout.title}
         exercises={exercises}
         durationMins={report.durationMins}
+        dayNumber={report.dayNumber}
         weightKg={userWeightKg}
+        userEmail={user?.email ?? null}
         workoutId={report.workoutId}
         onDone={handleReportDone}
       />
