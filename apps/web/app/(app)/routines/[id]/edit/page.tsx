@@ -5,22 +5,23 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
-import { fetchExercises, searchExercises } from "@/lib/exercisedb";
-import type { Exercise } from "@/types/api";
+import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
+import { browseExercises, searchFreeExercises } from "@/lib/freeExerciseDb";
+import type { FreeExercise } from "@/lib/freeExerciseDb";
 import styles from "./page.module.css";
 
 const MUSCLE_CHIPS = [
   { label: "All",        bodyPart: "" },
   { label: "Chest",      bodyPart: "chest" },
-  { label: "Back",       bodyPart: "back" },
+  { label: "Lats",       bodyPart: "lats" },
   { label: "Shoulders",  bodyPart: "shoulders" },
-  { label: "Upper Arms", bodyPart: "upper arms" },
-  { label: "Lower Arms", bodyPart: "lower arms" },
-  { label: "Upper Legs", bodyPart: "upper legs" },
-  { label: "Lower Legs", bodyPart: "lower legs" },
-  { label: "Waist",      bodyPart: "waist" },
-  { label: "Cardio",     bodyPart: "cardio" },
+  { label: "Biceps",     bodyPart: "biceps" },
+  { label: "Triceps",    bodyPart: "triceps" },
+  { label: "Abs",        bodyPart: "abdominals" },
+  { label: "Quads",      bodyPart: "quadriceps" },
+  { label: "Hamstrings", bodyPart: "hamstrings" },
+  { label: "Glutes",     bodyPart: "glutes" },
+  { label: "Calves",     bodyPart: "calves" },
 ];
 
 interface DraftExercise {
@@ -45,7 +46,7 @@ export default function EditRoutinePage() {
   const [error, setError] = useState("");
 
   // Library panel
-  const [libraryExercises, setLibraryExercises] = useState<Exercise[]>([]);
+  const [libraryExercises, setLibraryExercises] = useState<FreeExercise[]>([]);
   const [libLoading, setLibLoading] = useState(false);
   const [libQuery, setLibQuery] = useState("");
   const [libMuscle, setLibMuscle] = useState("");
@@ -54,11 +55,13 @@ export default function EditRoutinePage() {
   const loadLibrary = useCallback(async (q: string, bodyPart: string) => {
     setLibLoading(true);
     try {
-      const searchTerm = q || bodyPart;
-      const result = searchTerm
-        ? await searchExercises({ q: searchTerm, limit: 80 })
-        : await fetchExercises({ limit: 80, offset: 0 });
-      setLibraryExercises(result.exercises);
+      if (q) {
+        const results = await searchFreeExercises(q);
+        setLibraryExercises(results);
+      } else {
+        const { exercises } = await browseExercises({ limit: 80, offset: 0, muscle: bodyPart || undefined });
+        setLibraryExercises(exercises);
+      }
     } catch {
       setLibraryExercises([]);
     } finally {
@@ -109,7 +112,7 @@ export default function EditRoutinePage() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleAddFromLibrary(exercise: Exercise) {
+  async function handleAddFromLibrary(exercise: FreeExercise) {
     setError("");
     if (exercises.some(e => e.name.toLowerCase() === exercise.name.toLowerCase())) return;
     try {
@@ -120,7 +123,7 @@ export default function EditRoutinePage() {
         exerciseId = existing.id;
       } else {
         const { data: ins } = await supabase
-          .from("exercises").insert({ name: exercise.name, muscle_group: exercise.muscleGroups }).select("id").single();
+          .from("exercises").insert({ name: exercise.name, muscle_group: exercise.primaryMuscles }).select("id").single();
         if (!ins) { setError("Could not add exercise"); return; }
         exerciseId = ins.id;
       }
@@ -298,12 +301,12 @@ export default function EditRoutinePage() {
               libraryExercises.map(ex => (
                 <button key={ex.id} type="button" className={styles.libItem} onClick={() => handleAddFromLibrary(ex)}>
                   <div className={styles.libIcon}>
-                    <MuscleMap muscles={ex.muscleGroups} variant="compact" />
+                    <ExerciseAnimation name={ex.name} muscles={ex.primaryMuscles} variant="thumb" />
                   </div>
                   <div className={styles.libInfo}>
                     <p className={styles.libName}>{ex.name}</p>
-                    {ex.muscleGroups.length > 0 && (
-                      <p className={styles.libMuscle}>{ex.muscleGroups[0]?.charAt(0).toUpperCase()}{ex.muscleGroups[0]?.slice(1)}</p>
+                    {ex.primaryMuscles.length > 0 && (
+                      <p className={styles.libMuscle}>{ex.primaryMuscles[0]?.charAt(0).toUpperCase()}{ex.primaryMuscles[0]?.slice(1)}</p>
                     )}
                   </div>
                   <div className={styles.libAdd}>

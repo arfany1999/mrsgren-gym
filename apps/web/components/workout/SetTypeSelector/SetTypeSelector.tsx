@@ -7,6 +7,7 @@ import styles from "./SetTypeSelector.module.css";
 interface SetTypeSelectorProps {
   value: SetType;
   onChange: (type: SetType) => void;
+  setNumber?: number;
 }
 
 const SET_TYPES: { type: SetType; label: string; color: string }[] = [
@@ -20,15 +21,15 @@ function getTypeColor(type: SetType) {
   return SET_TYPES.find((t) => t.type === type)?.color ?? "var(--text-secondary)";
 }
 
-function getTypeShort(type: SetType): string {
-  if (type === "normal") return "●";
+function getTypeShort(type: SetType, setNumber?: number): string {
+  if (type === "normal") return setNumber != null ? String(setNumber) : "●";
   if (type === "warmup") return "W";
   if (type === "dropset") return "D";
   if (type === "failure") return "F";
-  return "●";
+  return setNumber != null ? String(setNumber) : "●";
 }
 
-export function SetTypeSelector({ value, onChange }: SetTypeSelectorProps) {
+export function SetTypeSelector({ value, onChange, setNumber }: SetTypeSelectorProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,7 +41,7 @@ export function SetTypeSelector({ value, onChange }: SetTypeSelectorProps) {
         type="button"
         aria-label="Set type"
       >
-        {getTypeShort(value)}
+        {getTypeShort(value, setNumber)}
       </button>
 
       {open && (

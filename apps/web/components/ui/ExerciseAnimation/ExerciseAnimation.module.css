@@ -1,0 +1,82 @@
+/* ── Full hero (exercise detail page) ───────────────────────── */
+.wrapFull {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #0d0d0d;
+  flex-shrink: 0;
+}
+
+/* ── Thumb (list rows / picker) ─────────────────────────────── */
+.wrapThumb {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #1a1a1e;
+  flex-shrink: 0;
+}
+
+/* ── Both frames stacked ────────────────────────────────────── */
+.frame0,
+.frame1 {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Frame 0: visible first half, hidden second half */
+.frame0 {
+  animation: showA 1.8s steps(1, end) infinite;
+}
+
+/* Frame 1: hidden first half, visible second half */
+.frame1 {
+  animation: showB 1.8s steps(1, end) infinite;
+}
+
+@keyframes showA {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes showB {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Skeleton loaders ───────────────────────────────────────── */
+.skeletonFull {
+  width: 260px;
+  height: 260px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #1a1a1e 25%, #26262c 50%, #1a1a1e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skeletonThumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #1a1a1e 25%, #26262c 50%, #1a1a1e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame0 { animation: none; opacity: 1; }
+  .frame1 { animation: none; opacity: 0; }
+}

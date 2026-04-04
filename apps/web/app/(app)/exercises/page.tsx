@@ -4,35 +4,33 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
-import { fetchExercises, searchExercises } from "@/lib/exercisedb";
-import type { Exercise } from "@/types/api";
+import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
+import { browseExercises, searchFreeExercises } from "@/lib/freeExerciseDb";
+import type { FreeExercise } from "@/lib/freeExerciseDb";
 import styles from "./page.module.css";
 
 const MUSCLE_GROUPS = [
   "All",
-  "abs",
+  "chest",
   "biceps",
-  "calves",
-  "cardiovascular system",
-  "delts",
+  "triceps",
+  "shoulders",
+  "lats",
+  "middle back",
+  "lower back",
+  "traps",
   "forearms",
+  "abdominals",
   "glutes",
   "hamstrings",
-  "lats",
-  "pectorals",
-  "quads",
-  "serratus anterior",
-  "spine",
-  "traps",
-  "triceps",
-  "upper back",
+  "quadriceps",
+  "calves",
 ];
 
 const PAGE_SIZE = 50;
 
 export default function ExercisesPage() {
-  const [allExercises, setAllExercises] = useState<Exercise[]>([]);
+  const [allExercises, setAllExercises] = useState<FreeExercise[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -46,7 +44,7 @@ export default function ExercisesPage() {
     if (off === 0) setLoading(true);
     else setLoadingMore(true);
     try {
-      const { exercises, total: t } = await fetchExercises({ limit: PAGE_SIZE, offset: off });
+      const { exercises, total: t } = await browseExercises({ limit: PAGE_SIZE, offset: off });
       setAllExercises((prev) => replace ? exercises : [...prev, ...exercises]);
       setTotal(t);
       setOffset(off + exercises.length);
@@ -62,9 +60,9 @@ export default function ExercisesPage() {
   const doSearch = useCallback(async (q: string) => {
     setLoading(true);
     try {
-      const { exercises, total: t } = await searchExercises({ q, limit: 100 });
+      const exercises = await searchFreeExercises(q);
       setAllExercises(exercises);
-      setTotal(t);
+      setTotal(exercises.length);
       setOffset(exercises.length);
     } catch {
       setAllExercises([]);
@@ -83,7 +81,6 @@ export default function ExercisesPage() {
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     if (!query) {
-      // Switching back from search to browse
       loadPage(0, true);
       return;
     }
@@ -98,7 +95,9 @@ export default function ExercisesPage() {
     muscle === "All"
       ? allExercises
       : allExercises.filter((ex) =>
-          ex.muscleGroups.some((m) => m.toLowerCase() === muscle.toLowerCase())
+          [...ex.primaryMuscles, ...ex.secondaryMuscles].some(
+            (m) => m.toLowerCase() === muscle.toLowerCase()
+          )
         );
 
   const canLoadMore = !query && offset < total;
@@ -182,15 +181,15 @@ export default function ExercisesPage() {
           <ul className={styles.list}>
             {displayed.map((ex) => (
               <li key={ex.id}>
-                <Link href={`/exercises/${ex.id}`} className={styles.item}>
+                <Link href={`/exercises/${encodeURIComponent(ex.id)}`} className={styles.item}>
                   <div className={styles.mapWrap}>
-                    <MuscleMap muscles={ex.muscleGroups} variant="compact" />
+                    <ExerciseAnimation name={ex.name} muscles={ex.primaryMuscles} variant="thumb" />
                   </div>
                   <div className={styles.itemInfo}>
                     <p className={styles.itemName}>{ex.name}</p>
-                    {ex.muscleGroups.length > 0 && (
+                    {ex.primaryMuscles.length > 0 && (
                       <p className={styles.itemMuscles}>
-                        {ex.muscleGroups
+                        {ex.primaryMuscles
                           .slice(0, 3)
                           .map((m) => m.charAt(0).toUpperCase() + m.slice(1))
                           .join(" · ")}

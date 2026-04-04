@@ -29,6 +29,7 @@ export function SetRow({ set, index, weId, prevSet, onUpdateField, onSave, onDel
         <SetTypeSelector
           value={set.setType}
           onChange={(t) => onUpdateField("setType", t)}
+          setNumber={index + 1}
         />
       </div>
 

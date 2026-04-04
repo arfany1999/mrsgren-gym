@@ -2,22 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
-import { fetchExerciseById } from "@/lib/exercisedb";
-import type { Exercise } from "@/types/api";
+import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
+import { findById } from "@/lib/freeExerciseDb";
+import type { FreeExercise } from "@/lib/freeExerciseDb";
 import styles from "./page.module.css";
 
 export default function ExerciseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [exercise, setExercise] = useState<Exercise | null>(null);
+  const [exercise, setExercise] = useState<FreeExercise | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchExerciseById(id)
+    const decodedId = decodeURIComponent(id);
+    findById(decodedId)
       .then((ex) => {
         if (!ex) router.replace("/exercises");
         else setExercise(ex);
@@ -35,9 +36,7 @@ export default function ExerciseDetailPage() {
   }
   if (!exercise) return null;
 
-  const steps = exercise.instructions
-    ? exercise.instructions.split("\n").filter(Boolean)
-    : [];
+  const allMuscles = [...exercise.primaryMuscles, ...exercise.secondaryMuscles];
 
   return (
     <div className={styles.page}>
@@ -47,13 +46,24 @@ export default function ExerciseDetailPage() {
         {/* Name */}
         <h1 className={styles.name}>{exercise.name}</h1>
 
-        {/* Muscle diagram — always works */}
+        {/* Exercise animation hero — flipbook from free-exercise-db */}
+        <div className={styles.animCard}>
+          <p className={styles.cardLabel}>How to Perform</p>
+          <div className={styles.animWrap}>
+            <ExerciseAnimation
+              name={exercise.name}
+              muscles={exercise.primaryMuscles}
+              variant="full"
+            />
+          </div>
+        </div>
+
+        {/* Muscle diagram */}
         <div className={styles.diagramCard}>
           <p className={styles.cardLabel}>Muscles Worked</p>
-          <MuscleMap muscles={exercise.muscleGroups} variant="full" />
-          {/* Tags row */}
+          <MuscleMap muscles={allMuscles} variant="full" />
           <div className={styles.tagsRow}>
-            {exercise.muscleGroups.map((m) => (
+            {allMuscles.map((m) => (
               <span key={m} className={styles.muscleTag}>
                 {m.charAt(0).toUpperCase() + m.slice(1)}
               </span>
@@ -64,30 +74,12 @@ export default function ExerciseDetailPage() {
           </div>
         </div>
 
-        {/* GIF animation — how to perform the exercise */}
-        {exercise.videoUrl && (
-          <div className={styles.gifCard}>
-            <p className={styles.cardLabel}>How to Perform</p>
-            <div className={styles.gifWrap}>
-              <Image
-                src={exercise.videoUrl}
-                alt={exercise.name}
-                width={280}
-                height={280}
-                className={styles.gif}
-                unoptimized
-                priority
-              />
-            </div>
-          </div>
-        )}
-
         {/* Instructions */}
-        {steps.length > 0 && (
+        {exercise.instructions.length > 0 && (
           <div className={styles.instructionsCard}>
             <p className={styles.cardLabel}>Instructions</p>
             <ol className={styles.steps}>
-              {steps.map((step, i) => (
+              {exercise.instructions.map((step, i) => (
                 <li key={i} className={styles.step}>
                   <span className={styles.stepNum}>{i + 1}</span>
                   <p className={styles.stepText}>{step}</p>

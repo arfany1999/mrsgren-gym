@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet/BottomSheet";
-import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
-import { fetchExercises, searchExercises } from "@/lib/exercisedb";
+import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
+import { browseExercises, searchFreeExercises } from "@/lib/freeExerciseDb";
+import type { FreeExercise } from "@/lib/freeExerciseDb";
 import type { Exercise } from "@/types/api";
 import styles from "./ExercisePicker.module.css";
 
@@ -14,33 +15,36 @@ interface ExercisePickerProps {
 }
 
 const MUSCLE_CHIPS = [
-  { label: "All",       bodyPart: "" },
-  { label: "Chest",     bodyPart: "chest" },
-  { label: "Back",      bodyPart: "back" },
-  { label: "Shoulders", bodyPart: "shoulders" },
-  { label: "Upper Arms",bodyPart: "upper arms" },
-  { label: "Lower Arms",bodyPart: "lower arms" },
-  { label: "Upper Legs",bodyPart: "upper legs" },
-  { label: "Lower Legs",bodyPart: "lower legs" },
-  { label: "Waist",     bodyPart: "waist" },
-  { label: "Cardio",    bodyPart: "cardio" },
+  { label: "All",        bodyPart: "" },
+  { label: "Chest",      bodyPart: "chest" },
+  { label: "Lats",       bodyPart: "lats" },
+  { label: "Shoulders",  bodyPart: "shoulders" },
+  { label: "Biceps",     bodyPart: "biceps" },
+  { label: "Triceps",    bodyPart: "triceps" },
+  { label: "Abs",        bodyPart: "abdominals" },
+  { label: "Quads",      bodyPart: "quadriceps" },
+  { label: "Hamstrings", bodyPart: "hamstrings" },
+  { label: "Glutes",     bodyPart: "glutes" },
+  { label: "Calves",     bodyPart: "calves" },
 ];
 
 export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps) {
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState("");
-  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [exercises, setExercises] = useState<FreeExercise[]>([]);
   const [loading, setLoading] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async (q: string, bodyPart: string) => {
     setLoading(true);
     try {
-      const searchTerm = q || bodyPart;
-      const result = searchTerm
-        ? await searchExercises({ q: searchTerm, limit: 80 })
-        : await fetchExercises({ limit: 80, offset: 0 });
-      setExercises(result.exercises);
+      if (q) {
+        const results = await searchFreeExercises(q);
+        setExercises(results);
+      } else {
+        const { exercises } = await browseExercises({ limit: 80, offset: 0, muscle: bodyPart || undefined });
+        setExercises(exercises);
+      }
     } catch {
       setExercises([]);
     } finally {
@@ -60,7 +64,17 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
   }, [query, muscle, open, load]);
 
-  function handleSelect(exercise: Exercise) {
+  function handleSelect(freeEx: FreeExercise) {
+    const exercise: Exercise = {
+      id: freeEx.id,
+      name: freeEx.name,
+      muscleGroups: [...freeEx.primaryMuscles, ...freeEx.secondaryMuscles],
+      equipment: freeEx.equipment || null,
+      instructions: freeEx.instructions.join("\n"),
+      videoUrl: null,
+      isCustom: false,
+      createdByUserId: null,
+    };
     onSelect(exercise);
     onClose();
     setQuery("");
@@ -133,13 +147,13 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
               <li key={ex.id}>
                 <button className={styles.item} onClick={() => handleSelect(ex)} type="button">
                   <div className={styles.mapWrap}>
-                    <MuscleMap muscles={ex.muscleGroups} variant="compact" />
+                    <ExerciseAnimation name={ex.name} muscles={ex.primaryMuscles} variant="thumb" />
                   </div>
                   <div className={styles.info}>
                     <p className={styles.itemName}>{ex.name}</p>
-                    {ex.muscleGroups.length > 0 && (
+                    {ex.primaryMuscles.length > 0 && (
                       <p className={styles.itemMuscles}>
-                        {ex.muscleGroups.slice(0, 3).map((m) => m.charAt(0).toUpperCase() + m.slice(1)).join(" · ")}
+                        {ex.primaryMuscles.slice(0, 3).map((m) => m.charAt(0).toUpperCase() + m.slice(1)).join(" · ")}
                       </p>
                     )}
                   </div>
