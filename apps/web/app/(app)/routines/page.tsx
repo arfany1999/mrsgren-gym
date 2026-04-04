@@ -8,6 +8,7 @@ import { useWorkout } from "@/contexts/WorkoutContext";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import type { Routine } from "@/types/api";
+import { parseMuscleGroup } from "@/lib/formatters";
 import styles from "./page.module.css";
 
 const MUSCLE_COLORS: Record<string, string> = {
@@ -390,7 +391,7 @@ function mapRoutine(row: Record<string, unknown>): Routine {
         exercise: {
           id: ex.id as string,
           name: ex.name as string,
-          muscleGroups: ex.muscle_group ? [ex.muscle_group as string] : [],
+          muscleGroups: parseMuscleGroup(ex.muscle_group),
           equipment: (ex.equipment as string) ?? null,
           instructions: (ex.instructions as string) ?? null,
           videoUrl: null,

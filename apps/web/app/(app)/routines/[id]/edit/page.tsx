@@ -123,7 +123,7 @@ export default function EditRoutinePage() {
         exerciseId = existing.id;
       } else {
         const { data: ins } = await supabase
-          .from("exercises").insert({ name: exercise.name, muscle_group: exercise.primaryMuscles }).select("id").single();
+          .from("exercises").insert({ name: exercise.name, muscle_group: exercise.primaryMuscles[0] ?? "" }).select("id").single();
         if (!ins) { setError("Could not add exercise"); return; }
         exerciseId = ins.id;
       }

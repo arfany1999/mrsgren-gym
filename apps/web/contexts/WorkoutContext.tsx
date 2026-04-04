@@ -17,6 +17,7 @@ import {
   clearActiveWorkoutId,
 } from "@/lib/storage";
 import type { SetType, Exercise } from "@/types/api";
+import { parseMuscleGroup } from "@/lib/formatters";
 
 // ── Types ─────────────────────────────────────────────────────
 export interface ActiveSet {
@@ -198,7 +199,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         weId: we.id as string,
         exerciseId: we.exercise_id as string,
         name: (exercise?.name as string) ?? "",
-        muscleGroups: exercise?.muscle_group ? [exercise.muscle_group as string] : [],
+        muscleGroups: parseMuscleGroup(exercise?.muscle_group),
         sets: weSets.map((s: Record<string, unknown>) => ({
           id: s.id as string,
           reps: s.reps !== null ? String(s.reps) : "",
@@ -395,7 +396,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           .from("exercises")
           .insert({
             name: exercise.name,
-            muscle_group: exercise.muscleGroups,
+            muscle_group: exercise.muscleGroups[0] ?? "",
             equipment: exercise.equipment,
             instructions: exercise.instructions,
             is_custom: false,

@@ -6,6 +6,7 @@ import { WorkoutCard } from "@/components/workout/WorkoutCard/WorkoutCard";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/Button/Button";
 import type { Workout, SetType } from "@/types/api";
+import { parseMuscleGroup } from "@/lib/formatters";
 import styles from "./page.module.css";
 
 const LIMIT = 20;
@@ -117,7 +118,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
         exercise: {
           id: ex.id as string,
           name: ex.name as string,
-          muscleGroups: ex.muscle_group ? [ex.muscle_group as string] : [],
+          muscleGroups: parseMuscleGroup(ex.muscle_group),
           equipment: (ex.equipment as string) ?? null,
           instructions: (ex.instructions as string) ?? null,
           videoUrl: null,

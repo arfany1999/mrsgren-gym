@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import type { Workout } from "@/types/api";
+import { parseMuscleGroup } from "@/lib/formatters";
 import styles from "./page.module.css";
 
 export default function DashboardPage() {
@@ -220,7 +221,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
         exercise: {
           id: ex.id as string,
           name: ex.name as string,
-          muscleGroups: ex.muscle_group ? [ex.muscle_group as string] : [],
+          muscleGroups: parseMuscleGroup(ex.muscle_group),
           equipment: (ex.equipment as string) ?? null,
           instructions: (ex.instructions as string) ?? null,
           videoUrl: null,

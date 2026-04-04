@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import type { Workout, SetType } from "@/types/api";
-import { formatDateFull, formatTime, workoutDuration, calcVolume } from "@/lib/formatters";
+import { formatDateFull, formatTime, workoutDuration, calcVolume, parseMuscleGroup } from "@/lib/formatters";
 import styles from "./page.module.css";
 
 export default function WorkoutDetailPage() {
@@ -244,7 +244,7 @@ function mapWorkout(row: Record<string, unknown>): Workout {
         exercise: {
           id: ex.id as string,
           name: ex.name as string,
-          muscleGroups: ex.muscle_group ? [ex.muscle_group as string] : [],
+          muscleGroups: parseMuscleGroup(ex.muscle_group),
           equipment: (ex.equipment as string) ?? null,
           instructions: (ex.instructions as string) ?? null,
           videoUrl: null,

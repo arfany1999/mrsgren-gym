@@ -87,3 +87,24 @@ export function calcOneRepMax(weightKg: number, reps: number): number {
 export function formatMuscleGroups(groups: string[]): string {
   return groups.map((g) => g.replace(/_/g, " ")).join(", ");
 }
+
+/**
+ * Parses the `muscle_group` column from Supabase.
+ * The column may be stored as:
+ *   - a plain string: "chest"
+ *   - a JSON array string: '["chest","triceps"]'  (from old inserts that passed an array)
+ * Returns a clean string[] in all cases.
+ */
+export function parseMuscleGroup(raw: unknown): string[] {
+  if (!raw) return [];
+  const s = String(raw).trim();
+  if (s.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(s);
+      return (Array.isArray(parsed) ? parsed : [parsed]).map(String).filter(Boolean);
+    } catch {
+      // fall through
+    }
+  }
+  return s ? [s] : [];
+}
