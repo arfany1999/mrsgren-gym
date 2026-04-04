@@ -1,21 +1,12 @@
 .page {
-  background: var(--bg-primary);
+  background: #000;
   min-height: 100dvh;
   animation: pageIn 0.2s ease both;
 }
 
 /* ── Header ──────────────────────────────────────────────────── */
 .header {
-  padding: 18px 16px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.headLeft {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  padding: 20px 16px 0;
 }
 
 .title {

@@ -133,11 +133,6 @@ export default function ProfilePage() {
               <path d="M4 20h4l10-10-4-4L4 16v4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <button type="button" className={styles.iconBtn} aria-label="Share">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 4v12M8 8l4-4 4 4M5 14v4a2 2 0 002 2h10a2 2 0 002-2v-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
           <Link href="/settings" className={styles.iconBtn} aria-label="Settings">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/>
@@ -153,15 +148,9 @@ export default function ProfilePage() {
           <h2 className={styles.name}>{displayName}</h2>
           <div className={styles.statsInline}>
             <span><b>{totalWorkouts}</b> Workouts</span>
-            <span><b>0</b> Followers</span>
-            <span><b>0</b> Following</span>
           </div>
         </div>
       </section>
-
-      <div className={styles.profileBanner}>
-        Your profile is 80% finished
-      </div>
 
       <section className={styles.chartCard}>
         <div className={styles.chartHeader}>
@@ -192,7 +181,6 @@ export default function ProfilePage() {
       </section>
 
       <section className={styles.dashboard}>
-        <h3 className={styles.sectionTitle}>Dashboard</h3>
         <div className={styles.grid}>
           {TILES.map(({ label, href, icon }) => (
             <Link key={label} href={href} className={styles.tile}>

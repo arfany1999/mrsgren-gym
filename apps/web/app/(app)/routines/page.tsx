@@ -176,10 +176,7 @@ export default function RoutinesPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headLeft}>
-          <h1 className={styles.title}>Workout</h1>
-        </div>
-        <span className={styles.pro}>PRO</span>
+        <h1 className={styles.title}>Workout</h1>
       </header>
 
       <section className={styles.content}>

@@ -1,300 +1,116 @@
 .page {
-  background: var(--bg-primary);
   min-height: 100dvh;
-  padding-bottom: calc(var(--bottom-nav-height) + 16px);
+  background: #000;
+  padding-bottom: calc(var(--bottom-nav-height) + 24px);
   animation: pageIn 0.2s ease both;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
 .header {
-  padding: 18px 16px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  padding: 20px 20px 8px;
 }
 
-.headerLeft { display: flex; align-items: center; gap: 6px; }
-
-.homeTitle {
-  font-size: 28px;
+.title {
+  font-size: 32px;
   font-weight: 800;
-  letter-spacing: -0.5px;
-  color: var(--text-primary);
-}
-
-.headerActions {
-  display: flex;
-  gap: 8px;
-}
-
-.iconBtn {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.07);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: background var(--transition-fast);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.iconBtn:hover { background: rgba(255, 255, 255, 0.1); }
-.iconBtn:active { background: rgba(255, 255, 255, 0.12); transform: scale(0.93); }
-
-/* ── Feed ────────────────────────────────────────────────────── */
-.feed {
-  padding: 0 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* ── Post card ───────────────────────────────────────────────── */
-.post {
-  background: var(--bg-surface);
-  border-radius: var(--card-radius);
-  border: 0.5px solid var(--border-color);
-  overflow: hidden;
-  box-shadow: var(--card-shadow);
-  animation: cardIn 0.3s ease both;
-}
-
-.postHeader {
-  padding: 14px 14px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.postUser {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 700;
+  letter-spacing: -0.6px;
   color: #fff;
-  flex-shrink: 0;
 }
 
-.userName {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.timeAgo {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin-top: 1px;
-}
-
-.moreBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  color: var(--text-tertiary);
-  border-radius: 8px;
-  transition: background var(--transition-fast);
-}
-.moreBtn:hover { background: rgba(255, 255, 255, 0.06); }
-
-/* ── Post title ──────────────────────────────────────────────── */
-.postTitle {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  color: var(--text-primary);
-  padding: 0 14px 12px;
-  cursor: pointer;
-}
-
-/* ── Metrics ─────────────────────────────────────────────────── */
-.metrics {
-  display: flex;
-  gap: 0;
-  padding: 0 14px 12px;
-}
-
-.metricItem {
-  flex: 1;
-}
-
-.metricLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.metricVal {
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.2px;
-  margin-top: 2px;
-}
-
-/* ── Separator ───────────────────────────────────────────────── */
-.separator {
-  height: 0.5px;
-  background: var(--separator);
-  margin: 0 14px;
-}
-
-/* ── Exercise list ───────────────────────────────────────────── */
-.exerciseList {
-  padding: 10px 14px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.exRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.exIcon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--bg-elevated);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.exText {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.3;
-}
-
-.exSets {
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.moreEx {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--accent);
-  font-weight: 600;
-  padding: 2px 0;
-  letter-spacing: -0.1px;
-}
-
-/* ── Post actions ────────────────────────────────────────────── */
-.postActions {
-  display: flex;
-  gap: 0;
-  padding: 8px 14px;
-  border-top: 0.5px solid var(--separator);
-}
-
-.actionBtn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-tertiary);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 12px 8px 0;
-  transition: color var(--transition-fast);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.actionBtn:hover { color: var(--text-secondary); }
-
-/* ── Comment row ─────────────────────────────────────────────── */
-.commentRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px 14px;
-  border-top: 0.5px solid var(--separator);
-}
-
-.commentAvatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.commentInput {
-  flex: 1;
-  background: var(--bg-elevated);
-  border-radius: 20px;
-  padding: 8px 14px;
-  font-size: 13px;
-  color: var(--text-tertiary);
-  border: 0.5px solid var(--border-color);
-  cursor: text;
-}
-
-.postCommentBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-/* ── States ──────────────────────────────────────────────────── */
-.loadingCenter {
+.loading {
   display: flex;
   justify-content: center;
-  padding: 60px 0;
+  padding: 80px 0;
 }
 
-.emptyState {
+.empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 80px 32px;
-  gap: 8px;
+  gap: 6px;
   text-align: center;
 }
+.emptyTitle { font-size: 17px; font-weight: 700; color: #fff; }
+.emptySub   { font-size: 14px; color: rgba(255,255,255,0.35); }
 
-.emptyTitle {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
+/* ── Workout list ─────────────────────────────────────────── */
+.list {
+  padding: 8px 0;
 }
 
-.emptySub {
-  font-size: 14px;
-  color: var(--text-tertiary);
+.item {
+  padding: 18px 20px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.07);
+  cursor: pointer;
+  animation: cardIn 0.25s ease both;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms ease;
+}
+.item:active { background: rgba(255,255,255,0.04); }
+.item:last-child { border-bottom: none; }
+
+.itemTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 5px;
+}
+
+.workoutName {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+}
+
+.timeAgo {
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.metaItem {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+}
+
+.metaDot {
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+}
+
+/* ── Exercise pills ───────────────────────────────────────── */
+.exercises {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.exPill {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.07);
+  border-radius: 20px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.exMore {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-radius: 20px;
+  padding: 4px 10px;
 }
