@@ -144,22 +144,3 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Delete button */
-.deleteBtn {
-  display: none;
-  position: absolute;
-  right: -6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  border-radius: var(--radius-full);
-  background: rgba(255,255,255,0.7);
-  border: 1px solid rgba(26,21,16,0.1);
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.row:hover .deleteBtn { display: flex; }

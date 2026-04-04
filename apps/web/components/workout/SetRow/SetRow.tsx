@@ -86,19 +86,6 @@ export function SetRow({ set, index, weId, prevSet, onUpdateField, onSave, onDel
         </svg>
       </button>
 
-      {/* Delete (long press or tap on saved set number area) */}
-      {set.isSaved && set.id && (
-        <button
-          className={styles.deleteBtn}
-          onClick={() => onDelete(set.id!)}
-          type="button"
-          aria-label="Delete set"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
-      )}
     </div>
   );
 }
