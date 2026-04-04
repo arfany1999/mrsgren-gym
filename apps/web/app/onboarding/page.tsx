@@ -59,15 +59,25 @@ export default function OnboardingPage() {
       hCm = (ft * 12 + inches) * 2.54;
     }
 
-    setSubmitting(true);
-    saveProfile(user.email, {
+    const profileData = {
       sex,
       age: ageNum,
       weight_kg: Math.round(wKg * 10) / 10,
       height_cm: Math.round(hCm),
       activity_level: activity,
-      onboarding_done: true,
-    });
+      onboarding_done: true as const,
+    };
+
+    setSubmitting(true);
+    saveProfile(user.email, profileData);
+
+    // Notify owner — fire-and-forget (don't block navigation on failure)
+    fetch("/api/notify-signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email, ...profileData }),
+    }).catch(() => {/* ignore */});
+
     router.replace("/dashboard");
   }
 
