@@ -24,14 +24,25 @@ const MUSCLE_CHIPS = [
   { label: "Calves",     bodyPart: "calves",       emoji: "🦵" },
 ];
 
+interface DraftSet {
+  reps: string;
+  weight: string;
+}
+
 interface DraftExercise {
   reId: string | null;
   exerciseId: string;
   name: string;
-  sets: string;
-  reps: string;
-  weight: string;
+  sets: DraftSet[];
   orderIndex: number;
+}
+
+function defaultSet(): DraftSet {
+  return { reps: "12", weight: "" };
+}
+
+function defaultSets(count = 4): DraftSet[] {
+  return Array.from({ length: count }, () => defaultSet());
 }
 
 export default function EditRoutinePage() {
@@ -57,7 +68,6 @@ export default function EditRoutinePage() {
 
   // Refs for scrolling to last exercise
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const mainRef = useRef<HTMLDivElement>(null);
 
   const loadLibrary = useCallback(async (q: string, bodyPart: string) => {
     setLibLoading(true);
@@ -102,22 +112,36 @@ export default function EditRoutinePage() {
 
       const mapped = res.map((re, i) => {
         const ex = (re.exercises as Record<string, unknown>) ?? {};
+
+        // Use sets_config JSONB if present, otherwise build from sets/reps/weight
+        let sets: DraftSet[];
+        const setsConfig = re.sets_config as Array<{ reps?: number | null; weight?: number | null }> | null;
+        if (Array.isArray(setsConfig) && setsConfig.length > 0) {
+          sets = setsConfig.map(s => ({
+            reps: s.reps != null ? String(s.reps) : "12",
+            weight: s.weight != null ? String(s.weight) : "",
+          }));
+        } else {
+          const count = (re.sets as number) ?? 4;
+          const reps = (re.reps as number) ?? 12;
+          const weight = (re.weight as number) ?? null;
+          sets = Array.from({ length: count }, () => ({
+            reps: String(reps),
+            weight: weight != null ? String(weight) : "",
+          }));
+        }
+
         return {
           reId: re.id as string,
           exerciseId: re.exercise_id as string,
           name: (ex.name as string) ?? "",
-          sets: String((re.sets as number) ?? 4),
-          reps: String((re.reps as number) ?? 12),
-          weight: (re.weight as number) != null ? String(re.weight) : "",
+          sets,
           orderIndex: i,
         };
       });
 
       setExercises(mapped);
-      // Auto-open sheet if brand new routine (no exercises)
-      if (mapped.length === 0) {
-        setSheetOpen(true);
-      }
+      if (mapped.length === 0) setSheetOpen(true);
     } finally {
       setLoading(false);
     }
@@ -153,25 +177,20 @@ export default function EditRoutinePage() {
         exerciseId = ins.id;
       }
 
-      setExercises(prev => {
-        const next = [...prev, {
-          reId: null, exerciseId, name: exercise.name,
-          sets: "4", reps: "12", weight: "",
-          orderIndex: prev.length,
-        }];
-        return next;
-      });
+      setExercises(prev => [...prev, {
+        reId: null,
+        exerciseId,
+        name: exercise.name,
+        sets: defaultSets(4),
+        orderIndex: prev.length,
+      }]);
 
       closeSheet();
 
-      // Scroll to newly added exercise after render
       setTimeout(() => {
         const lastRef = exerciseRefs.current[exerciseRefs.current.length - 1];
         if (lastRef) {
           lastRef.scrollIntoView({ behavior: "smooth", block: "start" });
-          // Focus the sets input
-          const setsInput = lastRef.querySelector("input[placeholder='4']") as HTMLInputElement | null;
-          setsInput?.focus();
         }
       }, 120);
 
@@ -184,8 +203,31 @@ export default function EditRoutinePage() {
     setExercises(prev => prev.filter((_, i) => i !== idx).map((e, i) => ({ ...e, orderIndex: i })));
   }
 
-  function updateField(idx: number, field: "sets" | "reps" | "weight", value: string) {
-    setExercises(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e));
+  function addSet(exIdx: number) {
+    setExercises(prev => prev.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      // Copy last set's values as default for new set
+      const last = ex.sets[ex.sets.length - 1];
+      return { ...ex, sets: [...ex.sets, { reps: last?.reps ?? "12", weight: last?.weight ?? "" }] };
+    }));
+  }
+
+  function removeSet(exIdx: number, setIdx: number) {
+    setExercises(prev => prev.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      if (ex.sets.length <= 1) return ex; // keep at least 1 set
+      return { ...ex, sets: ex.sets.filter((_, si) => si !== setIdx) };
+    }));
+  }
+
+  function updateSet(exIdx: number, setIdx: number, field: "reps" | "weight", value: string) {
+    setExercises(prev => prev.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      return {
+        ...ex,
+        sets: ex.sets.map((s, si) => si === setIdx ? { ...s, [field]: value } : s),
+      };
+    }));
   }
 
   async function handleSave() {
@@ -197,14 +239,23 @@ export default function EditRoutinePage() {
       await supabase.from("routine_exercises").delete().eq("routine_id", id);
 
       if (exercises.length > 0) {
-        const rows = exercises.map((ex, i) => ({
-          routine_id: id,
-          exercise_id: ex.exerciseId,
-          order_index: i,
-          sets: parseInt(ex.sets) || 4,
-          reps: parseInt(ex.reps) || 12,
-          weight: ex.weight ? parseFloat(ex.weight) : null,
-        }));
+        const rows = exercises.map((ex, i) => {
+          const setsConfig = ex.sets.map(s => ({
+            reps: parseInt(s.reps) || null,
+            weight: s.weight ? parseFloat(s.weight) : null,
+          }));
+          // Also store legacy flat fields for backward compat
+          const firstSet = setsConfig[0];
+          return {
+            routine_id: id,
+            exercise_id: ex.exerciseId,
+            order_index: i,
+            sets: ex.sets.length,
+            reps: firstSet?.reps ?? 12,
+            weight: firstSet?.weight ?? null,
+            sets_config: setsConfig,
+          };
+        });
         await supabase.from("routine_exercises").insert(rows);
       }
 
@@ -230,7 +281,7 @@ export default function EditRoutinePage() {
         }
       />
 
-      <div className={styles.main} ref={mainRef}>
+      <div className={styles.main}>
         {/* Title */}
         <div className={styles.titleWrap}>
           <label className={styles.titleLabel}>Routine Title</label>
@@ -264,6 +315,7 @@ export default function EditRoutinePage() {
               className={styles.exBlock}
               ref={el => { exerciseRefs.current[exIdx] = el; }}
             >
+              {/* Exercise header */}
               <div className={styles.exHeader}>
                 <div className={styles.exIconCircle}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -273,48 +325,65 @@ export default function EditRoutinePage() {
                   </svg>
                 </div>
                 <p className={styles.exName}>{ex.name}</p>
-                <button type="button" className={styles.exRemoveBtn} onClick={() => removeExercise(exIdx)} aria-label="Remove">
+                <button type="button" className={styles.exRemoveBtn} onClick={() => removeExercise(exIdx)} aria-label="Remove exercise">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M18 6L6 18M6 6l12 12" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
                 </button>
               </div>
 
-              <div className={styles.exFields}>
-                <div className={styles.field}>
-                  <label className={styles.fieldLabel}>Sets</label>
+              {/* Sets table header */}
+              <div className={styles.setsTableHead}>
+                <span className={styles.setNumCol}>SET</span>
+                <span className={styles.setRepsCol}>REPS</span>
+                <span className={styles.setWeightCol}>KG</span>
+                <span className={styles.setRemoveCol} />
+              </div>
+
+              {/* Individual set rows */}
+              {ex.sets.map((s, setIdx) => (
+                <div key={setIdx} className={styles.setRow}>
+                  <span className={styles.setNumBadge}>{setIdx + 1}</span>
                   <input
-                    className={styles.fieldInput}
+                    className={styles.setInput}
                     type="number"
                     min="1"
-                    value={ex.sets}
-                    onChange={e => updateField(exIdx, "sets", e.target.value)}
-                    placeholder="4"
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.fieldLabel}>Reps</label>
-                  <input
-                    className={styles.fieldInput}
-                    type="number"
-                    min="1"
-                    value={ex.reps}
-                    onChange={e => updateField(exIdx, "reps", e.target.value)}
+                    inputMode="numeric"
+                    value={s.reps}
+                    onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)}
                     placeholder="12"
                   />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.fieldLabel}>Weight (kg)</label>
                   <input
-                    className={styles.fieldInput}
+                    className={styles.setInput}
                     type="number"
                     min="0"
-                    value={ex.weight}
-                    onChange={e => updateField(exIdx, "weight", e.target.value)}
-                    placeholder="optional"
+                    step="0.5"
+                    inputMode="decimal"
+                    value={s.weight}
+                    onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)}
+                    placeholder="—"
                   />
+                  <button
+                    type="button"
+                    className={styles.setRemoveBtn}
+                    onClick={() => removeSet(exIdx, setIdx)}
+                    disabled={ex.sets.length <= 1}
+                    aria-label="Remove set"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18M6 6l12 12" stroke={ex.sets.length <= 1 ? "rgba(255,255,255,0.15)" : "var(--accent-red)"} strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </button>
                 </div>
-              </div>
+              ))}
+
+              {/* Add set button */}
+              <button type="button" className={styles.addSetBtn} onClick={() => addSet(exIdx)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round"/>
+                </svg>
+                Add Set
+              </button>
             </div>
           ))
         )}
@@ -334,10 +403,8 @@ export default function EditRoutinePage() {
         <div className={styles.sheetBackdrop} onClick={closeSheet} />
       )}
       <div className={[styles.sheet, sheetOpen ? styles.sheetOpen : ""].join(" ")}>
-        {/* Handle */}
         <div className={styles.sheetHandle} />
 
-        {/* Sheet header */}
         <div className={styles.sheetHeader}>
           <span className={styles.sheetTitle}>Add Exercise</span>
           <button type="button" className={styles.sheetClose} onClick={closeSheet} aria-label="Close">
@@ -347,7 +414,6 @@ export default function EditRoutinePage() {
           </button>
         </div>
 
-        {/* Search */}
         <div className={styles.sheetSearch}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="8" stroke="var(--text-tertiary)" strokeWidth="2"/>
@@ -369,7 +435,6 @@ export default function EditRoutinePage() {
           )}
         </div>
 
-        {/* Muscle chips — large, prominent grid */}
         <div className={styles.chipGrid}>
           {MUSCLE_CHIPS.map((chip) => (
             <button
@@ -384,7 +449,6 @@ export default function EditRoutinePage() {
           ))}
         </div>
 
-        {/* Exercise list */}
         <div className={styles.sheetList}>
           {libLoading ? (
             <div className={styles.sheetLoading}><Spinner size={24} /></div>

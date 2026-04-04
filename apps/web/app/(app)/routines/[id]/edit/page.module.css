@@ -133,42 +133,95 @@
   display: flex; align-items: center; flex-shrink: 0;
 }
 
-/* ── Sets/Reps/Weight fields ─────────────────────────────────── */
-.exFields {
+/* ── Sets table ──────────────────────────────────────────────── */
+.setsTableHead {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  padding: 0 14px 14px;
+  grid-template-columns: 38px 1fr 1fr 32px;
+  gap: 6px;
+  padding: 6px 14px 4px;
+  align-items: center;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.fieldLabel {
+.setNumCol,
+.setRepsCol,
+.setWeightCol {
   font-size: 10px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+.setNumCol { text-align: left; }
+.setRemoveCol { width: 32px; }
+
+/* Individual set row */
+.setRow {
+  display: grid;
+  grid-template-columns: 38px 1fr 1fr 32px;
+  gap: 6px;
+  padding: 5px 14px;
+  align-items: center;
+}
+.setRow:last-of-type { padding-bottom: 4px; }
+
+.setNumBadge {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.07);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
 }
 
-.fieldInput {
+.setInput {
   background: rgba(255,255,255,0.07);
   border: 1.5px solid transparent;
   border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 16px;
+  padding: 8px 6px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   outline: none;
   width: 100%;
   text-align: center;
+  min-width: 0;
 }
-.fieldInput::placeholder { color: var(--text-tertiary); font-weight: 400; font-size: 13px; }
-.fieldInput:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); }
+.setInput::placeholder { color: rgba(255,255,255,0.2); font-weight: 400; font-size: 13px; }
+.setInput:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); }
+
+.setRemoveBtn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.setRemoveBtn:disabled { cursor: default; }
+
+/* Add set button */
+.addSetBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(255,255,255,0.03);
+  border: none;
+  border-top: 0.5px solid rgba(255,255,255,0.06);
+  border-radius: 0 0 16px 16px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.addSetBtn:hover { background: rgba(58,123,255,0.07); }
+.addSetBtn:active { background: rgba(58,123,255,0.12); }
 
 /* ── Add Exercise button ─────────────────────────────────────── */
 .addExBtn {
