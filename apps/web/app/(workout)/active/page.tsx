@@ -42,13 +42,21 @@ export default function ActiveWorkoutPage() {
   // Report state
   const [report, setReport] = useState<{ workoutId: string; durationMins: number; dayNumber: number } | null>(null);
   const startedAtRef = useRef<string | null>(null);
+  const workoutTitleRef = useRef<string>("");
+  const workoutExercisesRef = useRef(exercises);
 
-  // Track when workout started
+  // Track when workout started and save title/exercises for report
   useEffect(() => {
     if (activeWorkout?.startedAt && !startedAtRef.current) {
       startedAtRef.current = activeWorkout.startedAt;
     }
-  }, [activeWorkout?.startedAt]);
+    if (activeWorkout?.title) workoutTitleRef.current = activeWorkout.title;
+  }, [activeWorkout?.startedAt, activeWorkout?.title]);
+
+  // Keep exercises ref up to date for report
+  useEffect(() => {
+    if (exercises.length > 0) workoutExercisesRef.current = exercises;
+  }, [exercises]);
 
   useEffect(() => {
     if (!activeWorkout && !getActiveWorkoutId() && !finishing && !done) {
@@ -67,7 +75,7 @@ export default function ActiveWorkoutPage() {
     [exercises]
   );
 
-  if (!activeWorkout) return null;
+  if (!activeWorkout && !report) return null;
 
   async function handleFinish() {
     setFinishing(true);
@@ -121,8 +129,8 @@ export default function ActiveWorkoutPage() {
   if (report) {
     return (
       <WorkoutReport
-        title={activeWorkout.title}
-        exercises={exercises}
+        title={workoutTitleRef.current || activeWorkout?.title || "Workout"}
+        exercises={workoutExercisesRef.current.length > 0 ? workoutExercisesRef.current : exercises}
         durationMins={report.durationMins}
         dayNumber={report.dayNumber}
         weightKg={userWeightKg}
@@ -143,7 +151,7 @@ export default function ActiveWorkoutPage() {
           Discard
         </button>
         <div className={styles.titleWrapper}>
-          <span className={styles.workoutName}>{activeWorkout.title}</span>
+          <span className={styles.workoutName}>{activeWorkout?.title}</span>
           <WorkoutTimer />
         </div>
         <Button variant="primary" size="sm" onClick={handleFinish} loading={finishing}>

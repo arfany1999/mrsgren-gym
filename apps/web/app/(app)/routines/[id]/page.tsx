@@ -244,14 +244,14 @@ function mapRoutine(row: Record<string, unknown>): Routine {
       .sort((a, b) => ((a.order_index ?? a.order ?? 0) as number) - ((b.order_index ?? b.order ?? 0) as number))
       .map((re) => {
         const ex = (re.exercises as Record<string, unknown>) ?? {};
-        const setsCount = (re.sets as number) ?? 3;
-        const defaultReps = (re.reps as number) ?? null;
-        const defaultWeight = (re.weight as number) ?? null;
-        const setsConfig = Array.from({ length: setsCount }, () => ({
-          setType: "normal" as const,
-          reps: defaultReps,
-          weightKg: defaultWeight,
-        }));
+        const rawConfig = re.sets_config as Array<Record<string, unknown>> | null;
+        const setsConfig = Array.isArray(rawConfig) && rawConfig.length > 0
+          ? rawConfig.map(s => ({
+              setType: "normal" as const,
+              reps: (s.reps as number) ?? null,
+              weightKg: (s.weight as number) ?? null,
+            }))
+          : Array.from({ length: 3 }, () => ({ setType: "normal" as const, reps: null, weightKg: null }));
         return {
           id: re.id as string,
           routineId: re.routine_id as string,

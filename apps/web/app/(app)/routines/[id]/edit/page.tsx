@@ -60,7 +60,7 @@ const COL_LABELS: Record<MeasurementType, string[]> = {
 
 export default function EditRoutinePage() {
   const { id } = useParams<{ id: string }>();
-  const { supabase } = useAuth();
+  const { supabase, user } = useAuth();
   const router = useRouter();
 
   const [title, setTitle]       = useState("");
@@ -96,7 +96,7 @@ export default function EditRoutinePage() {
     try {
       const { data, error: err } = await supabase
         .from("routines")
-        .select("*, routine_exercises(*, exercises(id, name, muscle_group, measurement_type))")
+        .select("*, routine_exercises(*, exercises(*))")
         .eq("id", id)
         .single();
       if (err || !data) { router.replace("/routines"); return; }
@@ -179,18 +179,16 @@ export default function EditRoutinePage() {
 
       if (existing?.id) {
         exerciseId = existing.id as string;
-        // Update measurement_type in case it was wrong
-        await supabase
-          .from("exercises")
-          .update({ measurement_type: def.type, muscle_group: def.muscle })
-          .eq("id", exerciseId);
       } else {
-        const { data: ins } = await supabase
+        const { data: ins, error: insErr } = await supabase
           .from("exercises")
-          .insert({ name: def.name, muscle_group: def.muscle, measurement_type: def.type })
+          .insert({ name: def.name, muscle_group: def.muscle })
           .select("id")
           .single();
-        if (!ins) { setError("Could not add exercise"); return; }
+        if (insErr || !ins) {
+          setError(insErr?.message ?? "Could not add exercise");
+          return;
+        }
         exerciseId = ins.id as string;
       }
 
@@ -249,8 +247,11 @@ export default function EditRoutinePage() {
     setSaving(true);
     setError("");
     try {
-      await supabase.from("routines").update({ name: title.trim() }).eq("id", id);
-      await supabase.from("routine_exercises").delete().eq("routine_id", id);
+      const { error: nameErr } = await supabase.from("routines").update({ name: title.trim() }).eq("id", id);
+      if (nameErr) throw new Error(nameErr.message);
+
+      const { error: delErr } = await supabase.from("routine_exercises").delete().eq("routine_id", id);
+      if (delErr) throw new Error(delErr.message);
 
       if (exercises.length > 0) {
         const rows = exercises.map((ex, i) => {
@@ -260,21 +261,18 @@ export default function EditRoutinePage() {
             duration: s.duration ? (parseInt(s.duration) || null) : null,
             distance: s.distance ? (parseFloat(s.distance) || null) : null,
           }));
-          const first = setsConfig[0];
           return {
             routine_id: id,
             exercise_id: ex.exerciseId,
             order_index: i,
-            sets: ex.sets.length,
-            reps: first?.reps ?? null,
-            weight: first?.weight ?? null,
             sets_config: setsConfig,
           };
         });
-        await supabase.from("routine_exercises").insert(rows);
+        const { error: insertErr } = await supabase.from("routine_exercises").insert(rows);
+        if (insertErr) throw new Error(insertErr.message);
       }
 
-      router.replace(`/routines/${id}`);
+      router.replace("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {

@@ -68,7 +68,7 @@ export default function RoutinesPage() {
     try {
       const mine = await supabase
         .from("routines")
-        .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, order_index, sets, reps, weight, exercises(id, name, muscle_group))")
+        .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, \"order\", sets_config, exercises(id, name, muscle_group))")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       setMyRoutines((mine.data ?? []).map(mapRoutine));
@@ -80,7 +80,7 @@ export default function RoutinesPage() {
   async function loadLibrary() {
     const lib = await supabase
       .from("routines")
-      .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, order_index, sets, reps, weight, exercises(id, name, muscle_group))")
+      .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, \"order\", sets_config, exercises(id, name, muscle_group))")
       .neq("user_id", user!.id);
     setLibrary(lib.error ? [] : (lib.data ?? []).map(mapRoutine));
   }
@@ -117,7 +117,7 @@ export default function RoutinesPage() {
 
       const { data: newRoutine, error } = await supabase
         .from("routines")
-        .insert({ user_id: user?.id, name: ((src.name as string) ?? (src.title as string) ?? "Routine"), description: src.description ?? null })
+        .insert({ user_id: user?.id, name: ((src.name as string) ?? "Routine"), description: src.description ?? null })
         .select()
         .single();
 
@@ -129,8 +129,8 @@ export default function RoutinesPage() {
           res.map((re, i) => ({
             routine_id: newRoutine.id,
             exercise_id: re.exercise_id,
-            order_index: (re.order_index ?? re.order ?? i) as number,
-            sets: (re.sets ?? 3) as number,
+            order_index: ((re.order_index ?? re["order"]) ?? i) as number,
+            sets_config: (re.sets_config ?? []) as unknown[],
           }))
         );
       }

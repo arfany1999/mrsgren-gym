@@ -251,15 +251,17 @@ function mapWorkout(row: Record<string, unknown>): Workout {
           isCustom: (ex.is_custom as boolean) ?? false,
           createdByUserId: (ex.user_id as string) ?? null,
         },
-        sets: sets.map((s) => ({
-          id: s.id as string,
-          workoutExerciseId: s.workout_exercise_id as string,
-          reps: (s.reps as number) ?? null,
-          weightKg: (s.weight as number) ?? null,
-          setType: (s.set_type as SetType) ?? "normal",
-          rpe: (s.rpe as number) ?? null,
-          createdAt: "",
-        })),
+        sets: sets
+          .filter((s) => (s.is_completed as boolean) !== false)
+          .map((s) => ({
+            id: s.id as string,
+            workoutExerciseId: s.workout_exercise_id as string,
+            reps: (s.reps as number) ?? null,
+            weightKg: (s.weight as number) ?? null,
+            setType: (s.set_type as SetType) ?? "normal",
+            rpe: (s.rpe as number) ?? null,
+            createdAt: "",
+          })),
       };
     }),
   };

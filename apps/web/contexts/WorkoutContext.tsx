@@ -181,7 +181,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   async function fetchWorkoutExercises(workoutId: string): Promise<ActiveExercise[]> {
     const { data: wes } = await supabase
       .from("workout_exercises")
-      .select("id, exercise_id, order_index, exercises(id, name, muscle_group, measurement_type)")
+      .select("id, exercise_id, order_index, exercises(id, name, muscle_group)")
       .eq("workout_id", workoutId)
       .order("order_index");
 
@@ -208,17 +208,25 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         name: exName,
         muscleGroups: parseMuscleGroup(exercise?.muscle_group),
         measurementType,
-        sets: weSets.map((s: Record<string, unknown>) => ({
-          id: s.id as string,
-          reps: s.reps !== null ? String(s.reps) : "",
-          weightKg: s.weight !== null ? String(s.weight) : "",
-          duration: s.duration_seconds !== null ? String(s.duration_seconds) : "",
-          distance: s.distance_km !== null ? String(s.distance_km) : "",
-          setType: (s.set_type as SetType) ?? "normal",
-          rpe: (s.rpe as number) ?? undefined,
-          isPr: (s.is_pr as boolean) ?? false,
-          isSaved: (s.is_completed as boolean) ?? false,
-        })),
+        sets: weSets.map((s: Record<string, unknown>) => {
+          // For cardio: duration (mins) is stored in `reps`, distance (km) in `weight`
+          const isCardioSet = measurementType === "cardio";
+          return {
+            id: s.id as string,
+            reps: isCardioSet ? "" : (s.reps !== null ? String(s.reps) : ""),
+            weightKg: isCardioSet ? "" : (s.weight !== null ? String(s.weight) : ""),
+            duration: isCardioSet
+              ? (s.reps !== null ? String(s.reps) : "")
+              : (s.duration_seconds != null ? String(s.duration_seconds) : ""),
+            distance: isCardioSet
+              ? (s.weight !== null ? String(s.weight) : "")
+              : (s.distance_km != null ? String(s.distance_km) : ""),
+            setType: (s.set_type as SetType) ?? "normal",
+            rpe: (s.rpe as number) ?? undefined,
+            isPr: (s.is_pr as boolean) ?? false,
+            isSaved: (s.is_completed as boolean) ?? false,
+          };
+        }),
         previousSets: [] as Array<{ reps: string; weightKg: string }>,
       };
     });
@@ -283,7 +291,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           supabase.from("routines").select("name").eq("id", routineId).single(),
           supabase
             .from("routine_exercises")
-            .select("exercise_id, order_index, sets, reps, weight")
+            .select("exercise_id, order_index, sets_config, exercises(id, name, muscle_group)")
             .eq("routine_id", routineId)
             .order("order_index"),
         ]);
@@ -297,40 +305,53 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           const { data: insertedWEs } = await supabase
             .from("workout_exercises")
             .insert(
-              routineExercises.map((re: Record<string, unknown>) => ({
+              routineExercises.map((re: Record<string, unknown>, idx: number) => ({
                 workout_id: workout.id,
                 exercise_id: re.exercise_id,
-                order_index: re.order_index,
+                order_index: (re.order_index ?? idx) as number,
               }))
             )
             .select("id, exercise_id, order_index");
 
-          // Pre-create workout_sets from reps/weight so user just ticks them off
+          // Pre-create workout_sets from sets_config so user just ticks them off
           if (insertedWEs && insertedWEs.length > 0) {
             const allSetRows: Array<Record<string, unknown>> = [];
             for (const we of insertedWEs as Array<Record<string, unknown>>) {
               const re = routineExercises.find(
-                (r: Record<string, unknown>) =>
-                  r.exercise_id === we.exercise_id && r.order_index === we.order_index
+                (r: Record<string, unknown>) => r.exercise_id === we.exercise_id
               );
               if (!re) continue;
-              const setsCount = (re.sets as number) ?? 3;
-              const defaultReps = (re.reps as number) ?? null;
-              const defaultWeight = (re.weight as number) ?? null;
 
-              for (let idx = 0; idx < setsCount; idx++) {
+              const setsConfig = re.sets_config as Array<Record<string, unknown>> | null;
+              const setsArr: Record<string, unknown>[] = Array.isArray(setsConfig) && setsConfig.length > 0
+                ? setsConfig
+                : Array.from({ length: 3 }, (): Record<string, unknown> => ({}));
+
+              // Determine if this exercise is cardio (duration/distance stored in reps/weight)
+              const reEx = (re.exercises as unknown as Record<string, unknown>) ?? {};
+              const exNameForType = (reEx.name as string) ?? "";
+              const isCardioExercise = getMeasurementType(exNameForType) === "cardio";
+
+              setsArr.forEach((s, idx) => {
                 allSetRows.push({
                   workout_exercise_id: we.id,
-                  reps: defaultReps,
-                  weight: defaultWeight,
+                  // Cardio: store duration (mins) in reps, distance (km) in weight
+                  reps: isCardioExercise
+                    ? ((s.duration as number) ?? null)
+                    : ((s.reps as number) ?? null),
+                  weight: isCardioExercise
+                    ? ((s.distance as number) ?? null)
+                    : ((s.weight as number) ?? null),
                   set_type: "normal",
+                  is_pr: false,
                   is_completed: false,
                   order_index: idx,
                 });
-              }
+              });
             }
             if (allSetRows.length > 0) {
-              await supabase.from("workout_sets").insert(allSetRows);
+              const { error: setsInsertErr } = await supabase.from("workout_sets").insert(allSetRows);
+              if (setsInsertErr) console.error("workout_sets insert error:", setsInsertErr.message);
             }
           }
         }
@@ -350,17 +371,33 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const finishWorkout = useCallback(async () => {
     if (!activeWorkout) return null;
+
+    const finishedAt = new Date().toISOString();
+    const durationSecs = Math.floor(
+      (new Date(finishedAt).getTime() - new Date(activeWorkout.startedAt).getTime()) / 1000
+    );
+
+    // Compute total volume from completed sets
+    const totalVolume = exercises.reduce((sum, e) =>
+      sum + e.sets.filter(s => s.isSaved).reduce((v, s) =>
+        v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0);
+
     await supabase
       .from("workouts")
-      .update({ finished_at: new Date().toISOString() })
+      .update({
+        finished_at: finishedAt,
+        duration_secs: durationSecs,
+        total_volume: totalVolume > 0 ? Math.round(totalVolume) : null,
+      })
       .eq("id", activeWorkout.id);
+
     const finishedId = activeWorkout.id;
     stopTimer();
     clearActiveWorkoutId();
     setActiveWorkout(null);
     setExercises([]);
     return finishedId;
-  }, [activeWorkout, supabase]);
+  }, [activeWorkout, exercises, supabase]);
 
   const discardWorkout = useCallback(async () => {
     if (!activeWorkout) return;
@@ -525,11 +562,16 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       const set = exercise.sets[idx];
       if (!set) return;
 
-      const reps = parseInt(set.reps) || null;
-      const weightKg =
-        parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : null;
-      const durationSeconds = parseInt(set.duration) || null;
+      const isCardio = exercise.measurementType === "cardio";
+      const durationMins = parseFloat(set.duration) || null;
       const distanceKm = parseFloat(set.distance) || null;
+
+      // Cardio: store duration (mins) in `reps`, distance (km) in `weight`
+      // since duration_seconds/distance_km columns don't exist in live DB
+      const reps = isCardio ? null : (parseInt(set.reps) || null);
+      const weightKg = isCardio ? null : (parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : null);
+      const dbReps = isCardio ? durationMins : reps;
+      const dbWeight = isCardio ? distanceKm : weightKg;
 
       let savedSetId = set.id;
 
@@ -537,7 +579,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         // Pre-created set from routine — just mark completed + update values
         await supabase
           .from("workout_sets")
-          .update({ reps, weight: weightKg, duration_seconds: durationSeconds, distance_km: distanceKm, is_completed: true })
+          .update({ reps: dbReps, weight: dbWeight, is_completed: true })
           .eq("id", set.id);
       } else {
         // Manually added set — insert new row
@@ -547,10 +589,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           .from("workout_sets")
           .insert({
             workout_exercise_id: weId,
-            reps,
-            weight: weightKg,
-            duration_seconds: durationSeconds,
-            distance_km: distanceKm,
+            reps: dbReps,
+            weight: dbWeight,
             set_type: set.setType,
             rpe: set.rpe ?? null,
             is_pr: false,
