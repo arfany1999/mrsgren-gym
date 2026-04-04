@@ -1,21 +1,25 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { ExerciseBlock } from "@/components/workout/ExerciseBlock/ExerciseBlock";
 import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
 import { WorkoutTimer } from "@/components/workout/WorkoutTimer/WorkoutTimer";
 import { PRBanner } from "@/components/workout/PRBanner/PRBanner";
+import { WorkoutReport } from "@/components/workout/WorkoutReport/WorkoutReport";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
 import { getActiveWorkoutId } from "@/lib/storage";
+import { getProfile } from "@/lib/gymProfile";
 import type { ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./page.module.css";
 
 export default function ActiveWorkoutPage() {
-  const router = useRouter();
+  const router  = useRouter();
+  const { user } = useAuth();
   const {
     activeWorkout,
     exercises,
@@ -29,11 +33,22 @@ export default function ActiveWorkoutPage() {
     discardWorkout,
   } = useWorkout();
 
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerOpen,  setPickerOpen]  = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
-  const [finishing, setFinishing] = useState(false);
-  const [discarding, setDiscarding] = useState(false);
-  const [done, setDone] = useState(false);
+  const [finishing,   setFinishing]   = useState(false);
+  const [discarding,  setDiscarding]  = useState(false);
+  const [done,        setDone]        = useState(false);
+
+  // Report state
+  const [report, setReport] = useState<{ workoutId: string; durationMins: number } | null>(null);
+  const startedAtRef = useRef<string | null>(null);
+
+  // Track when workout started
+  useEffect(() => {
+    if (activeWorkout?.startedAt && !startedAtRef.current) {
+      startedAtRef.current = activeWorkout.startedAt;
+    }
+  }, [activeWorkout?.startedAt]);
 
   useEffect(() => {
     if (!activeWorkout && !getActiveWorkoutId() && !finishing && !done) {
@@ -47,8 +62,8 @@ export default function ActiveWorkoutPage() {
   );
   const totalVolume = useMemo(
     () => exercises.reduce((sum, e) =>
-      sum + e.sets.filter(s => s.isSaved).reduce((v, s) => v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0
-    ),
+      sum + e.sets.filter(s => s.isSaved).reduce((v, s) =>
+        v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0),
     [exercises]
   );
 
@@ -57,10 +72,16 @@ export default function ActiveWorkoutPage() {
   async function handleFinish() {
     setFinishing(true);
     try {
+      // Calculate duration before finishing
+      const startedAt = startedAtRef.current ?? activeWorkout!.startedAt;
+      const durationMins = startedAt
+        ? (Date.now() - new Date(startedAt).getTime()) / 60_000
+        : 30;
+
       const id = await finishWorkout();
       if (id) {
         setDone(true);
-        router.replace(`/workouts/${id}?new=1`);
+        setReport({ workoutId: id, durationMins: Math.max(durationMins, 1) });
       } else {
         router.replace("/");
       }
@@ -77,6 +98,27 @@ export default function ActiveWorkoutPage() {
       setDiscarding(false);
       setDiscardOpen(false);
     }
+  }
+
+  function handleReportDone(id: string) {
+    router.replace(`/workouts/${id}?new=1`);
+  }
+
+  // User's body weight for calorie calc (fallback = 75 kg)
+  const userWeightKg = (user?.email ? getProfile(user.email)?.weight_kg : null) ?? 75;
+
+  // ── Show calorie report after finish ──────────────────────────
+  if (report) {
+    return (
+      <WorkoutReport
+        title={activeWorkout.title}
+        exercises={exercises}
+        durationMins={report.durationMins}
+        weightKg={userWeightKg}
+        workoutId={report.workoutId}
+        onDone={handleReportDone}
+      />
+    );
   }
 
   return (
@@ -148,7 +190,6 @@ export default function ActiveWorkoutPage() {
           Add Exercise
         </button>
 
-        {/* Bottom Finish button */}
         {exercises.length > 0 && (
           <div className={styles.bottomFinish}>
             <Button variant="primary" fullWidth size="lg" onClick={handleFinish} loading={finishing}>
@@ -172,7 +213,6 @@ export default function ActiveWorkoutPage() {
           <Button variant="danger" onClick={handleDiscard} loading={discarding} fullWidth>Discard</Button>
         </div>
       </Modal>
-
     </div>
   );
 }

@@ -5,17 +5,25 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/layout/AppShell/AppShell";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { getProfile } from "@/lib/gymProfile";
 import styles from "./layout.module.css";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/login");
+      return;
     }
-  }, [status, router]);
+    if (status === "authenticated" && user?.email) {
+      const profile = getProfile(user.email);
+      if (!profile) {
+        router.replace("/onboarding");
+      }
+    }
+  }, [status, user, router]);
 
   if (status === "loading") {
     return (

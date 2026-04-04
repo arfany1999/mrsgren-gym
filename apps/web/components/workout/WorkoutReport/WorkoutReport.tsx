@@ -1,242 +1,211 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo } from "react";
 import type { ActiveExercise } from "@/contexts/WorkoutContext";
+import { estimateCalories } from "@/lib/gymProfile";
 import styles from "./WorkoutReport.module.css";
 
 interface WorkoutReportProps {
   title: string;
-  elapsedSeconds: number;
   exercises: ActiveExercise[];
+  durationMins: number;   // total workout duration
+  weightKg: number;       // user's body weight for MET calc
   workoutId: string;
   onDone: (id: string) => void;
 }
 
-const HYPE = [
-  "Well Done G! 💪",
-  "Beast Mode: Unlocked 🔥",
-  "You Crushed It! 🏆",
-  "Another Day, Another Win ⚡",
-  "That's What Champions Do! 🥇",
-  "Keep Grinding! 💎",
-];
-
-function pickHype(id: string): string {
-  const idx = id.charCodeAt(0) % HYPE.length;
-  return HYPE[idx] ?? "Well Done! 💪";
+function formatDuration(mins: number): string {
+  if (mins < 1) return "< 1 min";
+  if (mins < 60) return `${Math.round(mins)} min`;
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-function fmt(secs: number) {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = secs % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
+function formatVolume(exercises: ActiveExercise[]): string {
+  const vol = exercises.reduce((sum, e) =>
+    sum + e.sets.filter(s => s.isSaved).reduce((v, s) =>
+      v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0);
+  return vol > 0 ? `${Math.round(vol).toLocaleString()} kg` : null as unknown as string;
 }
 
-export function WorkoutReport({ title, elapsedSeconds, exercises, workoutId, onDone }: WorkoutReportProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const totalSets = exercises.reduce((n, e) => n + e.sets.filter((s) => s.isSaved).length, 0);
-  const totalReps = exercises.reduce((n, e) => n + e.sets.filter((s) => s.isSaved).reduce((r, s) => r + (parseInt(s.reps) || 0), 0), 0);
-  const totalVolume = exercises.reduce((n, e) =>
-    n + e.sets.filter((s) => s.isSaved).reduce((v, s) => v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0
+export function WorkoutReport({
+  title, exercises, durationMins, weightKg, workoutId, onDone,
+}: WorkoutReportProps) {
+  const totalSets = useMemo(
+    () => exercises.reduce((sum, e) => sum + e.sets.filter(s => s.isSaved).length, 0),
+    [exercises]
   );
-  const hype = pickHype(workoutId);
 
-  async function handleShare() {
-    // Build a canvas image of the report card
-    const card = cardRef.current;
-    if (!card) return;
+  // Build per-exercise calorie rows
+  const exerciseRows = useMemo(() => {
+    const withSets = exercises.filter(ex => ex.sets.some(s => s.isSaved));
+    if (withSets.length === 0) return [];
 
-    const canvas = document.createElement("canvas");
-    const scale = 2;
-    canvas.width = 400 * scale;
-    canvas.height = 520 * scale;
-    const ctx = canvas.getContext("2d")!;
-    ctx.scale(scale, scale);
+    return withSets.map(ex => {
+      const savedSets = ex.sets.filter(s => s.isSaved);
+      const isCardio = ex.measurementType === "cardio";
+      const isTimed  = ex.measurementType === "timed";
 
-    // Background
-    const grad = ctx.createLinearGradient(0, 0, 0, 520);
-    grad.addColorStop(0, "#0d1117");
-    grad.addColorStop(1, "#0a1929");
-    ctx.fillStyle = grad;
-    ctx.roundRect(0, 0, 400, 520, 20);
-    ctx.fill();
-
-    // Top accent bar
-    ctx.fillStyle = "#34d399";
-    ctx.roundRect(20, 20, 360, 4, 2);
-    ctx.fill();
-
-    // Hype text
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 28px -apple-system, system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(hype, 200, 80);
-
-    // Workout title
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "16px -apple-system, system-ui, sans-serif";
-    ctx.fillText(title, 200, 112);
-
-    // Divider
-    ctx.strokeStyle = "rgba(255,255,255,0.1)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(40, 130);
-    ctx.lineTo(360, 130);
-    ctx.stroke();
-
-    // Stats
-    const stats = [
-      { label: "DURATION", value: fmt(elapsedSeconds) },
-      { label: "EXERCISES", value: String(exercises.length) },
-      { label: "SETS", value: String(totalSets) },
-      { label: "REPS", value: String(totalReps) },
-    ];
-    const colW = 400 / stats.length;
-    stats.forEach((stat, i) => {
-      const x = colW * i + colW / 2;
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 26px -apple-system, system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(stat.value, x, 185);
-      ctx.fillStyle = "#64748b";
-      ctx.font = "11px -apple-system, system-ui, sans-serif";
-      ctx.fillText(stat.label, x, 205);
-    });
-
-    if (totalVolume > 0) {
-      ctx.fillStyle = "#34d399";
-      ctx.font = "bold 18px -apple-system, system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(`${Math.round(totalVolume).toLocaleString()} kg total volume`, 200, 238);
-    }
-
-    // Exercise list
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(40, 255); ctx.lineTo(360, 255); ctx.stroke();
-
-    let y = 280;
-    exercises.slice(0, 5).forEach((ex) => {
-      const saved = ex.sets.filter((s) => s.isSaved);
-      if (saved.length === 0) return;
-      ctx.fillStyle = "#e2e8f0";
-      ctx.font = "14px -apple-system, system-ui, sans-serif";
-      ctx.textAlign = "left";
-      const name = ex.name.length > 28 ? ex.name.slice(0, 27) + "…" : ex.name;
-      ctx.fillText(name, 40, y);
-      ctx.fillStyle = "#34d399";
-      ctx.font = "bold 14px -apple-system, system-ui, sans-serif";
-      ctx.textAlign = "right";
-      ctx.fillText(`${saved.length} sets`, 360, y);
-      y += 28;
-    });
-    if (exercises.length > 5) {
-      ctx.fillStyle = "#64748b";
-      ctx.font = "12px -apple-system, system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(`+ ${exercises.length - 5} more exercises`, 200, y + 4);
-      y += 28;
-    }
-
-    // Footer
-    ctx.fillStyle = "#334155";
-    ctx.font = "12px -apple-system, system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("Tracked with GYM • gym.mrgren.store", 200, 500);
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], "workout.png", { type: "image/png" });
-      try {
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: hype,
-            text: `${title} — ${fmt(elapsedSeconds)} | ${exercises.length} exercises | ${totalSets} sets`,
-            files: [file],
-          });
-        } else if (navigator.share) {
-          await navigator.share({
-            title: hype,
-            text: `${title} — ${fmt(elapsedSeconds)} | ${exercises.length} exercises | ${totalSets} sets\n\ngym.mrgren.store`,
-          });
-        } else {
-          // Download fallback
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "workout.png";
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-      } catch {
-        // User cancelled share — that's fine
+      // Calculate effective duration for this exercise
+      let mins: number;
+      if (isCardio) {
+        // Use logged duration if available
+        const trackedMins = savedSets.reduce((sum, s) => sum + (parseFloat(s.duration) || 0), 0);
+        mins = trackedMins > 0 ? trackedMins : (durationMins / withSets.length);
+      } else if (isTimed) {
+        // Sum all set durations (they're in seconds)
+        const totalSec = savedSets.reduce((sum, s) => sum + (parseInt(s.duration) || 30), 0);
+        mins = totalSec / 60;
+      } else {
+        // Weight/bodyweight: split time proportionally by sets
+        const exSets = savedSets.length;
+        mins = totalSets > 0 ? (exSets / totalSets) * durationMins : durationMins / withSets.length;
       }
-    }, "image/png");
-  }
+
+      const calories = estimateCalories(weightKg, Math.max(mins, 1), ex.name, isCardio);
+
+      // Build a readable summary of what was done
+      let setSummary = "";
+      if (ex.measurementType === "weight_reps") {
+        setSummary = savedSets.map(s =>
+          `${s.weightKg || "—"}kg × ${s.reps || "—"}`).join(" · ");
+      } else if (ex.measurementType === "bodyweight_reps" || ex.measurementType === "reps_only") {
+        setSummary = savedSets.map(s => `${s.reps || "—"} reps`).join(" · ");
+      } else if (isTimed) {
+        setSummary = savedSets.map(s => `${s.duration || "—"}s`).join(" · ");
+      } else if (isCardio) {
+        setSummary = savedSets.map(s =>
+          `${s.duration || "—"} min${s.distance ? ` / ${s.distance} km` : ""}`
+        ).join("  •  ");
+      }
+
+      return { ex, savedSets, calories, setSummary, mins };
+    });
+  }, [exercises, durationMins, totalSets, weightKg]);
+
+  const totalCalories = useMemo(
+    () => exerciseRows.reduce((sum, r) => sum + r.calories, 0),
+    [exerciseRows]
+  );
+
+  const volume = formatVolume(exercises);
+  const totalExercises = exerciseRows.length;
 
   return (
     <div className={styles.overlay}>
-      <div className={styles.card} ref={cardRef}>
-        <div className={styles.accentBar} />
+      {/* ═══════════════════ HERO BANNER ═══════════════════ */}
+      <div className={styles.hero}>
+        {/* Animated gradient orbs */}
+        <div className={styles.orb1} />
+        <div className={styles.orb2} />
+        <div className={styles.orb3} />
 
-        <p className={styles.hype}>{hype}</p>
-        <p className={styles.workoutTitle}>{title}</p>
+        <div className={styles.heroInner}>
+          {/* Fire ring */}
+          <div className={styles.fireRing}>
+            <div className={styles.fireRingInner}>🔥</div>
+          </div>
 
-        <div className={styles.statsGrid}>
-          <div className={styles.statItem}>
-            <span className={styles.statVal}>{fmt(elapsedSeconds)}</span>
-            <span className={styles.statLbl}>Duration</span>
+          {/* Well done */}
+          <div className={styles.congratsBlock}>
+            <p className={styles.wellDone}>Well done, G!</p>
+            <p className={styles.tagline}>You crushed another session 💪</p>
           </div>
-          <div className={styles.statItem}>
-            <span className={styles.statVal}>{exercises.length}</span>
-            <span className={styles.statLbl}>Exercises</span>
+
+          {/* Giant calorie number */}
+          <div className={styles.calsHero}>
+            <div className={styles.calsRow}>
+              <span className={styles.calsNum}>{totalCalories.toLocaleString()}</span>
+            </div>
+            <span className={styles.calsLabel}>ESTIMATED KCAL BURNED</span>
           </div>
-          <div className={styles.statItem}>
-            <span className={styles.statVal}>{totalSets}</span>
-            <span className={styles.statLbl}>Sets</span>
-          </div>
-          <div className={styles.statItem}>
-            <span className={styles.statVal}>{totalReps}</span>
-            <span className={styles.statLbl}>Reps</span>
+
+          {/* Stat chips */}
+          <div className={styles.chips}>
+            <div className={styles.chip}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
+                <path d="M12 7v5l3 3" stroke="rgba(255,255,255,0.65)" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              {formatDuration(durationMins)}
+            </div>
+            <div className={styles.chip}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="9" width="4" height="6" rx="1" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
+                <rect x="17" y="9" width="4" height="6" rx="1" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
+                <rect x="7" y="10.5" width="10" height="3" rx="1.5" stroke="rgba(255,255,255,0.65)" strokeWidth="2"/>
+              </svg>
+              {totalExercises} exercise{totalExercises !== 1 ? "s" : ""}
+            </div>
+            <div className={styles.chip}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12l5 5L19 7" stroke="rgba(255,255,255,0.65)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {totalSets} sets
+            </div>
+            {volume && (
+              <div className={styles.chip}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z" stroke="rgba(255,255,255,0.65)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {volume}
+              </div>
+            )}
           </div>
         </div>
+      </div>
 
-        {totalVolume > 0 && (
-          <p className={styles.volume}>{Math.round(totalVolume).toLocaleString()} kg total volume</p>
-        )}
+      {/* ═══════════════════ BREAKDOWN ═══════════════════ */}
+      <div className={styles.breakdown}>
+        {/* Header */}
+        <div className={styles.bdHeader}>
+          <h2 className={styles.bdTitle}>Calorie Breakdown</h2>
+          <span className={styles.bdDisclaimer}>est. ±20–30%</span>
+        </div>
 
-        <div className={styles.divider} />
-
+        {/* Exercise cards */}
         <div className={styles.exList}>
-          {exercises.map((ex) => {
-            const saved = ex.sets.filter((s) => s.isSaved);
-            if (saved.length === 0) return null;
+          {exerciseRows.map(({ ex, savedSets, calories, setSummary }) => {
+            const initials = ex.name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
             return (
-              <div key={ex.weId} className={styles.exRow}>
-                <span className={styles.exName}>{ex.name}</span>
-                <span className={styles.exSets}>{saved.length} sets</span>
+              <div key={ex.weId} className={styles.exCard}>
+                <div className={styles.exAvatar}>{initials}</div>
+                <div className={styles.exInfo}>
+                  <p className={styles.exName}>{ex.name}</p>
+                  <p className={styles.exMeta}>
+                    {savedSets.length} set{savedSets.length !== 1 ? "s" : ""}
+                    {setSummary && <span className={styles.exDetail}> · {setSummary}</span>}
+                  </p>
+                </div>
+                <div className={styles.exCals}>
+                  <span className={styles.exCalNum}>{calories}</span>
+                  <span className={styles.exCalUnit}>kcal</span>
+                </div>
               </div>
             );
           })}
         </div>
 
-        <p className={styles.footer}>Tracked with GYM</p>
-      </div>
+        {/* Total row */}
+        <div className={styles.totalRow}>
+          <span className={styles.totalLabel}>Total burned</span>
+          <div className={styles.totalRight}>
+            <span className={styles.totalNum}>{totalCalories.toLocaleString()}</span>
+            <span className={styles.totalUnit}>kcal</span>
+          </div>
+        </div>
 
-      <div className={styles.actions}>
-        <button type="button" className={styles.shareBtn} onClick={handleShare}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <p className={styles.disclaimerNote}>
+          * Estimate only. Actual burn varies by body composition, heart rate, and intensity (±20–30%).
+        </p>
+
+        {/* CTA */}
+        <button className={styles.doneBtn} type="button" onClick={() => onDone(workoutId)}>
+          Back to Home
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          Share
-        </button>
-        <button type="button" className={styles.doneBtn} onClick={() => onDone(workoutId)}>
-          Done
         </button>
       </div>
     </div>
