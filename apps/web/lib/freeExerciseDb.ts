@@ -61,7 +61,7 @@ export async function browseExercises(opts: {
 
   const filtered = muscle
     ? all.filter((e) =>
-        [...e.primaryMuscles, ...e.secondaryMuscles].some((m) =>
+        [...(e.primaryMuscles ?? []), ...(e.secondaryMuscles ?? [])].some((m) =>
           m.toLowerCase().includes(muscle.toLowerCase())
         )
       )
@@ -81,7 +81,7 @@ export async function searchFreeExercises(query: string): Promise<FreeExercise[]
     (e) =>
       e.name.toLowerCase().includes(q) ||
       e.primaryMuscles.some((m) => m.toLowerCase().includes(q)) ||
-      e.equipment.toLowerCase().includes(q)
+      (e.equipment ?? "").toLowerCase().includes(q)
   );
 }
 
