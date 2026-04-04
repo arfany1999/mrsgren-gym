@@ -6,135 +6,133 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
-import { browseExercises, searchFreeExercises } from "@/lib/freeExerciseDb";
-import type { FreeExercise } from "@/lib/freeExerciseDb";
+import {
+  EXERCISES,
+  MUSCLE_GROUPS,
+  getMeasurementType,
+  type MeasurementType,
+} from "@/lib/exercises-data";
 import styles from "./page.module.css";
 
-const MUSCLE_CHIPS = [
-  { label: "All",        bodyPart: "",             emoji: "💪" },
-  { label: "Chest",      bodyPart: "chest",        emoji: "🫀" },
-  { label: "Back",       bodyPart: "lats",         emoji: "🔙" },
-  { label: "Shoulders",  bodyPart: "shoulders",    emoji: "🏋️" },
-  { label: "Biceps",     bodyPart: "biceps",       emoji: "💪" },
-  { label: "Triceps",    bodyPart: "triceps",      emoji: "🦾" },
-  { label: "Abs",        bodyPart: "abdominals",   emoji: "🎯" },
-  { label: "Quads",      bodyPart: "quadriceps",   emoji: "🦵" },
-  { label: "Hamstrings", bodyPart: "hamstrings",   emoji: "🦿" },
-  { label: "Glutes",     bodyPart: "glutes",       emoji: "🍑" },
-  { label: "Calves",     bodyPart: "calves",       emoji: "🦵" },
-];
-
+// ── Draft types ───────────────────────────────────────────────
 interface DraftSet {
   reps: string;
   weight: string;
+  duration: string; // seconds (timed) or minutes (cardio)
+  distance: string; // km (cardio)
 }
 
 interface DraftExercise {
   reId: string | null;
   exerciseId: string;
   name: string;
+  muscle: string;
+  measurementType: MeasurementType;
   sets: DraftSet[];
   orderIndex: number;
 }
 
-function defaultSet(): DraftSet {
-  return { reps: "12", weight: "" };
+// ── Set helpers ───────────────────────────────────────────────
+function emptySet(type: MeasurementType): DraftSet {
+  switch (type) {
+    case "timed":   return { reps: "", weight: "", duration: "30", distance: "" };
+    case "cardio":  return { reps: "", weight: "", duration: "30", distance: "5" };
+    default:        return { reps: "12", weight: "", duration: "", distance: "" };
+  }
 }
 
-function defaultSets(count = 4): DraftSet[] {
-  return Array.from({ length: count }, () => defaultSet());
+function defaultSets(type: MeasurementType): DraftSet[] {
+  const count = type === "cardio" ? 1 : type === "weight_reps" ? 4 : 3;
+  return Array.from({ length: count }, () => emptySet(type));
 }
+
+// Labels per measurement type
+const COL_LABELS: Record<MeasurementType, string[]> = {
+  weight_reps:     ["SET", "REPS", "KG"],
+  bodyweight_reps: ["SET", "REPS"],
+  reps_only:       ["SET", "REPS"],
+  timed:           ["SET", "SEC"],
+  cardio:          ["MIN", "KM"],
+};
 
 export default function EditRoutinePage() {
   const { id } = useParams<{ id: string }>();
   const { supabase } = useAuth();
   const router = useRouter();
 
-  const [title, setTitle] = useState("");
+  const [title, setTitle]       = useState("");
   const [exercises, setExercises] = useState<DraftExercise[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading]   = useState(true);
+  const [saving, setSaving]     = useState(false);
+  const [error, setError]       = useState("");
 
-  // Bottom sheet state
+  // Bottom sheet
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedMuscle, setSelectedMuscle] = useState("");
+  const [query, setQuery]         = useState("");
 
-  // Library state
-  const [libraryExercises, setLibraryExercises] = useState<FreeExercise[]>([]);
-  const [libLoading, setLibLoading] = useState(false);
-  const [libQuery, setLibQuery] = useState("");
-  const [libMuscle, setLibMuscle] = useState("");
-  const libSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Refs for scrolling to last exercise
+  // Scroll refs
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const loadLibrary = useCallback(async (q: string, bodyPart: string) => {
-    setLibLoading(true);
-    try {
-      if (q) {
-        const results = await searchFreeExercises(q);
-        setLibraryExercises(results);
-      } else {
-        const { exercises } = await browseExercises({ limit: 80, offset: 0, muscle: bodyPart || undefined });
-        setLibraryExercises(exercises);
-      }
-    } catch {
-      setLibraryExercises([]);
-    } finally {
-      setLibLoading(false);
-    }
-  }, []);
+  // ── Filtered exercise list ───────────────────────────────────
+  const filteredExercises = EXERCISES.filter(ex => {
+    const matchMuscle = !selectedMuscle || ex.muscle === selectedMuscle;
+    const matchQuery  = !query || ex.name.toLowerCase().includes(query.toLowerCase());
+    return matchMuscle && matchQuery;
+  });
 
-  useEffect(() => { loadLibrary("", ""); }, [loadLibrary]);
-
-  useEffect(() => {
-    if (libSearchTimer.current) clearTimeout(libSearchTimer.current);
-    if (!libQuery) { loadLibrary("", libMuscle); return; }
-    libSearchTimer.current = setTimeout(() => loadLibrary(libQuery, libMuscle), 300);
-    return () => { if (libSearchTimer.current) clearTimeout(libSearchTimer.current); };
-  }, [libQuery, libMuscle, loadLibrary]);
-
+  // ── Load existing routine ────────────────────────────────────
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error: err } = await supabase
         .from("routines")
-        .select("*, routine_exercises(*, exercises(*))")
+        .select("*, routine_exercises(*, exercises(id, name, muscle_group, measurement_type))")
         .eq("id", id)
         .single();
       if (err || !data) { router.replace("/routines"); return; }
 
-      setTitle((data.title as string) ?? (data.name as string) ?? "");
+      setTitle((data.name as string) ?? (data.title as string) ?? "");
+
       const res = ((data.routine_exercises as Record<string, unknown>[]) ?? [])
         .slice()
         .sort((a, b) => ((a.order_index ?? 0) as number) - ((b.order_index ?? 0) as number));
 
-      const mapped = res.map((re, i) => {
+      const mapped: DraftExercise[] = res.map((re, i) => {
         const ex = (re.exercises as Record<string, unknown>) ?? {};
+        const exName = (ex.name as string) ?? "";
+        const measurementType: MeasurementType =
+          (ex.measurement_type as MeasurementType) ?? getMeasurementType(exName);
 
-        // Use sets_config JSONB if present, otherwise build from sets/reps/weight
         let sets: DraftSet[];
-        const setsConfig = re.sets_config as Array<{ reps?: number | null; weight?: number | null }> | null;
+        const setsConfig = re.sets_config as Array<Record<string, unknown>> | null;
+
         if (Array.isArray(setsConfig) && setsConfig.length > 0) {
           sets = setsConfig.map(s => ({
-            reps: s.reps != null ? String(s.reps) : "12",
-            weight: s.weight != null ? String(s.weight) : "",
+            reps:     s.reps     != null ? String(s.reps)     : "",
+            weight:   s.weight   != null ? String(s.weight)   : "",
+            duration: s.duration != null ? String(s.duration) : "",
+            distance: s.distance != null ? String(s.distance) : "",
           }));
         } else {
+          // Legacy: build from flat fields
           const count = (re.sets as number) ?? 4;
-          const reps = (re.reps as number) ?? 12;
-          const weight = (re.weight as number) ?? null;
-          sets = Array.from({ length: count }, () => ({
-            reps: String(reps),
-            weight: weight != null ? String(weight) : "",
-          }));
+          sets = Array.from({ length: count }, () => emptySet(measurementType));
+          if (measurementType === "weight_reps") {
+            sets = sets.map(s => ({
+              ...s,
+              reps:   String((re.reps as number)   ?? 12),
+              weight: String((re.weight as number) ?? ""),
+            }));
+          }
         }
 
         return {
           reId: re.id as string,
           exerciseId: re.exercise_id as string,
-          name: (ex.name as string) ?? "",
+          name: exName,
+          muscle: (ex.muscle_group as string) ?? "",
+          measurementType,
           sets,
           orderIndex: i,
         };
@@ -149,56 +147,67 @@ export default function EditRoutinePage() {
 
   useEffect(() => { load(); }, [load]);
 
-  function openSheet() {
-    setLibQuery("");
-    setSheetOpen(true);
-  }
+  // ── Sheet helpers ────────────────────────────────────────────
+  function openSheet() { setQuery(""); setSheetOpen(true); }
+  function closeSheet() { setSheetOpen(false); }
 
-  function closeSheet() {
-    setSheetOpen(false);
-  }
-
-  async function handleAddFromLibrary(exercise: FreeExercise) {
-    setError("");
-    if (exercises.some(e => e.name.toLowerCase() === exercise.name.toLowerCase())) {
+  // ── Add exercise from picker ─────────────────────────────────
+  async function handleAdd(def: typeof EXERCISES[number]) {
+    if (exercises.some(e => e.name.toLowerCase() === def.name.toLowerCase())) {
       closeSheet();
       return;
     }
+    setError("");
     try {
       let exerciseId = "";
+      // Upsert exercise into DB (with correct measurement_type)
       const { data: existing } = await supabase
-        .from("exercises").select("id").ilike("name", exercise.name).limit(1).maybeSingle();
+        .from("exercises")
+        .select("id")
+        .ilike("name", def.name)
+        .limit(1)
+        .maybeSingle();
+
       if (existing?.id) {
-        exerciseId = existing.id;
+        exerciseId = existing.id as string;
+        // Update measurement_type in case it was wrong
+        await supabase
+          .from("exercises")
+          .update({ measurement_type: def.type, muscle_group: def.muscle })
+          .eq("id", exerciseId);
       } else {
         const { data: ins } = await supabase
-          .from("exercises").insert({ name: exercise.name, muscle_group: exercise.primaryMuscles[0] ?? "" }).select("id").single();
+          .from("exercises")
+          .insert({ name: def.name, muscle_group: def.muscle, measurement_type: def.type })
+          .select("id")
+          .single();
         if (!ins) { setError("Could not add exercise"); return; }
-        exerciseId = ins.id;
+        exerciseId = ins.id as string;
       }
 
-      setExercises(prev => [...prev, {
+      const newEx: DraftExercise = {
         reId: null,
         exerciseId,
-        name: exercise.name,
-        sets: defaultSets(4),
-        orderIndex: prev.length,
-      }]);
+        name: def.name,
+        muscle: def.muscle,
+        measurementType: def.type,
+        sets: defaultSets(def.type),
+        orderIndex: exercises.length,
+      };
 
+      setExercises(prev => [...prev, newEx]);
       closeSheet();
 
       setTimeout(() => {
-        const lastRef = exerciseRefs.current[exerciseRefs.current.length - 1];
-        if (lastRef) {
-          lastRef.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        const last = exerciseRefs.current[exerciseRefs.current.length - 1];
+        last?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 120);
-
     } catch {
       setError("Failed to add exercise");
     }
   }
 
+  // ── Exercise / set mutations ─────────────────────────────────
   function removeExercise(idx: number) {
     setExercises(prev => prev.filter((_, i) => i !== idx).map((e, i) => ({ ...e, orderIndex: i })));
   }
@@ -206,30 +215,26 @@ export default function EditRoutinePage() {
   function addSet(exIdx: number) {
     setExercises(prev => prev.map((ex, i) => {
       if (i !== exIdx) return ex;
-      // Copy last set's values as default for new set
-      const last = ex.sets[ex.sets.length - 1];
-      return { ...ex, sets: [...ex.sets, { reps: last?.reps ?? "12", weight: last?.weight ?? "" }] };
+      const last = ex.sets[ex.sets.length - 1] ?? emptySet(ex.measurementType);
+      return { ...ex, sets: [...ex.sets, { ...last }] };
     }));
   }
 
   function removeSet(exIdx: number, setIdx: number) {
     setExercises(prev => prev.map((ex, i) => {
-      if (i !== exIdx) return ex;
-      if (ex.sets.length <= 1) return ex; // keep at least 1 set
+      if (i !== exIdx || ex.sets.length <= 1) return ex;
       return { ...ex, sets: ex.sets.filter((_, si) => si !== setIdx) };
     }));
   }
 
-  function updateSet(exIdx: number, setIdx: number, field: "reps" | "weight", value: string) {
+  function updateSet(exIdx: number, setIdx: number, field: keyof DraftSet, value: string) {
     setExercises(prev => prev.map((ex, i) => {
       if (i !== exIdx) return ex;
-      return {
-        ...ex,
-        sets: ex.sets.map((s, si) => si === setIdx ? { ...s, [field]: value } : s),
-      };
+      return { ...ex, sets: ex.sets.map((s, si) => si === setIdx ? { ...s, [field]: value } : s) };
     }));
   }
 
+  // ── Save ─────────────────────────────────────────────────────
   async function handleSave() {
     if (!title.trim()) { setError("Routine name is required"); return; }
     setSaving(true);
@@ -241,18 +246,19 @@ export default function EditRoutinePage() {
       if (exercises.length > 0) {
         const rows = exercises.map((ex, i) => {
           const setsConfig = ex.sets.map(s => ({
-            reps: parseInt(s.reps) || null,
-            weight: s.weight ? parseFloat(s.weight) : null,
+            reps:     s.reps     ? (parseInt(s.reps)     || null) : null,
+            weight:   s.weight   ? (parseFloat(s.weight) || null) : null,
+            duration: s.duration ? (parseInt(s.duration) || null) : null,
+            distance: s.distance ? (parseFloat(s.distance) || null) : null,
           }));
-          // Also store legacy flat fields for backward compat
-          const firstSet = setsConfig[0];
+          const first = setsConfig[0];
           return {
             routine_id: id,
             exercise_id: ex.exerciseId,
             order_index: i,
             sets: ex.sets.length,
-            reps: firstSet?.reps ?? 12,
-            weight: firstSet?.weight ?? null,
+            reps: first?.reps ?? null,
+            weight: first?.weight ?? null,
             sets_config: setsConfig,
           };
         });
@@ -288,7 +294,7 @@ export default function EditRoutinePage() {
           <input
             className={styles.titleInput}
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={e => setTitle(e.target.value)}
             placeholder="e.g. Push Day, Leg Day…"
           />
         </div>
@@ -300,92 +306,140 @@ export default function EditRoutinePage() {
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="9" width="4" height="6" rx="1" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
-                <rect x="17" y="9" width="4" height="6" rx="1" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
-                <rect x="7" y="10.5" width="10" height="3" rx="1.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
+                <rect x="3" y="9" width="4" height="6" rx="1" stroke="var(--text-tertiary)" strokeWidth="1.5"/>
+                <rect x="17" y="9" width="4" height="6" rx="1" stroke="var(--text-tertiary)" strokeWidth="1.5"/>
+                <rect x="7" y="10.5" width="10" height="3" rx="1.5" stroke="var(--text-tertiary)" strokeWidth="1.5"/>
               </svg>
             </div>
             <p className={styles.emptyTitle}>No exercises yet</p>
-            <p className={styles.emptySub}>Tap below to add your first exercise</p>
+            <p className={styles.emptySub}>Choose a muscle group below to add your first exercise</p>
           </div>
         ) : (
-          exercises.map((ex, exIdx) => (
-            <div
-              key={`${ex.exerciseId}-${exIdx}`}
-              className={styles.exBlock}
-              ref={el => { exerciseRefs.current[exIdx] = el; }}
-            >
-              {/* Exercise header */}
-              <div className={styles.exHeader}>
-                <div className={styles.exIconCircle}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="9" width="4" height="6" rx="1" stroke="#555" strokeWidth="1.5"/>
-                    <rect x="17" y="9" width="4" height="6" rx="1" stroke="#555" strokeWidth="1.5"/>
-                    <rect x="7" y="10.5" width="10" height="3" rx="1.5" stroke="#555" strokeWidth="1.5"/>
-                  </svg>
-                </div>
-                <p className={styles.exName}>{ex.name}</p>
-                <button type="button" className={styles.exRemoveBtn} onClick={() => removeExercise(exIdx)} aria-label="Remove exercise">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                </button>
-              </div>
+          exercises.map((ex, exIdx) => {
+            const cols = COL_LABELS[ex.measurementType];
+            const isCardio      = ex.measurementType === "cardio";
+            const isTimed       = ex.measurementType === "timed";
+            const isWeighted    = ex.measurementType === "weight_reps";
+            const isRepsOnly    = ex.measurementType !== "cardio" && ex.measurementType !== "timed";
 
-              {/* Sets table header */}
-              <div className={styles.setsTableHead}>
-                <span className={styles.setNumCol}>SET</span>
-                <span className={styles.setRepsCol}>REPS</span>
-                <span className={styles.setWeightCol}>KG</span>
-                <span className={styles.setRemoveCol} />
-              </div>
-
-              {/* Individual set rows */}
-              {ex.sets.map((s, setIdx) => (
-                <div key={setIdx} className={styles.setRow}>
-                  <span className={styles.setNumBadge}>{setIdx + 1}</span>
-                  <input
-                    className={styles.setInput}
-                    type="number"
-                    min="1"
-                    inputMode="numeric"
-                    value={s.reps}
-                    onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)}
-                    placeholder="12"
-                  />
-                  <input
-                    className={styles.setInput}
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    inputMode="decimal"
-                    value={s.weight}
-                    onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)}
-                    placeholder="—"
-                  />
-                  <button
-                    type="button"
-                    className={styles.setRemoveBtn}
-                    onClick={() => removeSet(exIdx, setIdx)}
-                    disabled={ex.sets.length <= 1}
-                    aria-label="Remove set"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M18 6L6 18M6 6l12 12" stroke={ex.sets.length <= 1 ? "rgba(255,255,255,0.15)" : "var(--accent-red)"} strokeWidth="2" strokeLinecap="round"/>
+            return (
+              <div
+                key={`${ex.exerciseId}-${exIdx}`}
+                className={styles.exBlock}
+                ref={el => { exerciseRefs.current[exIdx] = el; }}
+              >
+                {/* Header */}
+                <div className={styles.exHeader}>
+                  <div className={styles.exIconCircle}>
+                    <ExerciseAnimation name={ex.name} muscles={[ex.muscle]} variant="thumb" />
+                  </div>
+                  <div className={styles.exMeta}>
+                    <p className={styles.exName}>{ex.name}</p>
+                    <p className={styles.exType}>{typeLabel(ex.measurementType)}</p>
+                  </div>
+                  <button type="button" className={styles.exRemoveBtn} onClick={() => removeExercise(exIdx)} aria-label="Remove">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18M6 6l12 12" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
                   </button>
                 </div>
-              ))}
 
-              {/* Add set button */}
-              <button type="button" className={styles.addSetBtn} onClick={() => addSet(exIdx)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round"/>
-                </svg>
-                Add Set
-              </button>
-            </div>
-          ))
+                {/* Column headers */}
+                <div className={styles.setsTableHead} data-type={ex.measurementType}>
+                  {!isCardio && <span className={styles.setNumCol}>SET</span>}
+                  {cols.slice(isCardio ? 0 : 1).map(c => (
+                    <span key={c} className={styles.setColLabel}>{c}</span>
+                  ))}
+                  <span />
+                </div>
+
+                {/* Set rows */}
+                {ex.sets.map((s, setIdx) => (
+                  <div key={setIdx} className={styles.setRow} data-type={ex.measurementType}>
+                    {!isCardio && <span className={styles.setNumBadge}>{setIdx + 1}</span>}
+
+                    {/* REPS / REPS-ONLY input */}
+                    {isRepsOnly && (
+                      <input
+                        className={styles.setInput}
+                        type="number" inputMode="numeric" min="1"
+                        value={s.reps}
+                        onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)}
+                        placeholder="12"
+                      />
+                    )}
+
+                    {/* KG input — only for weight_reps */}
+                    {isWeighted && (
+                      <input
+                        className={styles.setInput}
+                        type="number" inputMode="decimal" min="0" step="0.5"
+                        value={s.weight}
+                        onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)}
+                        placeholder="—"
+                      />
+                    )}
+
+                    {/* DURATION input — timed (seconds) */}
+                    {isTimed && (
+                      <input
+                        className={styles.setInput}
+                        type="number" inputMode="numeric" min="1"
+                        value={s.duration}
+                        onChange={e => updateSet(exIdx, setIdx, "duration", e.target.value)}
+                        placeholder="30"
+                      />
+                    )}
+
+                    {/* DURATION + DISTANCE — cardio */}
+                    {isCardio && (
+                      <>
+                        <input
+                          className={styles.setInput}
+                          type="number" inputMode="numeric" min="1"
+                          value={s.duration}
+                          onChange={e => updateSet(exIdx, setIdx, "duration", e.target.value)}
+                          placeholder="30"
+                        />
+                        <input
+                          className={styles.setInput}
+                          type="number" inputMode="decimal" min="0" step="0.1"
+                          value={s.distance}
+                          onChange={e => updateSet(exIdx, setIdx, "distance", e.target.value)}
+                          placeholder="5"
+                        />
+                      </>
+                    )}
+
+                    {/* Remove set */}
+                    <button
+                      type="button"
+                      className={styles.setRemoveBtn}
+                      onClick={() => removeSet(exIdx, setIdx)}
+                      disabled={ex.sets.length <= 1}
+                      aria-label="Remove set"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path
+                          d="M18 6L6 18M6 6l12 12"
+                          stroke={ex.sets.length <= 1 ? "var(--text-disabled)" : "var(--accent-red)"}
+                          strokeWidth="2" strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add set (no extra "sessions" for cardio) */}
+                <button type="button" className={styles.addSetBtn} onClick={() => addSet(exIdx)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round"/>
+                  </svg>
+                  {isCardio ? "Add Session" : "Add Set"}
+                </button>
+              </div>
+            );
+          })
         )}
 
         {/* Add Exercise button */}
@@ -398,10 +452,8 @@ export default function EditRoutinePage() {
         </button>
       </div>
 
-      {/* ── Bottom Sheet Overlay ─────────────────────────────────── */}
-      {sheetOpen && (
-        <div className={styles.sheetBackdrop} onClick={closeSheet} />
-      )}
+      {/* ── Bottom Sheet ─────────────────────────────────────────── */}
+      {sheetOpen && <div className={styles.sheetBackdrop} onClick={closeSheet} />}
       <div className={[styles.sheet, sheetOpen ? styles.sheetOpen : ""].join(" ")}>
         <div className={styles.sheetHandle} />
 
@@ -414,6 +466,7 @@ export default function EditRoutinePage() {
           </button>
         </div>
 
+        {/* Search */}
         <div className={styles.sheetSearch}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="8" stroke="var(--text-tertiary)" strokeWidth="2"/>
@@ -422,12 +475,12 @@ export default function EditRoutinePage() {
           <input
             className={styles.sheetSearchInput}
             placeholder="Search exercises…"
-            value={libQuery}
-            onChange={e => setLibQuery(e.target.value)}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
             autoComplete="off"
           />
-          {libQuery && (
-            <button type="button" className={styles.sheetSearchClear} onClick={() => setLibQuery("")}>
+          {query && (
+            <button type="button" className={styles.sheetSearchClear} onClick={() => setQuery("")}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M18 6L6 18M6 6l12 12" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round"/>
               </svg>
@@ -435,46 +488,57 @@ export default function EditRoutinePage() {
           )}
         </div>
 
+        {/* Muscle chips */}
         <div className={styles.chipGrid}>
-          {MUSCLE_CHIPS.map((chip) => (
+          <button
+            type="button"
+            className={[styles.chip, selectedMuscle === "" ? styles.chipActive : ""].join(" ")}
+            onClick={() => { setSelectedMuscle(""); setQuery(""); }}
+          >
+            <span className={styles.chipEmoji}>💪</span>
+            <span className={styles.chipLabel}>All</span>
+          </button>
+          {MUSCLE_GROUPS.map(mg => (
             <button
-              key={chip.bodyPart}
+              key={mg.id}
               type="button"
-              className={[styles.chip, libMuscle === chip.bodyPart ? styles.chipActive : ""].join(" ")}
-              onClick={() => { setLibMuscle(chip.bodyPart); setLibQuery(""); }}
+              className={[styles.chip, selectedMuscle === mg.id ? styles.chipActive : ""].join(" ")}
+              onClick={() => { setSelectedMuscle(mg.id); setQuery(""); }}
             >
-              <span className={styles.chipEmoji}>{chip.emoji}</span>
-              <span className={styles.chipLabel}>{chip.label}</span>
+              <span className={styles.chipEmoji}>{mg.emoji}</span>
+              <span className={styles.chipLabel}>{mg.label}</span>
             </button>
           ))}
         </div>
 
+        {/* Exercise list */}
         <div className={styles.sheetList}>
-          {libLoading ? (
-            <div className={styles.sheetLoading}><Spinner size={24} /></div>
-          ) : libraryExercises.length === 0 ? (
+          {filteredExercises.length === 0 ? (
             <p className={styles.sheetEmpty}>No exercises found</p>
           ) : (
-            libraryExercises.map(ex => {
-              const alreadyAdded = exercises.some(e => e.name.toLowerCase() === ex.name.toLowerCase());
+            filteredExercises.map(def => {
+              const alreadyAdded = exercises.some(e => e.name.toLowerCase() === def.name.toLowerCase());
               return (
                 <button
-                  key={ex.id}
+                  key={def.name}
                   type="button"
                   className={[styles.sheetItem, alreadyAdded ? styles.sheetItemAdded : ""].join(" ")}
-                  onClick={() => !alreadyAdded && handleAddFromLibrary(ex)}
+                  onClick={() => !alreadyAdded && handleAdd(def)}
                   disabled={alreadyAdded}
                 >
                   <div className={styles.sheetItemIcon}>
-                    <ExerciseAnimation name={ex.name} muscles={ex.primaryMuscles} variant="thumb" />
+                    <ExerciseAnimation name={def.name} muscles={[def.muscle]} variant="thumb" />
                   </div>
                   <div className={styles.sheetItemInfo}>
-                    <p className={styles.sheetItemName}>{ex.name}</p>
-                    {ex.primaryMuscles.length > 0 && (
-                      <p className={styles.sheetItemMuscle}>
-                        {ex.primaryMuscles[0]?.charAt(0).toUpperCase()}{ex.primaryMuscles[0]?.slice(1)}
-                      </p>
-                    )}
+                    <p className={styles.sheetItemName}>{def.name}</p>
+                    <p className={styles.sheetItemMeta}>
+                      <span className={styles.sheetItemMuscle}>
+                        {def.muscle.charAt(0).toUpperCase() + def.muscle.slice(1)}
+                      </span>
+                      <span className={styles.sheetItemTypePill} data-type={def.type}>
+                        {typeLabel(def.type)}
+                      </span>
+                    </p>
                   </div>
                   <div className={styles.sheetItemAction}>
                     {alreadyAdded ? (
@@ -484,7 +548,7 @@ export default function EditRoutinePage() {
                     ) : (
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" fill="var(--accent)"/>
-                        <path d="M12 7v10M7 12h10" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M12 7v10M7 12h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
                       </svg>
                     )}
                   </div>
@@ -496,4 +560,14 @@ export default function EditRoutinePage() {
       </div>
     </div>
   );
+}
+
+function typeLabel(t: MeasurementType): string {
+  switch (t) {
+    case "weight_reps":     return "Sets × Reps × Weight";
+    case "bodyweight_reps": return "Sets × Reps";
+    case "reps_only":       return "Sets × Reps";
+    case "timed":           return "Sets × Duration";
+    case "cardio":          return "Time + Distance";
+  }
 }

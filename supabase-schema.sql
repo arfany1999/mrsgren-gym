@@ -18,7 +18,9 @@ create table profiles (
 create table exercises (
   id uuid default gen_random_uuid() primary key,
   name text not null,
+  muscle_group text,
   muscle_groups text[] default '{}',
+  measurement_type text default 'weight_reps',
   equipment text,
   instructions text,
   video_url text,
@@ -69,14 +71,19 @@ create table workout_exercises (
   superset_id uuid
 );
 
--- 7. Sets
-create table sets (
+-- 7. Workout Sets
+create table workout_sets (
   id uuid default gen_random_uuid() primary key,
   workout_exercise_id uuid references workout_exercises on delete cascade not null,
   reps int,
-  weight_kg numeric,
+  weight numeric,
+  duration_seconds int,
+  distance_km numeric,
   set_type text default 'normal',
   rpe numeric,
+  is_pr boolean default false,
+  is_completed boolean default false,
+  order_index int default 0,
   created_at timestamptz default now() not null
 );
 
@@ -90,7 +97,7 @@ alter table routines enable row level security;
 alter table routine_exercises enable row level security;
 alter table workouts enable row level security;
 alter table workout_exercises enable row level security;
-alter table sets enable row level security;
+alter table workout_sets enable row level security;
 
 -- Profiles: users can read/update their own profile
 create policy "Users can view own profile" on profiles for select using (auth.uid() = id);
@@ -129,22 +136,36 @@ create policy "Users can manage workout exercises" on workout_exercises for inse
 create policy "Users can delete workout exercises" on workout_exercises for delete
   using (exists (select 1 from workouts where workouts.id = workout_exercises.workout_id and workouts.user_id = auth.uid()));
 
--- Sets: accessible if user owns the parent workout
-create policy "Users can read sets" on sets for select
+-- Workout Sets: accessible if user owns the parent workout
+create policy "Users can read workout_sets" on workout_sets for select
   using (exists (
     select 1 from workout_exercises we
     join workouts w on w.id = we.workout_id
-    where we.id = sets.workout_exercise_id and w.user_id = auth.uid()
+    where we.id = workout_sets.workout_exercise_id and w.user_id = auth.uid()
   ));
-create policy "Users can create sets" on sets for insert
+create policy "Users can create workout_sets" on workout_sets for insert
   with check (exists (
     select 1 from workout_exercises we
     join workouts w on w.id = we.workout_id
-    where we.id = sets.workout_exercise_id and w.user_id = auth.uid()
+    where we.id = workout_sets.workout_exercise_id and w.user_id = auth.uid()
   ));
-create policy "Users can delete sets" on sets for delete
+create policy "Users can update workout_sets" on workout_sets for update
   using (exists (
     select 1 from workout_exercises we
     join workouts w on w.id = we.workout_id
-    where we.id = sets.workout_exercise_id and w.user_id = auth.uid()
+    where we.id = workout_sets.workout_exercise_id and w.user_id = auth.uid()
   ));
+create policy "Users can delete workout_sets" on workout_sets for delete
+  using (exists (
+    select 1 from workout_exercises we
+    join workouts w on w.id = we.workout_id
+    where we.id = workout_sets.workout_exercise_id and w.user_id = auth.uid()
+  ));
+
+-- ============================================================
+-- MIGRATION: Run these if you already have an existing DB
+-- ============================================================
+-- alter table exercises add column if not exists muscle_group text;
+-- alter table exercises add column if not exists measurement_type text default 'weight_reps';
+-- alter table workout_sets add column if not exists duration_seconds int;
+-- alter table workout_sets add column if not exists distance_km numeric;

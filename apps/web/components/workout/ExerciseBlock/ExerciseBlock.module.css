@@ -119,6 +119,14 @@
   letter-spacing: 0.4px;
   text-transform: uppercase;
 }
+.colLabels[data-type="bodyweight_reps"],
+.colLabels[data-type="reps_only"],
+.colLabels[data-type="timed"] {
+  grid-template-columns: 40px 52px 1fr 48px;
+}
+.colLabels[data-type="cardio"] {
+  grid-template-columns: 1fr 1fr 48px;
+}
 
 /* ── Add Set button ──────────────────────────────────────── */
 .addSetBtn {

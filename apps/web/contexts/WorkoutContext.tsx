@@ -18,12 +18,15 @@ import {
 } from "@/lib/storage";
 import type { SetType, Exercise } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
+import { getMeasurementType, type MeasurementType } from "@/lib/exercises-data";
 
 // ── Types ─────────────────────────────────────────────────────
 export interface ActiveSet {
   id?: string;
   reps: string;
   weightKg: string;
+  duration: string;   // seconds (timed) or minutes (cardio)
+  distance: string;   // km (cardio)
   setType: SetType;
   rpe?: number;
   isPr: boolean;
@@ -35,6 +38,7 @@ export interface ActiveExercise {
   exerciseId: string;
   name: string;
   muscleGroups: string[];
+  measurementType: MeasurementType;
   sets: ActiveSet[];
   previousSets: Array<{ reps: string; weightKg: string }>;
 }
@@ -177,7 +181,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   async function fetchWorkoutExercises(workoutId: string): Promise<ActiveExercise[]> {
     const { data: wes } = await supabase
       .from("workout_exercises")
-      .select("id, exercise_id, order_index, exercises(id, name)")
+      .select("id, exercise_id, order_index, exercises(id, name, muscle_group, measurement_type)")
       .eq("workout_id", workoutId)
       .order("order_index");
 
@@ -195,15 +199,21 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       const weSets = (sets ?? []).filter(
         (s: Record<string, unknown>) => s.workout_exercise_id === we.id
       );
+      const exName = (exercise?.name as string) ?? "";
+      const measurementType: MeasurementType =
+        (exercise?.measurement_type as MeasurementType) ?? getMeasurementType(exName);
       return {
         weId: we.id as string,
         exerciseId: we.exercise_id as string,
-        name: (exercise?.name as string) ?? "",
+        name: exName,
         muscleGroups: parseMuscleGroup(exercise?.muscle_group),
+        measurementType,
         sets: weSets.map((s: Record<string, unknown>) => ({
           id: s.id as string,
           reps: s.reps !== null ? String(s.reps) : "",
           weightKg: s.weight !== null ? String(s.weight) : "",
+          duration: s.duration_seconds !== null ? String(s.duration_seconds) : "",
+          distance: s.distance_km !== null ? String(s.distance_km) : "",
           setType: (s.set_type as SetType) ?? "normal",
           rpe: (s.rpe as number) ?? undefined,
           isPr: (s.is_pr as boolean) ?? false,
@@ -435,6 +445,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
       if (error || !we) return;
       const prevSets = await fetchPreviousPerformance(exerciseUuid, activeWorkout.id);
+      const mType: MeasurementType =
+        (exercise.measurementType as MeasurementType) ?? getMeasurementType(exercise.name);
       setExercises((prev) => [
         ...prev,
         {
@@ -442,6 +454,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           exerciseId: exerciseUuid,
           name: exercise.name,
           muscleGroups: exercise.muscleGroups,
+          measurementType: mType,
           sets: [],
           previousSets: prevSets,
         },
@@ -470,6 +483,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
                 {
                   reps: "",
                   weightKg: "",
+                  duration: "",
+                  distance: "",
                   setType: "normal" as SetType,
                   isPr: false,
                   isSaved: false,
@@ -513,6 +528,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       const reps = parseInt(set.reps) || null;
       const weightKg =
         parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : null;
+      const durationSeconds = parseInt(set.duration) || null;
+      const distanceKm = parseFloat(set.distance) || null;
 
       let savedSetId = set.id;
 
@@ -520,7 +537,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         // Pre-created set from routine — just mark completed + update values
         await supabase
           .from("workout_sets")
-          .update({ reps, weight: weightKg, is_completed: true })
+          .update({ reps, weight: weightKg, duration_seconds: durationSeconds, distance_km: distanceKm, is_completed: true })
           .eq("id", set.id);
       } else {
         // Manually added set — insert new row
@@ -532,6 +549,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
             workout_exercise_id: weId,
             reps,
             weight: weightKg,
+            duration_seconds: durationSeconds,
+            distance_km: distanceKm,
             set_type: set.setType,
             rpe: set.rpe ?? null,
             is_pr: false,

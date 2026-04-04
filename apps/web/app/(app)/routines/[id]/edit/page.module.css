@@ -139,12 +139,24 @@
   letter-spacing: -0.01em;
 }
 
+.exMeta { flex: 1; min-width: 0; }
+
+.exType {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  letter-spacing: 0.1px;
+}
+
 .exRemoveBtn {
   background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px;
   display: flex; align-items: center; flex-shrink: 0;
 }
 
 /* ── Sets table ──────────────────────────────────────────────── */
+
+/* Default = weight_reps: SET | REPS | KG | × */
 .setsTableHead {
   display: grid;
   grid-template-columns: 38px 1fr 1fr 32px;
@@ -152,10 +164,26 @@
   padding: 6px 14px 4px;
   align-items: center;
 }
+/* bodyweight / reps_only / timed: SET | FIELD | × */
+.setsTableHead[data-type="bodyweight_reps"],
+.setsTableHead[data-type="reps_only"],
+.setsTableHead[data-type="timed"] {
+  grid-template-columns: 38px 1fr 32px;
+}
+/* cardio: no SET badge — FIELD | FIELD | × */
+.setsTableHead[data-type="cardio"] {
+  grid-template-columns: 1fr 1fr 32px;
+}
 
-.setNumCol,
-.setRepsCol,
-.setWeightCol {
+.setNumCol {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+.setColLabel {
   font-size: 10px;
   font-weight: 700;
   color: var(--text-tertiary);
@@ -163,16 +191,22 @@
   letter-spacing: 0.5px;
   text-align: center;
 }
-.setNumCol { text-align: left; }
-.setRemoveCol { width: 32px; }
 
-/* Individual set row */
+/* Individual set row — mirrors table head columns */
 .setRow {
   display: grid;
   grid-template-columns: 38px 1fr 1fr 32px;
   gap: 6px;
   padding: 5px 14px;
   align-items: center;
+}
+.setRow[data-type="bodyweight_reps"],
+.setRow[data-type="reps_only"],
+.setRow[data-type="timed"] {
+  grid-template-columns: 38px 1fr 32px;
+}
+.setRow[data-type="cardio"] {
+  grid-template-columns: 1fr 1fr 32px;
 }
 .setRow:last-of-type { padding-bottom: 4px; }
 
@@ -474,10 +508,41 @@
   text-overflow: ellipsis;
 }
 
+.sheetItemMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
 .sheetItemMuscle {
   font-size: 12px;
   color: var(--text-tertiary);
-  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Measurement type badge per exercise */
+.sheetItemTypePill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  background: rgba(26,21,16,0.07);
+  color: var(--text-tertiary);
+}
+.sheetItemTypePill[data-type="cardio"] {
+  background: rgba(236, 72, 153, 0.1);
+  color: #be185d;
+}
+.sheetItemTypePill[data-type="timed"] {
+  background: rgba(14, 165, 233, 0.1);
+  color: #0369a1;
+}
+.sheetItemTypePill[data-type="bodyweight_reps"] {
+  background: rgba(34, 168, 90, 0.1);
+  color: #15803d;
 }
 
 .sheetItemAction { flex-shrink: 0; }

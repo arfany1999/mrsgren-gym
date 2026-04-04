@@ -1,3 +1,4 @@
+/* Default: weight_reps → SET | PREV | KG | REPS | ✓ */
 .row {
   display: grid;
   grid-template-columns: 40px 52px 1fr 1fr 48px;
@@ -8,6 +9,22 @@
   position: relative;
   min-height: 52px;
   border-radius: 0;
+}
+
+/* bodyweight_reps / reps_only → SET | PREV | REPS | ✓ */
+.row[data-type="bodyweight_reps"],
+.row[data-type="reps_only"] {
+  grid-template-columns: 40px 52px 1fr 48px;
+}
+
+/* timed → SET | PREV | SEC | ✓ */
+.row[data-type="timed"] {
+  grid-template-columns: 40px 52px 1fr 48px;
+}
+
+/* cardio → MIN | KM | ✓ (no SET/PREV columns) */
+.row[data-type="cardio"] {
+  grid-template-columns: 1fr 1fr 48px;
 }
 
 .saved {

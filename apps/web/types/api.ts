@@ -21,6 +21,7 @@ export interface Exercise {
   videoUrl: string | null;
   isCustom: boolean;
   createdByUserId: string | null;
+  measurementType?: string;
 }
 
 export interface Set {

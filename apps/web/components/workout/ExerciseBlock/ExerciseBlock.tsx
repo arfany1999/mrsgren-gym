@@ -79,11 +79,13 @@ export function ExerciseBlock({
 
       {/* Column labels */}
       {exercise.sets.length > 0 && (
-        <div className={styles.colLabels}>
-          <span>SET</span>
-          <span>PREV</span>
-          <span>KG</span>
-          <span>REPS</span>
+        <div className={styles.colLabels} data-type={exercise.measurementType}>
+          {exercise.measurementType !== "cardio" && <span>SET</span>}
+          {exercise.measurementType !== "cardio" && <span>PREV</span>}
+          {exercise.measurementType === "weight_reps" && <><span>KG</span><span>REPS</span></>}
+          {(exercise.measurementType === "bodyweight_reps" || exercise.measurementType === "reps_only") && <span>REPS</span>}
+          {exercise.measurementType === "timed"  && <span>SEC</span>}
+          {exercise.measurementType === "cardio" && <><span>MIN</span><span>KM</span></>}
           <span />
         </div>
       )}
@@ -96,6 +98,7 @@ export function ExerciseBlock({
           index={idx}
           weId={exercise.weId}
           prevSet={exercise.previousSets[idx]}
+          measurementType={exercise.measurementType}
           onUpdateField={(field, value) => onUpdateField(idx, field, value)}
           onSave={() => onSaveSet(idx)}
           onDelete={onDeleteSet}
