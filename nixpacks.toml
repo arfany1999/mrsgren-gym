@@ -1,8 +1,8 @@
 [phases.install]
-cmds = ["pnpm install --filter web..."]
+cmds = ["pnpm install"]
 
 [phases.build]
 cmds = ["pnpm --filter web build"]
 
 [start]
-cmd = "pnpm --filter web start -- -p ${PORT:-3000}"
+cmd = "cd apps/web && node_modules/.bin/next start -p ${PORT:-3000}"
