@@ -5,4 +5,4 @@ cmds = ["pnpm install --filter web..."]
 cmds = ["pnpm --filter web build"]
 
 [start]
-cmd = "pnpm --filter web start"
+cmd = "pnpm --filter web start -- -p ${PORT:-3000}"
