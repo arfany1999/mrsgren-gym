@@ -59,10 +59,10 @@ export default function ActiveWorkoutPage() {
   }, [exercises]);
 
   useEffect(() => {
-    if (!activeWorkout && !getActiveWorkoutId() && !finishing && !done) {
+    if (!activeWorkout && !getActiveWorkoutId() && !finishing && !done && !discarding) {
       router.replace("/");
     }
-  }, [activeWorkout, router, finishing, done]);
+  }, [activeWorkout, router, finishing, done, discarding]);
 
   const totalSets = useMemo(
     () => exercises.reduce((sum, e) => sum + e.sets.filter(s => s.isSaved).length, 0),

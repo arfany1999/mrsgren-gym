@@ -283,88 +283,92 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         throw new Error(workoutErr?.message ?? "Failed to create workout");
       }
 
-      let workoutTitle: string = workout.title as string;
-
-      // If starting from a routine, copy exercises + pre-populate sets
-      if (routineId) {
-        const [{ data: routine }, { data: routineExercises }] = await Promise.all([
-          supabase.from("routines").select("name").eq("id", routineId).single(),
-          supabase
-            .from("routine_exercises")
-            .select("exercise_id, order_index, sets_config, exercises(id, name, muscle_group)")
-            .eq("routine_id", routineId)
-            .order("order_index"),
-        ]);
-
-        if (routine?.name) {
-          workoutTitle = routine.name as string;
-          await supabase.from("workouts").update({ title: workoutTitle }).eq("id", workout.id);
-        }
-
-        if (routineExercises && routineExercises.length > 0) {
-          const { data: insertedWEs } = await supabase
-            .from("workout_exercises")
-            .insert(
-              routineExercises.map((re: Record<string, unknown>, idx: number) => ({
-                workout_id: workout.id,
-                exercise_id: re.exercise_id,
-                order_index: (re.order_index ?? idx) as number,
-              }))
-            )
-            .select("id, exercise_id, order_index");
-
-          // Pre-create workout_sets from sets_config so user just ticks them off
-          if (insertedWEs && insertedWEs.length > 0) {
-            const allSetRows: Array<Record<string, unknown>> = [];
-            for (const we of insertedWEs as Array<Record<string, unknown>>) {
-              const re = routineExercises.find(
-                (r: Record<string, unknown>) => r.exercise_id === we.exercise_id
-              );
-              if (!re) continue;
-
-              const setsConfig = re.sets_config as Array<Record<string, unknown>> | null;
-              const setsArr: Record<string, unknown>[] = Array.isArray(setsConfig) && setsConfig.length > 0
-                ? setsConfig
-                : Array.from({ length: 3 }, (): Record<string, unknown> => ({}));
-
-              // Determine if this exercise is cardio (duration/distance stored in reps/weight)
-              const reEx = (re.exercises as unknown as Record<string, unknown>) ?? {};
-              const exNameForType = (reEx.name as string) ?? "";
-              const isCardioExercise = getMeasurementType(exNameForType) === "cardio";
-
-              setsArr.forEach((s, idx) => {
-                allSetRows.push({
-                  workout_exercise_id: we.id,
-                  // Cardio: store duration (mins) in reps, distance (km) in weight
-                  reps: isCardioExercise
-                    ? ((s.duration as number) ?? null)
-                    : ((s.reps as number) ?? null),
-                  weight: isCardioExercise
-                    ? ((s.distance as number) ?? null)
-                    : ((s.weight as number) ?? null),
-                  set_type: "normal",
-                  is_pr: false,
-                  is_completed: false,
-                  order_index: idx,
-                });
-              });
-            }
-            if (allSetRows.length > 0) {
-              const { error: setsInsertErr } = await supabase.from("workout_sets").insert(allSetRows);
-              if (setsInsertErr) console.error("workout_sets insert error:", setsInsertErr.message);
-            }
-          }
-        }
-      }
-
+      // Set active state immediately so the caller can navigate without waiting
       setActiveWorkout({
         id: workout.id,
-        title: workoutTitle,
+        title: workout.title as string,
         startedAt: workout.started_at,
       });
-      const mapped = await fetchWorkoutExercises(workout.id);
-      setExercises(mapped);
+      setExercises([]);
       setActiveWorkoutId(workout.id);
+
+      // Load routine exercises in background (non-blocking)
+      if (routineId) {
+        (async () => {
+          try {
+            const [{ data: routine }, { data: routineExercises }] = await Promise.all([
+              supabase.from("routines").select("name").eq("id", routineId).single(),
+              supabase
+                .from("routine_exercises")
+                .select("exercise_id, order_index, sets_config, exercises(id, name, muscle_group)")
+                .eq("routine_id", routineId)
+                .order("order_index"),
+            ]);
+
+            if (routine?.name) {
+              const workoutTitle = routine.name as string;
+              setActiveWorkout((w) => (w ? { ...w, title: workoutTitle } : w));
+              await supabase.from("workouts").update({ title: workoutTitle }).eq("id", workout.id);
+            }
+
+            if (routineExercises && routineExercises.length > 0) {
+              const { data: insertedWEs } = await supabase
+                .from("workout_exercises")
+                .insert(
+                  routineExercises.map((re: Record<string, unknown>, idx: number) => ({
+                    workout_id: workout.id,
+                    exercise_id: re.exercise_id,
+                    order_index: (re.order_index ?? idx) as number,
+                  }))
+                )
+                .select("id, exercise_id, order_index");
+
+              if (insertedWEs && insertedWEs.length > 0) {
+                const allSetRows: Array<Record<string, unknown>> = [];
+                for (const we of insertedWEs as Array<Record<string, unknown>>) {
+                  const re = routineExercises.find(
+                    (r: Record<string, unknown>) => r.exercise_id === we.exercise_id
+                  );
+                  if (!re) continue;
+
+                  const setsConfig = re.sets_config as Array<Record<string, unknown>> | null;
+                  const setsArr: Record<string, unknown>[] = Array.isArray(setsConfig) && setsConfig.length > 0
+                    ? setsConfig
+                    : Array.from({ length: 3 }, (): Record<string, unknown> => ({}));
+
+                  const reEx = (re.exercises as unknown as Record<string, unknown>) ?? {};
+                  const exNameForType = (reEx.name as string) ?? "";
+                  const isCardioExercise = getMeasurementType(exNameForType) === "cardio";
+
+                  setsArr.forEach((s, idx) => {
+                    allSetRows.push({
+                      workout_exercise_id: we.id,
+                      reps: isCardioExercise
+                        ? ((s.duration as number) ?? null)
+                        : ((s.reps as number) ?? null),
+                      weight: isCardioExercise
+                        ? ((s.distance as number) ?? null)
+                        : ((s.weight as number) ?? null),
+                      set_type: "normal",
+                      is_pr: false,
+                      is_completed: false,
+                      order_index: idx,
+                    });
+                  });
+                }
+                if (allSetRows.length > 0) {
+                  await supabase.from("workout_sets").insert(allSetRows);
+                }
+              }
+            }
+
+            const mapped = await fetchWorkoutExercises(workout.id);
+            setExercises(mapped);
+          } catch (e) {
+            console.error("Background routine load failed:", e);
+          }
+        })();
+      }
     },
     [supabase, user] // eslint-disable-line react-hooks/exhaustive-deps
   );
@@ -401,13 +405,12 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const discardWorkout = useCallback(async () => {
     if (!activeWorkout) return;
-    await supabase.from("workouts").delete().eq("id", activeWorkout.id);
-    stopTimer();
     clearActiveWorkoutId();
     setActiveWorkout(null);
     setExercises([]);
-    router.replace("/");
-  }, [activeWorkout, supabase, router]);
+    // Delete from DB in background — don't block navigation
+    supabase.from("workouts").delete().eq("id", activeWorkout.id).then(() => {});
+  }, [activeWorkout, supabase]);
 
   const updateTitle = useCallback(
     (title: string) => {
@@ -562,12 +565,23 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       const set = exercise.sets[idx];
       if (!set) return;
 
+      // Optimistic update — mark saved immediately for instant UI feedback
+      setExercises((prev) =>
+        prev.map((e) => {
+          if (e.weId !== weId) return e;
+          const sets = [...e.sets];
+          const existing = sets[idx];
+          if (!existing) return e;
+          sets[idx] = { ...existing, isSaved: true };
+          return { ...e, sets };
+        })
+      );
+
       const isCardio = exercise.measurementType === "cardio";
       const durationMins = parseFloat(set.duration) || null;
       const distanceKm = parseFloat(set.distance) || null;
 
       // Cardio: store duration (mins) in `reps`, distance (km) in `weight`
-      // since duration_seconds/distance_km columns don't exist in live DB
       const reps = isCardio ? null : (parseInt(set.reps) || null);
       const weightKg = isCardio ? null : (parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : null);
       const dbReps = isCardio ? durationMins : reps;
@@ -603,7 +617,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         savedSetId = savedSet.id;
       }
 
-      // Check for PR
+      // Check for PR in background
       let isPr = false;
       if (reps && weightKg && weightKg > 0 && savedSetId) {
         const { data: prevSets } = await supabase
@@ -630,6 +644,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         await supabase.from("workout_sets").update({ is_pr: true }).eq("id", savedSetId);
       }
 
+      // Final update with real ID and PR status
       setExercises((prev) =>
         prev.map((e) => {
           if (e.weId !== weId) return e;
@@ -690,6 +705,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     deleteSet,
     clearPrBanner,
   }), [activeWorkout, exercises, showPrBanner, prExerciseName, router, startWorkout, loadActiveWorkout, finishWorkout, discardWorkout, updateTitle, addExercise, removeExercise, addSet, updateSetField, saveSet, deleteSet, clearPrBanner]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   return (
     <WorkoutContext.Provider value={value}>
