@@ -1,0 +1,8 @@
+[phases.install]
+cmds = ["pnpm install --filter web..."]
+
+[phases.build]
+cmds = ["pnpm --filter web build"]
+
+[start]
+cmd = "pnpm --filter web start"
