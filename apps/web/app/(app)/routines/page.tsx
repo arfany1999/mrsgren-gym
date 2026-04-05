@@ -163,8 +163,12 @@ export default function RoutinesPage() {
     if (!deleteId) return;
     setDeleteLoading(true);
     try {
-      await supabase.from("routines").delete().eq("id", deleteId);
+      await supabase.from("routine_exercises").delete().eq("routine_id", deleteId);
+      const { error } = await supabase.from("routines").delete().eq("id", deleteId);
+      if (error) throw error;
       setMyRoutines((prev) => prev.filter((r) => r.id !== deleteId));
+    } catch {
+      alert("Failed to delete routine. Please try again.");
     } finally {
       setDeleteLoading(false);
       setDeleteId(null);

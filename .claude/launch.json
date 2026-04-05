@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "Gym Web",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace=apps/web", "--", "--port", "3002"],
-      "port": 3002
+      "runtimeExecutable": "/opt/homebrew/Cellar/node/25.8.1_1/bin/node",
+      "runtimeArgs": ["/Users/hamidrezaarfany/Desktop/code.me/Gym/apps/web/node_modules/next/dist/bin/next", "dev", "--port", "3000"],
+      "port": 3000
     }
   ]
 }

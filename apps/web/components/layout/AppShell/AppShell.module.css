@@ -1,12 +1,15 @@
 .shell {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   max-width: var(--app-max-width);
-  min-height: 100dvh;
-  margin: 0 auto;
+  height: 100dvh;
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 @media (min-width: 500px) {
@@ -20,4 +23,6 @@
   padding-bottom: var(--bottom-nav-height);
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }

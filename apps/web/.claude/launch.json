@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Gym Web",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["next", "dev", "--port", "3001"],
-      "port": 3001
+      "name": "gym-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
     }
   ]
 }

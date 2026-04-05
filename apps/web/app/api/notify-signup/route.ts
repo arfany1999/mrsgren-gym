@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "GYM Tracker <onboarding@resend.dev>",
+      from: "GYM Tracker <noreply@gym.mrgren.store>",
       to: [OWNER_EMAIL],
       subject: `🏋️ New user joined: ${body.email}`,
       html,
