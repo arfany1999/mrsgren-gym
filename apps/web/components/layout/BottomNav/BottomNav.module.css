@@ -9,10 +9,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(243, 237, 225, 0.82);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border-top: 0.5px solid rgba(255, 255, 255, 0.7);
+  background: var(--bg-primary);
+  border-top: 0.5px solid var(--border-color);
   box-shadow: 0 -1px 0 rgba(26, 21, 16, 0.07);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 100;

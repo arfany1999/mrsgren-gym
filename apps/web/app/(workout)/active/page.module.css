@@ -1,9 +1,10 @@
 .page {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100%;
   background: var(--bg-primary);
   animation: pageIn 0.2s ease both;
+  overflow: hidden;
 }
 
 /* ── Top Bar ─────────────────────────────────────────────────── */
@@ -12,13 +13,10 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--sp-3) var(--sp-4);
-  background: rgba(243, 237, 225, 0.82);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.7);
+  background: var(--bg-primary);
+  border-bottom: 0.5px solid var(--border-color);
   box-shadow: 0 1px 0 rgba(26, 21, 16, 0.07);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 20;
   gap: var(--sp-3);
 }
@@ -92,10 +90,9 @@
   justify-content: center;
   gap: 0;
   padding: 10px var(--sp-4) 8px;
-  background: rgba(255,255,255,0.35);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 0.5px solid rgba(26,21,16,0.07);
+  background: var(--bg-surface);
+  border-bottom: 0.5px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .statChip {
@@ -136,9 +133,7 @@
   background: rgba(34, 168, 90, 0.12);
   border-bottom: 1px solid rgba(34, 168, 90, 0.2);
   color: #1a8a4a;
-  position: sticky;
-  top: 96px;
-  z-index: 15;
+  flex-shrink: 0;
   animation: slideDown 0.2s ease both;
 }
 
@@ -179,6 +174,10 @@
   padding-top: var(--sp-3);
   padding-bottom: var(--sp-8);
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  min-height: 0;
 }
 
 /* ── Empty State ─────────────────────────────────────────────── */

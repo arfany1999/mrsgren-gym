@@ -1,15 +1,19 @@
 .layout {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   max-width: var(--app-max-width);
-  min-height: 100dvh;
-  margin: 0 auto;
+  height: 100dvh;
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .loading {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
