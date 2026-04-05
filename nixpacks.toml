@@ -5,4 +5,4 @@ cmds = ["pnpm install"]
 cmds = ["pnpm --filter web build"]
 
 [start]
-cmd = "cd apps/web && node_modules/.bin/next start -p ${PORT:-3000}"
+cmd = "/app/node_modules/.bin/next start apps/web -p ${PORT:-3000}"
