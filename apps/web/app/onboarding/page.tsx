@@ -71,12 +71,19 @@ export default function OnboardingPage() {
     setSubmitting(true);
     saveProfile(user.email, profileData);
 
-    // Notify owner — fire-and-forget (don't block navigation on failure)
-    fetch("/api/notify-signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: user.email, ...profileData }),
-    }).catch(() => {/* ignore */});
+    // Use sendBeacon so navigation doesn't cancel the request
+    const payload = JSON.stringify({ email: user.email, ...profileData });
+    if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: "application/json" });
+      navigator.sendBeacon("/api/notify-signup", blob);
+    } else {
+      fetch("/api/notify-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    }
 
     router.replace("/dashboard");
   }
