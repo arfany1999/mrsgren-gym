@@ -49,6 +49,18 @@ export interface ActiveWorkout {
   startedAt: string;
 }
 
+export interface PreloadedExercise {
+  exerciseId: string;
+  name: string;
+  muscleGroups: string[];
+  setsConfig: Array<{ reps: number | null; weightKg: number | null }>;
+}
+
+export interface PreloadedRoutine {
+  title?: string;
+  exercises?: PreloadedExercise[];
+}
+
 interface WorkoutContextValue {
   activeWorkout: ActiveWorkout | null;
   exercises: ActiveExercise[];
@@ -56,7 +68,7 @@ interface WorkoutContextValue {
   prExerciseName: string;
   router: ReturnType<typeof useRouter>;
 
-  startWorkout: (routineId?: string) => Promise<void>;
+  startWorkout: (routineId?: string, preloaded?: PreloadedRoutine) => Promise<void>;
   loadActiveWorkout: (id: string) => Promise<void>;
   finishWorkout: () => Promise<string | null>;
   discardWorkout: () => Promise<void>;
@@ -264,7 +276,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   );
 
   const startWorkout = useCallback(
-    async (routineId?: string) => {
+    async (routineId?: string, preloaded?: PreloadedRoutine) => {
       if (!user) return;
       const now = new Date().toISOString();
 
@@ -273,7 +285,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         .insert({
           user_id: user.id,
           routine_id: routineId ?? null,
-          title: "Workout",
+          title: preloaded?.title ?? "Workout",
           started_at: now,
         })
         .select()
@@ -283,16 +295,38 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         throw new Error(workoutErr?.message ?? "Failed to create workout");
       }
 
-      // Set active state immediately so the caller can navigate without waiting
+      // Set active state immediately — show preloaded exercises for instant UI
       setActiveWorkout({
         id: workout.id,
-        title: workout.title as string,
+        title: (preloaded?.title ?? workout.title) as string,
         startedAt: workout.started_at,
       });
-      setExercises([]);
+
+      if (preloaded?.exercises?.length) {
+        setExercises(preloaded.exercises.map((re, idx) => ({
+          weId: `temp-${idx}`,
+          exerciseId: re.exerciseId,
+          name: re.name,
+          muscleGroups: re.muscleGroups,
+          measurementType: getMeasurementType(re.name),
+          sets: re.setsConfig.map(s => ({
+            reps: s.reps != null ? String(s.reps) : "",
+            weightKg: s.weightKg != null ? String(s.weightKg) : "",
+            duration: "",
+            distance: "",
+            setType: "normal" as SetType,
+            isPr: false,
+            isSaved: false,
+          })),
+          previousSets: [],
+        })));
+      } else {
+        setExercises([]);
+      }
+
       setActiveWorkoutId(workout.id);
 
-      // Load routine exercises in background (non-blocking)
+      // Persist to DB in background (non-blocking) and reconcile with real IDs
       if (routineId) {
         (async () => {
           try {
@@ -305,7 +339,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
                 .order("order_index"),
             ]);
 
-            if (routine?.name) {
+            if (routine?.name && !preloaded?.title) {
               const workoutTitle = routine.name as string;
               setActiveWorkout((w) => (w ? { ...w, title: workoutTitle } : w));
               await supabase.from("workouts").update({ title: workoutTitle }).eq("id", workout.id);
@@ -363,7 +397,23 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
             }
 
             const mapped = await fetchWorkoutExercises(workout.id);
-            setExercises(mapped);
+            // Reconcile: merge real DB IDs while preserving any values user entered
+            setExercises(prev => {
+              const hasEdits = prev.some(ex => ex.sets.some(s => s.reps || s.weightKg || s.isSaved));
+              if (!hasEdits) return mapped;
+              return mapped.map((newEx, i) => {
+                const prevEx = prev[i];
+                if (!prevEx) return newEx;
+                return {
+                  ...newEx,
+                  sets: newEx.sets.map((newSet, si) => {
+                    const prevSet = prevEx.sets[si];
+                    if (!prevSet || !(prevSet.reps || prevSet.weightKg || prevSet.isSaved)) return newSet;
+                    return { ...newSet, reps: prevSet.reps, weightKg: prevSet.weightKg, duration: prevSet.duration, distance: prevSet.distance, isSaved: prevSet.isSaved };
+                  }),
+                };
+              });
+            });
           } catch (e) {
             console.error("Background routine load failed:", e);
           }
@@ -506,6 +556,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const removeExercise = useCallback(
     async (weId: string) => {
       if (!activeWorkout) return;
+      if (weId.startsWith("temp-")) return;
       await supabase.from("workout_exercises").delete().eq("id", weId);
       setExercises((prev) => prev.filter((e) => e.weId !== weId));
     },
@@ -560,6 +611,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const saveSet = useCallback(
     async (weId: string, idx: number) => {
       if (!activeWorkout) return;
+      if (weId.startsWith("temp-")) return; // DB not ready yet — background init still running
       const exercise = exercises.find((e) => e.weId === weId);
       if (!exercise) return;
       const set = exercise.sets[idx];
@@ -672,6 +724,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const deleteSet = useCallback(
     async (weId: string, setId: string) => {
+      if (weId.startsWith("temp-")) return;
       await supabase.from("workout_sets").delete().eq("id", setId);
       setExercises((prev) =>
         prev.map((e) =>

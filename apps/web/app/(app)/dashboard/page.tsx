@@ -13,6 +13,7 @@ interface RoutineExercise {
   id: string;
   name: string;
   muscleGroups: string[];
+  setsConfig: Array<{ reps: number | null; weightKg: number | null }>;
 }
 
 interface Routine {
@@ -112,10 +113,14 @@ export default function DashboardPage() {
               title: (r.name as string) ?? "Routine",
               exercises: res.map((re) => {
                 const ex = (re.exercises as Record<string, unknown>) ?? {};
+                const cfg = re.sets_config as Array<Record<string, unknown>> | null;
                 return {
                   id: ex.id as string,
                   name: ex.name as string,
                   muscleGroups: parseMuscleGroup(ex.muscle_group as string),
+                  setsConfig: Array.isArray(cfg) && cfg.length > 0
+                    ? cfg.map(s => ({ reps: (s.reps as number) ?? null, weightKg: (s.weight as number) ?? null }))
+                    : Array.from({ length: 3 }, () => ({ reps: null, weightKg: null })),
                 };
               }),
               totalSets: res.reduce((sum, re) => {
@@ -131,11 +136,19 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleStart(routineId: string) {
+  async function handleStart(routineId: string, routine?: Routine) {
     setMenuOpenId(null);
     setStartingId(routineId);
     try {
-      await startWorkout(routineId);
+      await startWorkout(routineId, routine ? {
+        title: routine.title,
+        exercises: routine.exercises.map(ex => ({
+          exerciseId: ex.id,
+          name: ex.name,
+          muscleGroups: ex.muscleGroups,
+          setsConfig: ex.setsConfig,
+        })),
+      } : undefined);
       router.push("/active");
     } finally {
       setStartingId(null);
@@ -275,7 +288,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     className={styles.startBtn}
-                    onClick={() => handleStart(r.id)}
+                    onClick={() => handleStart(r.id, r)}
                     disabled={startingId === r.id}
                     style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
                   >

@@ -83,7 +83,15 @@ export default function RoutineDetailPage() {
   async function handleStart() {
     setStarting(true);
     try {
-      await startWorkout(id);
+      await startWorkout(id, {
+        title: routine!.title,
+        exercises: routine!.routineExercises.map(re => ({
+          exerciseId: re.exercise.id,
+          name: re.exercise.name,
+          muscleGroups: re.exercise.muscleGroups,
+          setsConfig: re.setsConfig.map(s => ({ reps: s.reps ?? null, weightKg: s.weightKg ?? null })),
+        })),
+      });
       router.push("/active");
     } finally {
       setStarting(false);

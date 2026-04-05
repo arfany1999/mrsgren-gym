@@ -85,11 +85,21 @@ export default function RoutinesPage() {
     setLibrary(lib.error ? [] : (lib.data ?? []).map(mapRoutine));
   }
 
-  async function handleStart(routineId: string) {
+  async function handleStart(routineId: string, routine?: Routine) {
     setMenuOpenId(null);
     setStartingId(routineId);
     try {
-      await startWorkout(routineId);
+      await startWorkout(routineId, routine ? {
+        title: routine.title,
+        exercises: routine.routineExercises.map(re => ({
+          exerciseId: re.exercise.id,
+          name: re.exercise.name,
+          muscleGroups: re.exercise.muscleGroups,
+          setsConfig: re.setsConfig.length > 0
+            ? re.setsConfig.map(s => ({ reps: s.reps ?? null, weightKg: s.weightKg ?? null }))
+            : Array.from({ length: 3 }, () => ({ reps: null, weightKg: null })),
+        })),
+      } : undefined);
       router.push("/active");
     } finally {
       setStartingId(null);
@@ -255,7 +265,7 @@ export default function RoutinesPage() {
                       <button
                         type="button"
                         className={styles.dropItem}
-                        onClick={() => { setMenuOpenId(null); handleStart(r.id); }}
+                        onClick={() => { setMenuOpenId(null); handleStart(r.id, r); }}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                           <polygon points="5,3 19,12 5,21" fill="currentColor" />
@@ -294,7 +304,7 @@ export default function RoutinesPage() {
                 <button
                   type="button"
                   className={styles.startRoutineBtn}
-                  onClick={() => handleStart(r.id)}
+                  onClick={() => handleStart(r.id, r)}
                   disabled={startingId === r.id}
                 >
                   {startingId === r.id ? "Starting…" : "Start Routine"}
