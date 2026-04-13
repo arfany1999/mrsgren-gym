@@ -1,5 +1,5 @@
 /* ============================================================
-   GYM TRACKER — Global Design System (Warm Beige + Liquid Glass)
+   GYM TRACKER — Global Design System (Dispatch Dark)
    ============================================================ */
 
 /* ── Reset ─────────────────────────────────────────────────── */
@@ -11,7 +11,7 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
   font-size: 16px;
   height: 100%;
   overflow: hidden;
@@ -35,35 +35,35 @@ body {
 
 /* ── Color Tokens ───────────────────────────────────────────── */
 :root {
-  /* Backgrounds — warm sand / parchment */
-  --bg-primary:     #f3ede1;
-  --bg-surface:     #ede7d9;
-  --bg-elevated:    #e6dfc9;
-  --bg-overlay:     #ddd6c0;
+  /* Backgrounds — Dispatch dark */
+  --bg-primary:     #0A0A08;
+  --bg-surface:     #1A1510;
+  --bg-elevated:    #1E1A15;
+  --bg-overlay:     #241E17;
 
-  /* Accent Colors */
-  --accent:         #4a6ef5;
-  --accent-dim:     rgba(74, 110, 245, 0.12);
-  --accent-red:     #e53e3e;
-  --accent-red-dim: rgba(229, 62, 62, 0.12);
-  --accent-orange:  #dd8d0a;
+  /* Accent Colors — terracotta primary */
+  --accent:         #C4764A;
+  --accent-dim:     rgba(196, 118, 74, 0.12);
+  --accent-red:     #e05454;
+  --accent-red-dim: rgba(224, 84, 84, 0.14);
+  --accent-orange:  #C4764A;
   --accent-yellow:  #d4a017;
-  --accent-green:   #22a85a;
-  --accent-blue:    #4a6ef5;
+  --accent-green:   #3ab06a;
+  --accent-blue:    #6b96e8;
 
-  /* Text — dark warm brown on beige */
-  --text-primary:   #1a1510;
-  --text-secondary: rgba(26, 21, 16, 0.58);
-  --text-tertiary:  rgba(26, 21, 16, 0.36);
-  --text-disabled:  rgba(26, 21, 16, 0.22);
+  /* Text — warm off-white on dark */
+  --text-primary:   #E8E0D8;
+  --text-secondary: rgba(212, 203, 192, 0.72);
+  --text-tertiary:  rgba(212, 203, 192, 0.42);
+  --text-disabled:  rgba(212, 203, 192, 0.24);
 
   /* Borders / Separators */
-  --border-color:   rgba(26, 21, 16, 0.11);
-  --separator:      rgba(26, 21, 16, 0.07);
+  --border-color:   rgba(255, 255, 255, 0.09);
+  --separator:      rgba(255, 255, 255, 0.05);
 
   /* Card */
   --card-radius:    18px;
-  --card-shadow:    0 2px 16px rgba(0, 0, 0, 0.09);
+  --card-shadow:    0 2px 16px rgba(0, 0, 0, 0.35);
 
   /* Set Type Colors */
   --set-normal:    var(--text-secondary);
@@ -118,10 +118,10 @@ body {
   --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-bounce: 300ms cubic-bezier(0.34, 1.4, 0.64, 1);
 
-  /* Glass surface */
-  --glass-bg:     rgba(255, 255, 255, 0.42);
-  --glass-border: rgba(255, 255, 255, 0.72);
-  --glass-shadow: 0 2px 14px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255,255,255,0.85);
+  /* Glass surface — dark glass */
+  --glass-bg:     rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-shadow: 0 2px 14px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255,255,255,0.07);
   --glass-blur:   blur(14px);
 }
 
@@ -160,7 +160,7 @@ a {
 
 input, textarea, select {
   font-family: inherit;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -171,8 +171,8 @@ input, textarea, select {
 
 input:focus, textarea:focus {
   border-color: var(--accent);
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 0 0 3px rgba(74, 110, 245, 0.12);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 3px rgba(196, 118, 74, 0.15);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 input::placeholder, textarea::placeholder { color: var(--text-tertiary); }
@@ -274,4 +274,5 @@ button:not(:disabled):active,
 a:active {
   -webkit-tap-highlight-color: transparent;
 }
+
 
