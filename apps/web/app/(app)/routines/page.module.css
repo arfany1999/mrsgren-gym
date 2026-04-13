@@ -25,8 +25,8 @@
 .startEmpty {
   width: 100%;
   padding: 18px 16px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
@@ -44,7 +44,7 @@
   letter-spacing: -0.2px;
   -webkit-tap-highlight-color: transparent;
 }
-.startEmpty:hover  { background: rgba(255, 255, 255, 0.6); }
+.startEmpty:hover  { background: rgba(255, 255, 255, 0.09); }
 .startEmpty:active { transform: scale(0.98); }
 
 .plus {
@@ -72,8 +72,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: var(--glass-shadow);
@@ -87,7 +87,7 @@
   transition: background var(--transition-fast);
   cursor: pointer;
 }
-.addBtn:hover { background: rgba(255, 255, 255, 0.65); }
+.addBtn:hover { background: rgba(255, 255, 255, 0.12); }
 
 /* ── Quick actions ───────────────────────────────────────────── */
 .quick {
@@ -99,8 +99,8 @@
 
 .quickCard {
   padding: 18px 16px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
@@ -118,7 +118,7 @@
   letter-spacing: -0.1px;
   -webkit-tap-highlight-color: transparent;
 }
-.quickCard:hover  { background: rgba(255, 255, 255, 0.6); }
+.quickCard:hover  { background: rgba(255, 255, 255, 0.09); }
 .quickCard:active { transform: scale(0.97); }
 
 /* ── Mine head ───────────────────────────────────────────────── */
@@ -175,8 +175,8 @@
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
@@ -227,8 +227,8 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
@@ -240,7 +240,7 @@
 }
 .more:hover,
 .more:active {
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--text-secondary);
 }
 
@@ -248,14 +248,14 @@
   position: absolute;
   top: 36px;
   right: 0;
-  background: rgba(243, 237, 225, 0.88);
+  background: rgba(30, 26, 21, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 16px;
   min-width: 170px;
   z-index: 50;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255,255,255,0.9);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.06);
   overflow: hidden;
   animation: dropIn 0.15s ease both;
 }
@@ -277,12 +277,12 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
-  border-bottom: 0.5px solid rgba(26, 21, 16, 0.07);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
   text-align: left;
   transition: background var(--transition-fast);
 }
 .dropItem:last-child { border-bottom: none; }
-.dropItem:hover { background: rgba(26, 21, 16, 0.04); }
+.dropItem:hover { background: rgba(255, 255, 255, 0.06); }
 
 .dropDanger { color: var(--accent-red); }
 
@@ -291,9 +291,9 @@
   width: 100%;
   padding: 15px;
   margin-top: 14px;
-  background: rgba(74, 110, 245, 0.88);
+  background: rgba(196, 118, 74, 0.88);
   border: none;
-  border-top: 1px solid rgba(74, 110, 245, 0.5);
+  border-top: 1px solid rgba(196, 118, 74, 0.5);
   cursor: pointer;
   font-size: 15px;
   font-weight: 800;
@@ -330,15 +330,15 @@
 }
 
 .modal {
-  background: rgba(243, 237, 225, 0.92);
+  background: rgba(26, 21, 16, 0.97);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 22px;
   padding: 24px;
   width: 100%;
   max-width: 320px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255,255,255,0.05);
   animation: modalSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -365,8 +365,8 @@
 
 .modalInput {
   width: 100%;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   padding: 14px 14px;
   font-size: 15px;
@@ -378,7 +378,7 @@
 }
 .modalInput:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(74, 110, 245, 0.14);
+  box-shadow: 0 0 0 3px rgba(196, 118, 74, 0.15);
 }
 
 .modalActions {
@@ -390,8 +390,8 @@
   flex: 1;
   padding: 14px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: var(--glass-shadow);
@@ -401,15 +401,15 @@
   color: var(--text-primary);
   transition: background var(--transition-fast);
 }
-.modalCancel:hover { background: rgba(255, 255, 255, 0.6); }
+.modalCancel:hover { background: rgba(255, 255, 255, 0.12); }
 
 .modalSave {
   flex: 1;
   padding: 14px;
   border-radius: 14px;
-  background: rgba(74, 110, 245, 0.9);
-  border: 1px solid rgba(74, 110, 245, 0.5);
-  box-shadow: 0 4px 16px rgba(74, 110, 245, 0.28), inset 0 1px 0 rgba(255,255,255,0.2);
+  background: rgba(196, 118, 74, 0.9);
+  border: 1px solid rgba(196, 118, 74, 0.5);
+  box-shadow: 0 4px 16px rgba(196, 118, 74, 0.28), inset 0 1px 0 rgba(255,255,255,0.12);
   cursor: pointer;
   font-size: 14px;
   font-weight: 800;

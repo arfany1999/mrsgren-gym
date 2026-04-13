@@ -38,7 +38,7 @@
   z-index: 9999;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(180,100,50,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(180,100,50,0.06) 1px, transparent 1px);
+    linear-gradient(rgba(180,100,50,0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(180,100,50,0.11) 1px, transparent 1px);
   background-size: 40px 40px;
 }
