@@ -30,26 +30,25 @@
 
 /* ── Variants ─────────────────────────────────────────────── */
 .primary {
-  background: rgba(196, 118, 74, 0.9);
+  background: rgba(74, 110, 245, 0.9);
   color: #fff;
-  border: 1px solid rgba(196, 118, 74, 0.5);
-  box-shadow: 0 4px 18px rgba(196, 118, 74, 0.28), inset 0 1px 0 rgba(255,255,255,0.15);
+  border: 1px solid rgba(74, 110, 245, 0.5);
+  box-shadow: 0 4px 18px rgba(74, 110, 245, 0.28), inset 0 1px 0 rgba(255,255,255,0.22);
 }
 .primary:hover:not(:disabled) {
-  background: rgba(212, 132, 90, 0.9);
-  box-shadow: 0 6px 24px rgba(196, 118, 74, 0.38), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 6px 24px rgba(74, 110, 245, 0.38), inset 0 1px 0 rgba(255,255,255,0.22);
   opacity: 0.94;
 }
 
 .secondary {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.42);
   color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.72);
   box-shadow: var(--glass-shadow);
 }
 .secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 18px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.09), inset 0 1px 0 rgba(255,255,255,0.9);
 }
 
 .ghost {
@@ -58,8 +57,8 @@
   border: 1px solid transparent;
 }
 .ghost:hover:not(:disabled) {
-  background: rgba(196, 118, 74, 0.10);
-  border-color: rgba(196, 118, 74, 0.22);
+  background: rgba(74, 110, 245, 0.1);
+  border-color: rgba(74, 110, 245, 0.2);
 }
 
 .danger {
