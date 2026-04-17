@@ -124,17 +124,55 @@
   flex-shrink: 0;
 }
 
+/* ── Sync pill ──────────────────────────────────────────────── */
+.syncPill {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  margin: 8px auto 0;
+  padding: 5px 12px;
+  background: rgba(249, 180, 45, 0.12);
+  border: 1px solid rgba(249, 180, 45, 0.3);
+  border-radius: 999px;
+  color: #b5780b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.syncDot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
 /* ── Rest Timer Banner ───────────────────────────────────────── */
 .restBanner {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 6px;
+  padding: 10px 14px;
   background: rgba(34, 168, 90, 0.12);
   border-bottom: 1px solid rgba(34, 168, 90, 0.2);
   color: #1a8a4a;
   flex-shrink: 0;
   animation: slideDown 0.2s ease both;
+  overflow: hidden;
+}
+
+.restBarFill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  background: rgba(34, 168, 90, 0.18);
+  z-index: 0;
+  transition: width 0.95s linear;
+  pointer-events: none;
 }
 
 @keyframes slideDown {
@@ -143,19 +181,42 @@
 }
 
 .restTime {
+  position: relative; z-index: 1;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  min-width: 40px;
+  min-width: 48px;
+  font-variant-numeric: tabular-nums;
 }
 
 .restLabel {
+  position: relative; z-index: 1;
   font-size: 13px;
   font-weight: 600;
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+.restAdjust {
+  position: relative; z-index: 1;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(34, 168, 90, 0.35);
+  border-radius: 10px;
+  color: #1a8a4a;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 8px;
+  cursor: pointer;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+}
+.restAdjust:active { transform: scale(0.94); background: rgba(255,255,255,0.7); }
+
 .restSkip {
+  position: relative; z-index: 1;
   background: rgba(255,255,255,0.5);
   border: 1px solid rgba(34, 168, 90, 0.4);
   backdrop-filter: blur(8px);
@@ -164,9 +225,10 @@
   color: #1a8a4a;
   font-size: 13px;
   font-weight: 800;
-  padding: 6px 14px;
+  padding: 6px 12px;
   cursor: pointer;
 }
+.restSkip:active { transform: scale(0.94); background: rgba(255,255,255,0.7); }
 
 /* ── Content ─────────────────────────────────────────────────── */
 .content {

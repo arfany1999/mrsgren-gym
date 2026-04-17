@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
@@ -13,6 +13,12 @@ import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
 import { getActiveWorkoutId } from "@/lib/storage";
 import { getProfile } from "@/lib/gymProfile";
+import {
+  REST_BY_TYPE,
+  ensureNotificationPermission,
+  alertRestDone,
+} from "@/lib/restTimer";
+import { subscribeQueue } from "@/lib/offlineQueue";
 import type { ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./page.module.css";
@@ -38,6 +44,13 @@ export default function ActiveWorkoutPage() {
   const [finishing,   setFinishing]   = useState(false);
   const [discarding,  setDiscarding]  = useState(false);
   const [done,        setDone]        = useState(false);
+  const [restSecs,    setRestSecs]    = useState(-1);
+  const [restTotal,   setRestTotal]   = useState(0);
+  const [restExerciseName, setRestExerciseName] = useState<string | undefined>(undefined);
+  const restFiredRef  = useRef(false);
+  const [pendingSync, setPendingSync] = useState(0);
+
+  useEffect(() => subscribeQueue(setPendingSync), []);
 
   // Report state
   const [report, setReport] = useState<{ workoutId: string; durationMins: number; dayNumber: number } | null>(null);
@@ -57,6 +70,51 @@ export default function ActiveWorkoutPage() {
   useEffect(() => {
     if (exercises.length > 0) workoutExercisesRef.current = exercises;
   }, [exercises]);
+
+  // Rest timer countdown — fires alert once when it reaches 0
+  useEffect(() => {
+    if (restSecs <= 0) return;
+    const t = setTimeout(() => setRestSecs((s) => {
+      const next = s - 1;
+      if (next === 0 && !restFiredRef.current) {
+        restFiredRef.current = true;
+        alertRestDone(restExerciseName);
+      }
+      return next;
+    }), 1000);
+    return () => clearTimeout(t);
+  }, [restSecs, restExerciseName]);
+
+  const startRest = useCallback((setType: SetType = "normal", exerciseName?: string) => {
+    const secs = REST_BY_TYPE[setType] ?? 90;
+    restFiredRef.current = false;
+    setRestTotal(secs);
+    setRestSecs(secs);
+    setRestExerciseName(exerciseName);
+    // Ask for notification permission on first rest (one-time)
+    void ensureNotificationPermission();
+  }, []);
+
+  const adjustRest = useCallback((delta: number) => {
+    setRestSecs(s => Math.max(1, s + delta));
+    setRestTotal(t => Math.max(1, t + delta));
+    if (delta > 0) restFiredRef.current = false;
+  }, []);
+
+  const skipRest = useCallback(() => {
+    setRestSecs(-1);
+    setRestTotal(0);
+    restFiredRef.current = false;
+  }, []);
+
+  const formatRest = (s: number) => {
+    if (s <= 0) return "0:00";
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${String(r).padStart(2, "0")}`;
+  };
+
+  const restProgress = restTotal > 0 ? Math.max(0, Math.min(1, 1 - (restSecs / restTotal))) : 0;
 
   useEffect(() => {
     if (!activeWorkout && !getActiveWorkoutId() && !finishing && !done && !discarding) {
@@ -159,6 +217,16 @@ export default function ActiveWorkoutPage() {
         </Button>
       </div>
 
+      {/* Pending sync pill */}
+      {pendingSync > 0 && (
+        <div className={styles.syncPill}>
+          <span className={styles.syncDot} />
+          {navigator.onLine
+            ? `Syncing ${pendingSync} ${pendingSync === 1 ? "change" : "changes"}…`
+            : `Offline — ${pendingSync} saved locally`}
+        </div>
+      )}
+
       {/* Live Stats Bar */}
       <div className={styles.statsBar}>
         <div className={styles.statChip}>
@@ -179,6 +247,30 @@ export default function ActiveWorkoutPage() {
         </div>
       </div>
 
+      {/* Rest Timer Banner */}
+      {restSecs > 0 && (
+        <div className={styles.restBanner}>
+          <span className={styles.restBarFill} style={{ width: `${restProgress * 100}%` }} />
+          <span className={styles.restTime}>{formatRest(restSecs)}</span>
+          <span className={styles.restLabel}>
+            Rest{restExerciseName ? ` · ${restExerciseName}` : ""}
+          </span>
+          <button
+            className={styles.restAdjust}
+            onClick={() => adjustRest(-15)}
+            type="button"
+            aria-label="Subtract 15 seconds"
+          >−15s</button>
+          <button
+            className={styles.restAdjust}
+            onClick={() => adjustRest(15)}
+            type="button"
+            aria-label="Add 15 seconds"
+          >+15s</button>
+          <button className={styles.restSkip} onClick={skipRest} type="button">Skip</button>
+        </div>
+      )}
+
       {/* Exercises */}
       <div className={styles.content}>
         {exercises.length === 0 ? (
@@ -196,7 +288,11 @@ export default function ActiveWorkoutPage() {
               onUpdateField={(idx, field, value) =>
                 updateSetField(ex.weId, idx, field as keyof ActiveSet, value as string | SetType | boolean | number)
               }
-              onSaveSet={(idx) => saveSet(ex.weId, idx)}
+              onSaveSet={async (idx) => {
+                const st = ex.sets[idx]?.setType ?? "normal";
+                await saveSet(ex.weId, idx);
+                startRest(st, ex.name);
+              }}
               onDeleteSet={(setId) => deleteSet(ex.weId, setId)}
               onRemove={() => removeExercise(ex.weId)}
             />

@@ -11,8 +11,10 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
+    "idb": "^8.0.3",
     "next": "16.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

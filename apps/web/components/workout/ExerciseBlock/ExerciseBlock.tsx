@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { SetRow } from "@/components/workout/SetRow/SetRow";
+import { progressiveOverloadHint } from "@/lib/exerciseHistory";
 import type { ActiveExercise, ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./ExerciseBlock.module.css";
@@ -26,6 +27,39 @@ export function ExerciseBlock({
   const [showMenu, setShowMenu] = useState(false);
   const [note, setNote] = useState("");
 
+  const { nudge, lastTopSet } = useMemo(() => {
+    if (exercise.measurementType !== "weight_reps" || !exercise.previousSets.length) {
+      return { nudge: null, lastTopSet: null };
+    }
+    // Top set = highest weight × reps product from last session
+    let topW = 0, topR = 0, topScore = -1;
+    exercise.previousSets.forEach(s => {
+      const w = parseFloat(s.weightKg) || 0;
+      const r = parseInt(s.reps) || 0;
+      const score = w * r;
+      if (score > topScore) { topScore = score; topW = w; topR = r; }
+    });
+    if (topW <= 0) return { nudge: null, lastTopSet: null };
+    const hint = progressiveOverloadHint(topW, topR);
+    return {
+      nudge: hint ? { ...hint, prevWeight: topW, prevReps: topR } : null,
+      lastTopSet: { weight: topW, reps: topR },
+    };
+  }, [exercise.previousSets, exercise.measurementType]);
+
+  const pr = exercise.personalRecord;
+  const hasUnfilledFirstSet = exercise.sets.length > 0 && !exercise.sets[0]?.isSaved && lastTopSet;
+
+  function useLastWeights() {
+    if (!lastTopSet) return;
+    // Fill every unsaved set with last session's top weight/reps
+    exercise.sets.forEach((s, idx) => {
+      if (s.isSaved) return;
+      if (!s.weightKg) onUpdateField(idx, "weightKg", String(lastTopSet.weight));
+      if (!s.reps)     onUpdateField(idx, "reps",     String(lastTopSet.reps));
+    });
+  }
+
   return (
     <div className={styles.block}>
       {/* Header */}
@@ -34,6 +68,28 @@ export function ExerciseBlock({
           <h3 className={styles.name}>{exercise.name}</h3>
           {exercise.muscleGroups.length > 0 && (
             <p className={styles.muscles}>{exercise.muscleGroups.join(", ")}</p>
+          )}
+          <div className={styles.historyLine}>
+            {pr && pr.weight > 0 && (
+              <span className={styles.prChip} title={`Estimated 1RM: ${pr.estimated1rm}kg`}>
+                🏆 PR {pr.weight}kg × {pr.reps}
+              </span>
+            )}
+            {lastTopSet && (
+              <span className={styles.lastChip}>
+                Last {lastTopSet.weight}kg × {lastTopSet.reps}
+              </span>
+            )}
+          </div>
+          {nudge && (
+            <p className={styles.nudge}>
+              💡 Try <b>{nudge.suggestWeight}kg</b> — {nudge.reason}
+            </p>
+          )}
+          {hasUnfilledFirstSet && (
+            <button type="button" className={styles.useLastBtn} onClick={useLastWeights}>
+              ↻ Use last weights
+            </button>
           )}
         </div>
         <div className={styles.menuWrapper}>

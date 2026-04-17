@@ -19,6 +19,8 @@ import {
 import type { SetType, Exercise } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
 import { getMeasurementType, type MeasurementType } from "@/lib/exercises-data";
+import { fetchPRsForExercises } from "@/lib/exerciseHistory";
+import { enqueue as queueMutation, startOnlineAutoFlush } from "@/lib/offlineQueue";
 
 // ── Types ─────────────────────────────────────────────────────
 export interface ActiveSet {
@@ -41,6 +43,7 @@ export interface ActiveExercise {
   measurementType: MeasurementType;
   sets: ActiveSet[];
   previousSets: Array<{ reps: string; weightKg: string }>;
+  personalRecord?: { weight: number; reps: number; estimated1rm: number };
 }
 
 export interface ActiveWorkout {
@@ -112,6 +115,11 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   function stopTimer() { /* no-op — timer is local to WorkoutTimer component */ }
 
   useEffect(() => () => { /* cleanup on unmount */ }, []);
+
+  // Start the offline-queue auto-flush whenever the provider is mounted
+  useEffect(() => {
+    return startOnlineAutoFlush(supabase);
+  }, [supabase]);
 
   // Restore active workout from localStorage
   useEffect(() => {
@@ -243,12 +251,20 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    // Fetch previous performance for all exercises in 3 queries (batched)
-    const prevMap = await fetchAllPreviousPerformance(
-      baseExercises.map((ex) => ex.exerciseId),
-      workoutId
-    );
-    return baseExercises.map((ex) => ({ ...ex, previousSets: prevMap.get(ex.exerciseId) ?? [] }));
+    // Fetch previous performance + PRs for all exercises (batched)
+    const exIds = baseExercises.map((ex) => ex.exerciseId);
+    const [prevMap, prMap] = await Promise.all([
+      fetchAllPreviousPerformance(exIds, workoutId),
+      fetchPRsForExercises(supabase, exIds),
+    ]);
+    return baseExercises.map((ex) => {
+      const pr = prMap.get(ex.exerciseId);
+      return {
+        ...ex,
+        previousSets: prevMap.get(ex.exerciseId) ?? [],
+        personalRecord: pr ? { weight: pr.weight, reps: pr.reps, estimated1rm: pr.estimated1rm } : undefined,
+      };
+    });
   }
 
   const loadActiveWorkout = useCallback(
@@ -436,14 +452,17 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       sum + e.sets.filter(s => s.isSaved).reduce((v, s) =>
         v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0);
 
-    await supabase
-      .from("workouts")
-      .update({
-        finished_at: finishedAt,
-        duration_secs: durationSecs,
-        total_volume: totalVolume > 0 ? Math.round(totalVolume) : null,
-      })
-      .eq("id", activeWorkout.id);
+    const finishPayload = {
+      finished_at: finishedAt,
+      duration_secs: durationSecs,
+      total_volume: totalVolume > 0 ? Math.round(totalVolume) : null,
+    };
+    try {
+      const { error } = await supabase.from("workouts").update(finishPayload).eq("id", activeWorkout.id);
+      if (error) throw error;
+    } catch {
+      await queueMutation("updateWorkout", { workoutId: activeWorkout.id, data: finishPayload });
+    }
 
     const finishedId = activeWorkout.id;
     stopTimer();
@@ -534,7 +553,11 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error || !we) return;
-      const prevSets = await fetchPreviousPerformance(exerciseUuid, activeWorkout.id);
+      const [prevSets, prMap] = await Promise.all([
+        fetchPreviousPerformance(exerciseUuid, activeWorkout.id),
+        fetchPRsForExercises(supabase, [exerciseUuid]),
+      ]);
+      const pr = prMap.get(exerciseUuid);
       const mType: MeasurementType =
         (exercise.measurementType as MeasurementType) ?? getMeasurementType(exercise.name);
       setExercises((prev) => [
@@ -547,6 +570,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           measurementType: mType,
           sets: [],
           previousSets: prevSets,
+          personalRecord: pr ? { weight: pr.weight, reps: pr.reps, estimated1rm: pr.estimated1rm } : undefined,
         },
       ]);
     },
@@ -565,25 +589,26 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   const addSet = useCallback((weId: string) => {
     setExercises((prev) =>
-      prev.map((e) =>
-        e.weId === weId
-          ? {
-              ...e,
-              sets: [
-                ...e.sets,
-                {
-                  reps: "",
-                  weightKg: "",
-                  duration: "",
-                  distance: "",
-                  setType: "normal" as SetType,
-                  isPr: false,
-                  isSaved: false,
-                },
-              ],
-            }
-          : e
-      )
+      prev.map((e) => {
+        if (e.weId !== weId) return e;
+        // Pre-fill from the same slot of the previous session
+        const prevSlot = e.previousSets[e.sets.length];
+        return {
+          ...e,
+          sets: [
+            ...e.sets,
+            {
+              reps: prevSlot?.reps ?? "",
+              weightKg: prevSlot?.weightKg ?? "",
+              duration: "",
+              distance: "",
+              setType: "normal" as SetType,
+              isPr: false,
+              isSaved: false,
+            },
+          ],
+        };
+      })
     );
   }, []);
 
@@ -643,30 +668,43 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
       if (set.id) {
         // Pre-created set from routine — just mark completed + update values
-        await supabase
-          .from("workout_sets")
-          .update({ reps: dbReps, weight: dbWeight, is_completed: true })
-          .eq("id", set.id);
+        const updateData = { reps: dbReps, weight: dbWeight, is_completed: true };
+        try {
+          const { error } = await supabase
+            .from("workout_sets")
+            .update(updateData)
+            .eq("id", set.id);
+          if (error) throw error;
+        } catch {
+          // Queue for retry when online
+          await queueMutation("upsertSet", { setId: set.id, data: updateData });
+        }
       } else {
-        // Manually added set — insert new row
+        // Manually added set — insert new row. Use client-side UUID so we can
+        // queue the insert offline and keep UI stable.
         const existingSets = exercise.sets.filter((s) => s.isSaved);
         const orderIndex = existingSets.length;
-        const { data: savedSet, error } = await supabase
-          .from("workout_sets")
-          .insert({
-            workout_exercise_id: weId,
-            reps: dbReps,
-            weight: dbWeight,
-            set_type: set.setType,
-            rpe: set.rpe ?? null,
-            is_pr: false,
-            is_completed: true,
-            order_index: orderIndex,
-          })
-          .select()
-          .single();
-        if (error || !savedSet) return;
-        savedSetId = savedSet.id;
+        const newId = typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const insertData = {
+          id: newId,
+          workout_exercise_id: weId,
+          reps: dbReps,
+          weight: dbWeight,
+          set_type: set.setType,
+          rpe: set.rpe ?? null,
+          is_pr: false,
+          is_completed: true,
+          order_index: orderIndex,
+        };
+        try {
+          const { error } = await supabase.from("workout_sets").insert(insertData);
+          if (error) throw error;
+        } catch {
+          await queueMutation("upsertSet", { data: insertData });
+        }
+        savedSetId = newId;
       }
 
       // Check for PR in background
@@ -694,6 +732,20 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
       if (isPr && savedSetId) {
         await supabase.from("workout_sets").update({ is_pr: true }).eq("id", savedSetId);
+        // Write to personal_records so Statistics page can show it
+        if (user && reps && weightKg) {
+          await supabase.from("personal_records").upsert(
+            {
+              user_id: user.id,
+              exercise_id: exercise.exerciseId,
+              weight: weightKg,
+              reps,
+              estimated_1rm: parseFloat((weightKg * (1 + reps / 30)).toFixed(1)),
+              achieved_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,exercise_id" }
+          );
+        }
       }
 
       // Final update with real ID and PR status
@@ -725,7 +777,12 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const deleteSet = useCallback(
     async (weId: string, setId: string) => {
       if (weId.startsWith("temp-")) return;
-      await supabase.from("workout_sets").delete().eq("id", setId);
+      try {
+        const { error } = await supabase.from("workout_sets").delete().eq("id", setId);
+        if (error) throw error;
+      } catch {
+        await queueMutation("deleteSet", { setId });
+      }
       setExercises((prev) =>
         prev.map((e) =>
           e.weId === weId
