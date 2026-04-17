@@ -35,6 +35,30 @@ function formatVolume(kg: number): string {
   return `${Math.round(kg)}kg`;
 }
 
+/** 10 lego-style workout avatars — one picked deterministically per day */
+const WORKOUT_LEGOS = [
+  "💪", "🏋️", "🦾", "🔥", "⚡",
+  "🚀", "🥇", "👊", "🎯", "⭐",
+] as const;
+
+function legoForToday(): string {
+  const now = new Date();
+  // Day-of-year (0-indexed); stable for whole local day
+  const start = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+  const idx = dayOfYear % WORKOUT_LEGOS.length;
+  return WORKOUT_LEGOS[idx] ?? "💪";
+}
+
+/** Is this ISO timestamp today in local time? */
+function isToday(iso: string): boolean {
+  const d = new Date(iso);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear()
+      && d.getMonth()    === now.getMonth()
+      && d.getDate()     === now.getDate();
+}
+
 /** Compute unique workout days + current streak from ISO timestamps */
 function computeDayStats(dates: string[]): { days: number; currentStreak: number; longestStreak: number } {
   if (dates.length === 0) return { days: 0, currentStreak: 0, longestStreak: 0 };
@@ -262,21 +286,41 @@ export default function ProfilePage() {
   }
 
   async function handleShare() {
-    const lines = [
-      `💪 My GYM Tracker Progress`,
-      ``,
-      `🏋️ ${totalWorkouts} Workouts`,
-      `📅 ${workoutDays} Workout Days`,
-      `🔥 ${currentStreak}-day Current Streak`,
-      `🏆 ${longestStreak}-day Longest Streak`,
-      `⏱️ ${formatBigDuration(totalDurationMin)} Total Time`,
-      `🏋️‍♂️ ${Math.round(totalVolumeKg).toLocaleString()} kg Lifted`,
-      ``,
-      `Tracked with HA GYM — https://gym.mrgren.store`,
-    ];
+    const latest = reports[0];
+    let lines: string[];
+    if (latest) {
+      const totalReps = latest.exercises.reduce((a, ex) => {
+        const parts = ex.setSummary ? ex.setSummary.split(" · ") : [];
+        return a + parts.reduce((rs, p) => {
+          const n = parseInt(p, 10);
+          return rs + (isNaN(n) ? 0 : n);
+        }, 0);
+      }, 0);
+      const legoIcon = legoForToday();
+      lines = [
+        `${legoIcon} Day ${latest.dayNumber} — ${latest.title}`,
+        `${formatDate(latest.date)}`,
+        ``,
+        `⏱️ ${formatDuration(latest.durationMins)}`,
+        `🏋️ ${latest.exercises.length} exercises · ${latest.totalSets} sets${totalReps ? ` · ${totalReps} reps` : ""}`,
+        latest.totalVolume > 0 ? `💪 ${Math.round(latest.totalVolume).toLocaleString()} kg lifted` : "",
+        `🔥 ${latest.totalCalories.toLocaleString()} kcal burned`,
+        currentStreak > 0 ? `${legoIcon} ${currentStreak}-day streak` : "",
+        ``,
+        ...latest.exercises.slice(0, 5).map(ex =>
+          `• ${ex.name} — ${ex.sets} set${ex.sets !== 1 ? "s" : ""}${ex.setSummary ? ` (${ex.setSummary.split(" · ")[0]})` : ""}`
+        ),
+        ``,
+        `Tracked with HA GYM — https://gym.mrgren.store`,
+      ].filter(Boolean);
+    } else {
+      lines = [
+        `💪 GYM Tracker — https://gym.mrgren.store`,
+      ];
+    }
     const text = lines.join("\n");
     const shareData: ShareData = {
-      title: "My GYM Tracker Progress",
+      title: latest ? `Day ${latest.dayNumber} — ${latest.title}` : "My GYM Tracker",
       text,
     };
     try {
@@ -480,7 +524,9 @@ export default function ProfilePage() {
       </header>
 
       <section className={styles.hero}>
-        <div className={styles.avatar}>{(displayName[0] ?? "U").toUpperCase()}</div>
+        <div className={styles.avatar} aria-label="Today's workout mascot">
+          <span className={styles.avatarLego}>{legoForToday()}</span>
+        </div>
         <div className={styles.heroMeta}>
           <h2 className={styles.name}>{displayName}</h2>
           <div className={styles.statsInline}>
@@ -504,66 +550,120 @@ export default function ProfilePage() {
         </button>
       </section>
 
-      {/* ── Workout Days banner ── */}
-      <section className={styles.reportBanner}>
-        <div className={styles.reportHead}>
-          <div className={styles.reportTitleWrap}>
-            <span className={styles.reportKicker}>Training Report</span>
-            <h3 className={styles.reportTitle}>
-              {currentStreak > 0
-                ? `🔥 ${currentStreak}-day Streak`
-                : workoutDays > 0
-                  ? `${workoutDays} Days Trained`
-                  : "Start your first workout"}
-            </h3>
-          </div>
-          <button
-            type="button"
-            className={styles.reportShareBtn}
-            onClick={handleShare}
-            aria-label="Share report"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M16 6l-4-4-4 4M12 2v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Share
-          </button>
-        </div>
+      {/* ── Today / Latest Training Report banner ── */}
+      {(() => {
+        const latest = reports[0];
+        if (!latest) {
+          return (
+            <section className={styles.reportBanner}>
+              <div className={styles.reportHead}>
+                <div className={styles.reportTitleWrap}>
+                  <span className={styles.reportKicker}>Training Report</span>
+                  <h3 className={styles.reportTitle}>No workouts yet</h3>
+                </div>
+              </div>
+              <p className={styles.reportEmpty}>
+                Start a routine today to see your daily training report here.
+              </p>
+            </section>
+          );
+        }
 
-        <div className={styles.reportGrid}>
-          <div className={styles.reportStat}>
-            <span className={styles.reportStatEmoji}>📅</span>
-            <span className={styles.reportStatVal}>{workoutDays}</span>
-            <span className={styles.reportStatLbl}>Workout Days</span>
-          </div>
-          <div className={styles.reportStat}>
-            <span className={styles.reportStatEmoji}>🔥</span>
-            <span className={styles.reportStatVal}>{currentStreak}</span>
-            <span className={styles.reportStatLbl}>Current Streak</span>
-          </div>
-          <div className={styles.reportStat}>
-            <span className={styles.reportStatEmoji}>🏆</span>
-            <span className={styles.reportStatVal}>{longestStreak}</span>
-            <span className={styles.reportStatLbl}>Best Streak</span>
-          </div>
-          <div className={styles.reportStat}>
-            <span className={styles.reportStatEmoji}>⏱️</span>
-            <span className={styles.reportStatVal}>{formatBigDuration(totalDurationMin)}</span>
-            <span className={styles.reportStatLbl}>Total Time</span>
-          </div>
-          <div className={styles.reportStat}>
-            <span className={styles.reportStatEmoji}>🏋️</span>
-            <span className={styles.reportStatVal}>{formatVolume(totalVolumeKg)}</span>
-            <span className={styles.reportStatLbl}>Total Lifted</span>
-          </div>
-          <div className={styles.reportStat}>
-            <span className={styles.reportStatEmoji}>✅</span>
-            <span className={styles.reportStatVal}>{totalWorkouts}</span>
-            <span className={styles.reportStatLbl}>Workouts</span>
-          </div>
-        </div>
-      </section>
+        const todayReport = isToday(latest.date);
+        const kicker = todayReport ? "Today's Training" : "Last Session";
+        const totalReps = latest.exercises.reduce((a, ex) => {
+          // setSummary is like "10 × 60 · 10 × 65 · ...", fall back to sets count
+          const parts = ex.setSummary ? ex.setSummary.split(" · ") : [];
+          return a + parts.reduce((rs, p) => {
+            const n = parseInt(p, 10);
+            return rs + (isNaN(n) ? 0 : n);
+          }, 0);
+        }, 0);
+
+        return (
+          <section className={styles.reportBanner}>
+            <div className={styles.reportHead}>
+              <div className={styles.reportTitleWrap}>
+                <span className={styles.reportKicker}>{kicker}</span>
+                <h3 className={styles.reportTitle}>
+                  Day {latest.dayNumber} · {latest.title}
+                </h3>
+                <span className={styles.reportDate}>{formatDate(latest.date)}</span>
+              </div>
+              <button
+                type="button"
+                className={styles.reportShareBtn}
+                onClick={handleShare}
+                aria-label="Share report"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16 6l-4-4-4 4M12 2v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Share
+              </button>
+            </div>
+
+            <div className={styles.reportCalsRow}>
+              <span className={styles.reportCalsNum}>{latest.totalCalories.toLocaleString()}</span>
+              <span className={styles.reportCalsUnit}>kcal burned</span>
+            </div>
+
+            <div className={styles.reportGrid}>
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatEmoji}>⏱️</span>
+                <span className={styles.reportStatVal}>{formatDuration(latest.durationMins)}</span>
+                <span className={styles.reportStatLbl}>Duration</span>
+              </div>
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatEmoji}>🏋️</span>
+                <span className={styles.reportStatVal}>{latest.exercises.length}</span>
+                <span className={styles.reportStatLbl}>Exercises</span>
+              </div>
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatEmoji}>📊</span>
+                <span className={styles.reportStatVal}>{latest.totalSets}</span>
+                <span className={styles.reportStatLbl}>Sets</span>
+              </div>
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatEmoji}>🔁</span>
+                <span className={styles.reportStatVal}>{totalReps || "—"}</span>
+                <span className={styles.reportStatLbl}>Reps</span>
+              </div>
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatEmoji}>💪</span>
+                <span className={styles.reportStatVal}>{latest.totalVolume > 0 ? formatVolume(latest.totalVolume) : "—"}</span>
+                <span className={styles.reportStatLbl}>Volume</span>
+              </div>
+              <div className={styles.reportStat}>
+                <span className={styles.reportStatEmoji}>🔥</span>
+                <span className={styles.reportStatVal}>{currentStreak}</span>
+                <span className={styles.reportStatLbl}>Streak</span>
+              </div>
+            </div>
+
+            {latest.exercises.length > 0 && (
+              <div className={styles.reportExList}>
+                {latest.exercises.slice(0, 4).map((ex, i) => (
+                  <div key={i} className={styles.reportExRow}>
+                    <span className={styles.reportExDot} />
+                    <span className={styles.reportExName}>{ex.name}</span>
+                    <span className={styles.reportExMeta}>
+                      {ex.sets} set{ex.sets !== 1 ? "s" : ""}
+                      {ex.setSummary ? ` · ${ex.setSummary.split(" · ")[0]}` : ""}
+                    </span>
+                  </div>
+                ))}
+                {latest.exercises.length > 4 && (
+                  <div className={styles.reportExMore}>
+                    +{latest.exercises.length - 4} more exercise{latest.exercises.length - 4 !== 1 ? "s" : ""}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       <section className={styles.chartCard}>
         <div className={styles.chartHeader}>

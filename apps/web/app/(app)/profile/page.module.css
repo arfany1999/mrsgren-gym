@@ -402,11 +402,102 @@
   box-shadow: 0 2px 8px rgba(74,110,245,0.22), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
+.reportDate {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.reportEmpty {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  position: relative;
+}
+
+.reportCalsRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 14px;
+  position: relative;
+}
+.reportCalsNum {
+  font-size: 38px;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.reportCalsUnit {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.65;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .reportGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   position: relative;
+}
+
+.reportExList {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 0.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  position: relative;
+}
+.reportExRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.reportExDot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+.reportExName {
+  flex: 1;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reportExMeta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.reportExMore {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-top: 4px;
+}
+
+.avatarLego {
+  font-size: 36px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.22));
 }
 .reportStat {
   background: rgba(255, 255, 255, 0.35);
