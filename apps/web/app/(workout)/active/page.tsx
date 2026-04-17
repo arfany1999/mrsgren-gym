@@ -17,6 +17,7 @@ import {
   REST_BY_TYPE,
   ensureNotificationPermission,
   alertRestDone,
+  unlockAudio,
 } from "@/lib/restTimer";
 import { subscribeQueue } from "@/lib/offlineQueue";
 import type { ActiveSet } from "@/contexts/WorkoutContext";
@@ -49,8 +50,20 @@ export default function ActiveWorkoutPage() {
   const [restExerciseName, setRestExerciseName] = useState<string | undefined>(undefined);
   const restFiredRef  = useRef(false);
   const [pendingSync, setPendingSync] = useState(0);
+  const [isOnline,    setIsOnline]    = useState(true);
 
   useEffect(() => subscribeQueue(setPendingSync), []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => setIsOnline(navigator.onLine);
+    update();
+    window.addEventListener("online",  update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online",  update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
 
   // Report state
   const [report, setReport] = useState<{ workoutId: string; durationMins: number; dayNumber: number } | null>(null);
@@ -85,14 +98,19 @@ export default function ActiveWorkoutPage() {
     return () => clearTimeout(t);
   }, [restSecs, restExerciseName]);
 
+  const permAskedRef = useRef(false);
   const startRest = useCallback((setType: SetType = "normal", exerciseName?: string) => {
     const secs = REST_BY_TYPE[setType] ?? 90;
     restFiredRef.current = false;
     setRestTotal(secs);
     setRestSecs(secs);
     setRestExerciseName(exerciseName);
-    // Ask for notification permission on first rest (one-time)
-    void ensureNotificationPermission();
+    // Unlock audio + ask for notification permission ONCE (we're inside a user gesture)
+    unlockAudio();
+    if (!permAskedRef.current) {
+      permAskedRef.current = true;
+      void ensureNotificationPermission();
+    }
   }, []);
 
   const adjustRest = useCallback((delta: number) => {
@@ -217,13 +235,15 @@ export default function ActiveWorkoutPage() {
         </Button>
       </div>
 
-      {/* Pending sync pill */}
-      {pendingSync > 0 && (
+      {/* Pending sync pill (or offline indicator) */}
+      {(pendingSync > 0 || !isOnline) && (
         <div className={styles.syncPill}>
           <span className={styles.syncDot} />
-          {navigator.onLine
-            ? `Syncing ${pendingSync} ${pendingSync === 1 ? "change" : "changes"}…`
-            : `Offline — ${pendingSync} saved locally`}
+          {!isOnline
+            ? (pendingSync > 0
+                ? `Offline — ${pendingSync} saved locally`
+                : "Offline — your sets are safe")
+            : `Syncing ${pendingSync} ${pendingSync === 1 ? "change" : "changes"}…`}
         </div>
       )}
 

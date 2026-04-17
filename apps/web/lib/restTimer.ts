@@ -45,13 +45,43 @@ export async function ensureNotificationPermission(): Promise<boolean> {
   } catch { return false; }
 }
 
-/** Play a short "ding" tone via WebAudio (no asset required). */
-export function playDing() {
-  if (typeof window === "undefined") return;
+// Single shared AudioContext — iOS Safari needs this to be resumed once by a
+// user gesture, after which it can play from timers in the background.
+let sharedCtx: AudioContext | null = null;
+
+function getOrCreateCtx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  if (sharedCtx) return sharedCtx;
   try {
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AC) return;
-    const ctx = new AC();
+    if (!AC) return null;
+    sharedCtx = new AC();
+    return sharedCtx;
+  } catch { return null; }
+}
+
+/** Call from any user gesture (button tap) to unlock audio on iOS Safari. */
+export function unlockAudio() {
+  const ctx = getOrCreateCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") { void ctx.resume(); }
+  // Also pump a near-silent 1ms tick to prime the pipeline
+  try {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    g.gain.value = 0.0001;
+    o.connect(g); g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    o.start(now); o.stop(now + 0.01);
+  } catch {}
+}
+
+/** Play a short "ding" tone via WebAudio (no asset required). */
+export function playDing() {
+  const ctx = getOrCreateCtx();
+  if (!ctx) return;
+  try {
+    if (ctx.state === "suspended") void ctx.resume();
     const o1 = ctx.createOscillator();
     const o2 = ctx.createOscillator();
     const g  = ctx.createGain();
@@ -64,7 +94,7 @@ export function playDing() {
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
     o1.start(now); o2.start(now + 0.05);
     o1.stop(now + 0.45); o2.stop(now + 0.45);
-    setTimeout(() => { try { ctx.close(); } catch {} }, 600);
+    // Don't close — we reuse the ctx across many rests
   } catch { /* ignore */ }
 }
 

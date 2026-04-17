@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { AiRoutineModal } from "@/components/workout/AiRoutineModal/AiRoutineModal";
 import type { Routine } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
 import styles from "./page.module.css";
@@ -49,9 +48,6 @@ export default function RoutinesPage() {
   // Delete confirm
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-
-  // AI Coach modal
-  const [aiOpen, setAiOpen] = useState(false);
 
   useEffect(() => {
     if (user) load();
@@ -211,9 +207,6 @@ export default function RoutinesPage() {
         <div className={styles.quick}>
           <Link href="/routines/new" className={styles.quickCard}>New Routine</Link>
           <button type="button" className={styles.quickCard} onClick={() => { setShowLibrary(true); if (library.length === 0) loadLibrary(); }}>Explore</button>
-          <button type="button" className={`${styles.quickCard} ${styles.aiCard}`} onClick={() => setAiOpen(true)}>
-            ✨ Build with AI
-          </button>
         </div>
 
         <div className={styles.mineHead}>
@@ -383,11 +376,6 @@ export default function RoutinesPage() {
         </div>
       )}
 
-      <AiRoutineModal
-        open={aiOpen}
-        onClose={() => setAiOpen(false)}
-        onCreated={() => { load(); }}
-      />
     </div>
   );
 }

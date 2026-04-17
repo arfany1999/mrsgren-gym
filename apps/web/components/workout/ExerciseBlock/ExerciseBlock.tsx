@@ -48,7 +48,10 @@ export function ExerciseBlock({
   }, [exercise.previousSets, exercise.measurementType]);
 
   const pr = exercise.personalRecord;
-  const hasUnfilledFirstSet = exercise.sets.length > 0 && !exercise.sets[0]?.isSaved && lastTopSet;
+  // Only show "Use last weights" when at least one unsaved set is missing a value
+  const hasEmptyUnsavedSet = !!lastTopSet && exercise.sets.some(s =>
+    !s.isSaved && (!s.weightKg || !s.reps)
+  );
 
   function useLastWeights() {
     if (!lastTopSet) return;
@@ -86,7 +89,7 @@ export function ExerciseBlock({
               💡 Try <b>{nudge.suggestWeight}kg</b> — {nudge.reason}
             </p>
           )}
-          {hasUnfilledFirstSet && (
+          {hasEmptyUnsavedSet && (
             <button type="button" className={styles.useLastBtn} onClick={useLastWeights}>
               ↻ Use last weights
             </button>
