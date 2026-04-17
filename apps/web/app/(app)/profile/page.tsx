@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { formatDateFull } from "@/lib/formatters";
-import { getReports, type WorkoutReportEntry } from "@/lib/gymProfile";
+import { getReports, getSelectedLego, saveSelectedLego, type WorkoutReportEntry } from "@/lib/gymProfile";
 import styles from "./page.module.css";
 
 type Segment = "Duration" | "Volume" | "Reps";
@@ -35,18 +35,27 @@ function formatVolume(kg: number): string {
   return `${Math.round(kg)}kg`;
 }
 
-/** 10 lego-style workout avatars — one picked deterministically per day */
+/** 10 lego-style workout avatars — user can pick one or let it rotate daily */
 const WORKOUT_LEGOS = [
   "💪", "🏋️", "🦾", "🔥", "⚡",
   "🚀", "🥇", "👊", "🎯", "⭐",
 ] as const;
 
-function legoForToday(): string {
+const LEGO_LABELS = [
+  "Flex", "Lifter", "Cyborg", "Fire", "Bolt",
+  "Rocket", "Gold", "Punch", "Target", "Star",
+] as const;
+
+function autoLegoIndex(): number {
   const now = new Date();
   // Day-of-year (0-indexed); stable for whole local day
   const start = new Date(now.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
-  const idx = dayOfYear % WORKOUT_LEGOS.length;
+  return dayOfYear % WORKOUT_LEGOS.length;
+}
+
+function legoFor(selectedIdx: number | null): string {
+  const idx = selectedIdx ?? autoLegoIndex();
   return WORKOUT_LEGOS[idx] ?? "💪";
 }
 
@@ -143,6 +152,9 @@ export default function ProfilePage() {
   // Share toast
   const [shareToast, setShareToast] = useState<string | null>(null);
 
+  // Banner / lego selection (null = auto daily rotation)
+  const [selectedLego, setSelectedLego] = useState<number | null>(null);
+
   const fetchChartData = useCallback(async (segment: Segment) => {
     const now  = new Date();
     const from = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString();
@@ -230,8 +242,14 @@ export default function ProfilePage() {
     load();
     if (user?.email) {
       setReports(getReports(user.email));
+      setSelectedLego(getSelectedLego(user.email));
     }
   }, [supabase, fetchAllStats, fetchChartData, user?.email]);
+
+  function pickLego(idx: number | null) {
+    setSelectedLego(idx);
+    if (user?.email) saveSelectedLego(user.email, idx);
+  }
 
   async function handleSegment(seg: Segment) {
     setActiveSegment(seg);
@@ -296,7 +314,7 @@ export default function ProfilePage() {
           return rs + (isNaN(n) ? 0 : n);
         }, 0);
       }, 0);
-      const legoIcon = legoForToday();
+      const legoIcon = legoFor(selectedLego);
       lines = [
         `${legoIcon} Day ${latest.dayNumber} — ${latest.title}`,
         `${formatDate(latest.date)}`,
@@ -525,7 +543,7 @@ export default function ProfilePage() {
 
       <section className={styles.hero}>
         <div className={styles.avatar} aria-label="Today's workout mascot">
-          <span className={styles.avatarLego}>{legoForToday()}</span>
+          <span className={styles.avatarLego}>{legoFor(selectedLego)}</span>
         </div>
         <div className={styles.heroMeta}>
           <h2 className={styles.name}>{displayName}</h2>
@@ -690,6 +708,50 @@ export default function ProfilePage() {
               {seg}
             </button>
           ))}
+        </div>
+      </section>
+
+      {/* ── Banner picker ── */}
+      <section className={styles.section}>
+        <div className={styles.sectionLabel}>Banner</div>
+        <div className={styles.bannerCard}>
+          <p className={styles.bannerHint}>
+            {selectedLego === null
+              ? `Auto — rotates daily (today: ${legoFor(null)})`
+              : `Custom — ${LEGO_LABELS[selectedLego] ?? ""}`}
+          </p>
+          <div className={styles.bannerGrid}>
+            <button
+              type="button"
+              onClick={() => pickLego(null)}
+              className={[
+                styles.bannerTile,
+                styles.bannerTileAuto,
+                selectedLego === null ? styles.bannerTileActive : "",
+              ].filter(Boolean).join(" ")}
+              aria-label="Auto rotate daily"
+              aria-pressed={selectedLego === null}
+            >
+              <span className={styles.bannerTileEmoji}>🔄</span>
+              <span className={styles.bannerTileLabel}>Auto</span>
+            </button>
+            {WORKOUT_LEGOS.map((emoji, i) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => pickLego(i)}
+                className={[
+                  styles.bannerTile,
+                  selectedLego === i ? styles.bannerTileActive : "",
+                ].filter(Boolean).join(" ")}
+                aria-label={LEGO_LABELS[i] ?? emoji}
+                aria-pressed={selectedLego === i}
+              >
+                <span className={styles.bannerTileEmoji}>{emoji}</span>
+                <span className={styles.bannerTileLabel}>{LEGO_LABELS[i]}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 

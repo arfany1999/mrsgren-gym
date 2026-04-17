@@ -499,6 +499,69 @@
   line-height: 1;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.22));
 }
+
+/* ── Banner picker ───────────────────────────────────────────── */
+.bannerCard {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  border-radius: 18px;
+  padding: 14px;
+}
+.bannerHint {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+.bannerGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.bannerTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 4px 8px;
+  background: rgba(255,255,255,0.25);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 140ms cubic-bezier(0.34,1.56,0.64,1), background 150ms ease, border-color 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.bannerTile:hover { background: rgba(255,255,255,0.42); }
+.bannerTile:active { transform: scale(0.92); }
+.bannerTileEmoji {
+  font-size: 26px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.2));
+}
+.bannerTileLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+.bannerTileActive {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(74,110,245,0.18), 0 4px 14px rgba(74,110,245,0.22);
+}
+.bannerTileActive .bannerTileLabel {
+  color: var(--accent);
+}
+.bannerTileAuto .bannerTileEmoji {
+  font-size: 22px;
+}
 .reportStat {
   background: rgba(255, 255, 255, 0.35);
   border: 0.5px solid rgba(255, 255, 255, 0.6);

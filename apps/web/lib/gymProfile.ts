@@ -119,3 +119,31 @@ export function saveReport(email: string, report: WorkoutReportEntry): void {
   const deduped = [report, ...existing.filter(r => r.id !== report.id)];
   localStorage.setItem(reportKey(email), JSON.stringify(deduped.slice(0, 200)));
 }
+
+// ── Banner / avatar lego preference ──────────────────────────────────────────
+// null = auto (daily rotation); number = specific index into WORKOUT_LEGOS
+
+function legoKey(email: string) {
+  return `gym_banner_lego_${email.toLowerCase()}`;
+}
+
+export function getSelectedLego(email: string): number | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(legoKey(email));
+    if (raw === null || raw === "auto") return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveSelectedLego(email: string, idx: number | null): void {
+  if (typeof window === "undefined") return;
+  if (idx === null) {
+    localStorage.setItem(legoKey(email), "auto");
+  } else {
+    localStorage.setItem(legoKey(email), String(idx));
+  }
+}
