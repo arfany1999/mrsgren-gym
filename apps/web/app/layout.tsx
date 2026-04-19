@@ -28,9 +28,21 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
+// Runs before hydration so the correct data-theme is on <html> from the first paint.
+const themeInitScript = `
+(function(){try{
+  var t = localStorage.getItem('gym_theme');
+  if (t !== 'light' && t !== 'dark') t = 'light';
+  document.documentElement.setAttribute('data-theme', t);
+}catch(e){}})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         <Providers>{children}</Providers>
         <ServiceWorkerRegister />

@@ -9,6 +9,7 @@ import { formatDateFull } from "@/lib/formatters";
 import { getReports, type WorkoutReportEntry } from "@/lib/gymProfile";
 import { TROPHIES, getTrophyProgress, nextTierLabel } from "@/lib/trophies";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
+import { useTheme } from "@/contexts/ThemeContext";
 import styles from "./page.module.css";
 
 type Segment = "Duration" | "Volume" | "Reps";
@@ -122,6 +123,7 @@ function computeDayStats(dates: string[]): { days: number; currentStreak: number
 
 export default function ProfilePage() {
   const { profile, user, supabase, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [totalWorkouts,   setTotalWorkouts]   = useState(0);
   const [workoutDays,     setWorkoutDays]     = useState(0);
   const [currentStreak,   setCurrentStreak]   = useState(0);
@@ -922,6 +924,42 @@ export default function ProfilePage() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionLabel}>Appearance</div>
+        <div className={styles.card}>
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Theme</span>
+            <div className={styles.themeToggle} role="radiogroup" aria-label="Theme">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={theme === "light"}
+                className={[styles.themeOpt, theme === "light" ? styles.themeOptActive : ""].join(" ")}
+                onClick={() => setTheme("light")}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Light
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={theme === "dark"}
+                className={[styles.themeOpt, theme === "dark" ? styles.themeOptActive : ""].join(" ")}
+                onClick={() => setTheme("dark")}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                </svg>
+                Dark
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 

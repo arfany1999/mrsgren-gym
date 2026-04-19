@@ -390,6 +390,36 @@
 .rowValue { font-size: 14px; color: var(--text-tertiary); text-align: right; }
 .separator { height: 0.5px; background: var(--separator); margin: 0 16px; }
 
+/* Theme toggle segmented control */
+.themeToggle {
+  display: inline-flex;
+  background: rgba(128, 128, 128, 0.14);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+.themeOpt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  border-radius: 999px;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+.themeOpt svg { color: currentColor; }
+.themeOpt:hover { color: var(--text-secondary); }
+.themeOptActive {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
 .loadingCenter { display: flex; justify-content: center; padding: 16px 0; }
 .logoutSection { padding: 8px 20px 0; }
 
