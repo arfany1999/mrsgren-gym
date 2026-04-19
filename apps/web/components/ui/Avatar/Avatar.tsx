@@ -12,7 +12,9 @@ interface AvatarProps {
   className?: string;
 }
 
-type Stage = "src" | "gravatar" | "initials";
+type Stage = "src" | "gravatar" | "default";
+
+const DEFAULT_AVATAR = "/avatar-default.jpg";
 
 async function sha256Hex(text: string): Promise<string> {
   const enc = new TextEncoder();
@@ -20,24 +22,6 @@ async function sha256Hex(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-}
-
-function hashHue(text: string): number {
-  let h = 0;
-  for (let i = 0; i < text.length; i++) h = text.charCodeAt(i) + ((h << 5) - h);
-  return Math.abs(h) % 360;
-}
-
-function initialsOf(source: string): string {
-  const t = source.trim();
-  if (!t) return "?";
-  const parts = t.split(/\s+/);
-  if (parts.length >= 2) {
-    const a = parts[0]?.[0] ?? "";
-    const b = parts[1]?.[0] ?? "";
-    return (a + b).toUpperCase();
-  }
-  return t.slice(0, 2).toUpperCase();
 }
 
 export function Avatar({
@@ -55,7 +39,7 @@ export function Avatar({
   useEffect(() => {
     let cancelled = false;
     if (!email) {
-      if (!src) setStage("initials");
+      if (!src) setStage("default");
       return;
     }
     sha256Hex(email.trim().toLowerCase()).then((hash) => {
@@ -70,12 +54,10 @@ export function Avatar({
 
   // Reset stage when inputs change
   useEffect(() => {
-    setStage(src ? "src" : email ? "gravatar" : "initials");
+    setStage(src ? "src" : email ? "gravatar" : "default");
   }, [src, email]);
 
   const label = name || email || "Profile";
-  const initials = initialsOf(name || email || "?");
-  const hue = hashHue(name || email || "x");
   const boxStyle: React.CSSProperties = {
     width: size,
     height: size,
@@ -111,24 +93,21 @@ export function Avatar({
         className={containerClass}
         style={boxStyle}
         referrerPolicy="no-referrer"
-        onError={() => setStage("initials")}
+        onError={() => setStage("default")}
       />
     );
   }
 
-  // Initials fallback with deterministic hue
+  // Default bundled avatar illustration
   return (
-    <div
-      className={[containerClass, styles.initialsFallback].join(" ")}
-      style={{
-        ...boxStyle,
-        background: `linear-gradient(135deg, hsl(${hue} 70% 58%), hsl(${(hue + 40) % 360} 65% 48%))`,
-        fontSize: size * 0.38,
-      }}
-      role="img"
-      aria-label={label}
-    >
-      <span className={styles.initialsText}>{initials}</span>
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={DEFAULT_AVATAR}
+      alt={label}
+      width={size}
+      height={size}
+      className={containerClass}
+      style={boxStyle}
+    />
   );
 }
