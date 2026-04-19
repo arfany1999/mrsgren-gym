@@ -8,6 +8,7 @@ import Image from "next/image";
 import { formatDateFull } from "@/lib/formatters";
 import { getReports, type WorkoutReportEntry } from "@/lib/gymProfile";
 import { TROPHIES, getTrophyProgress, nextTierLabel } from "@/lib/trophies";
+import { Avatar } from "@/components/ui/Avatar/Avatar";
 import styles from "./page.module.css";
 
 type Segment = "Duration" | "Volume" | "Reps";
@@ -555,9 +556,13 @@ export default function ProfilePage() {
       </header>
 
       <section className={styles.hero}>
-        <div className={styles.avatar} aria-label="Today's workout mascot">
-          <span className={styles.avatarLego}>{legoForToday()}</span>
-        </div>
+        <Avatar
+          name={displayName}
+          email={user?.email ?? profile?.email}
+          src={profile?.avatar_url}
+          size={68}
+          className={styles.avatarImg}
+        />
         <div className={styles.heroMeta}>
           <h2 className={styles.name}>{displayName}</h2>
           <div className={styles.statsInline}>

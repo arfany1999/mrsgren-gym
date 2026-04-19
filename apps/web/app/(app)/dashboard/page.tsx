@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { parseMuscleGroup } from "@/lib/formatters";
 import { getTrophyProgress } from "@/lib/trophies";
 import { MuscleHero } from "@/components/dashboard/MuscleHero/MuscleHero";
+import { Avatar } from "@/components/ui/Avatar/Avatar";
 import styles from "./page.module.css";
 
 interface RoutineExercise {
@@ -345,6 +346,13 @@ export default function DashboardPage() {
       {/* ── Greeting hero ───────────────────────────── */}
       <section className={styles.greetHero}>
         <div className={styles.greetRow}>
+          <Avatar
+            name={displayName}
+            email={user?.email ?? profile?.email}
+            src={profile?.avatar_url}
+            size={54}
+            className={styles.greetAvatar}
+          />
           <div className={styles.greetTextWrap}>
             <p className={styles.greetKicker}>{greetingFor(greetingHour)},</p>
             <h1 className={styles.greetName}>{firstName} 👋</h1>

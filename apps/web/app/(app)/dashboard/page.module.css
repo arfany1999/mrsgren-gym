@@ -28,12 +28,14 @@
 }
 .greetRow {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 14px;
 }
-.greetTextWrap { min-width: 0; }
+.greetTextWrap { min-width: 0; flex: 1; }
+.greetAvatar {
+  flex-shrink: 0;
+}
 .greetKicker {
   font-size: 13px;
   font-weight: 600;
