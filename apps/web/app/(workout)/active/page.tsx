@@ -66,7 +66,7 @@ export default function ActiveWorkoutPage() {
   }, []);
 
   // Report state
-  const [report, setReport] = useState<{ workoutId: string; durationMins: number; dayNumber: number } | null>(null);
+  const [report, setReport] = useState<{ workoutId: string; durationMins: number; dayNumber: number; workoutDays: number } | null>(null);
   const startedAtRef = useRef<string | null>(null);
   const workoutTitleRef = useRef<string>("");
   const workoutExercisesRef = useRef(exercises);
@@ -164,18 +164,31 @@ export default function ActiveWorkoutPage() {
 
       const id = await finishWorkout();
       if (id) {
-        // Count total completed workouts (this one is already saved by finishWorkout)
+        // Count total completed workouts + unique training days (this one is saved by finishWorkout)
         let dayNumber = 1;
+        let workoutDays = 1;
         try {
-          const { count } = await supabase
-            .from("workouts")
-            .select("id", { count: "exact", head: true })
-            .not("finished_at", "is", null);
+          const [{ count }, { data: startedRows }] = await Promise.all([
+            supabase
+              .from("workouts")
+              .select("id", { count: "exact", head: true })
+              .not("finished_at", "is", null),
+            supabase
+              .from("workouts")
+              .select("started_at")
+              .not("finished_at", "is", null),
+          ]);
           dayNumber = Math.max(count ?? 1, 1);
+          const dayKeys = new Set<string>();
+          (startedRows ?? []).forEach((r) => {
+            const d = new Date((r as { started_at: string }).started_at);
+            dayKeys.add(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
+          });
+          workoutDays = Math.max(dayKeys.size, 1);
         } catch { /* fallback to 1 */ }
 
         setDone(true);
-        setReport({ workoutId: id, durationMins: Math.max(durationMins, 1), dayNumber });
+        setReport({ workoutId: id, durationMins: Math.max(durationMins, 1), dayNumber, workoutDays });
       } else {
         router.replace("/");
       }
@@ -209,6 +222,7 @@ export default function ActiveWorkoutPage() {
         exercises={workoutExercisesRef.current.length > 0 ? workoutExercisesRef.current : exercises}
         durationMins={report.durationMins}
         dayNumber={report.dayNumber}
+        workoutDays={report.workoutDays}
         weightKg={userWeightKg}
         userEmail={user?.email ?? null}
         workoutId={report.workoutId}

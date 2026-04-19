@@ -13,6 +13,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
+    "body-muscles": "^1.0.0",
     "idb": "^8.0.3",
     "next": "16.2.0",
     "react": "^19.2.0",

@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
+import Image from "next/image";
 import { formatDateFull } from "@/lib/formatters";
 import { getReports, type WorkoutReportEntry } from "@/lib/gymProfile";
+import { TROPHIES, getTrophyProgress, nextTierLabel } from "@/lib/trophies";
 import styles from "./page.module.css";
 
 type Segment = "Duration" | "Volume" | "Reps";
@@ -349,12 +351,8 @@ export default function ProfilePage() {
   const displayEmail = profile?.email || user?.email || "—";
   const maxVal       = Math.max(...chartValues, 1);
 
-  const ACHIEVEMENTS = [
-    { icon: "👟", label: "First Step",     desc: "Complete your first workout", threshold: 1  },
-    { icon: "🔥", label: "On Fire",        desc: "Complete 5 workouts",         threshold: 5  },
-    { icon: "💪", label: "Consistent",     desc: "Complete 20 workouts",        threshold: 20 },
-    { icon: "🏆", label: "Century Club",   desc: "Complete 100 workouts",       threshold: 100},
-  ];
+  const trophyProgress = getTrophyProgress(workoutDays);
+  const nextLabel = nextTierLabel(trophyProgress);
 
   return (
     <div className={styles.page}>
@@ -435,17 +433,49 @@ export default function ProfilePage() {
                 <p className={styles.historyEmptyHint}>Finish a workout to see your reports here</p>
               </div>
             ) : (
-              reports.map(r => (
+              reports.map(r => {
+                const td = typeof r.trainingDay === "number" ? r.trainingDay : r.dayNumber;
+                const tierAtTime = getTrophyProgress(td);
+                const tierMilestone = tierAtTime.currentTier;
+                return (
                 <div key={r.id} className={styles.historyCard}>
                   <div className={styles.hCardHeader}>
                     <div className={styles.hCardLeft}>
-                      <span className={styles.hDayBadge}>Day {r.dayNumber}</span>
+                      <div className={styles.hBadgeRow}>
+                        <span className={styles.hDayBadge}>Workout #{r.dayNumber}</span>
+                        <span className={styles.hTrainingBadge}>Day {td}</span>
+                      </div>
                       <p className={styles.hTitle}>{r.title}</p>
                       <p className={styles.hDate}>{formatDate(r.date)}</p>
                     </div>
-                    <div className={styles.hCalsBig}>
-                      <span className={styles.hCalsNum}>{r.totalCalories.toLocaleString()}</span>
-                      <span className={styles.hCalsUnit}>kcal</span>
+                    <div className={styles.hCardRight}>
+                      {tierMilestone && (
+                        <div
+                          className={styles.hTierChip}
+                          title={`${tierMilestone.label} tier earned`}
+                        >
+                          <Image
+                            src={tierMilestone.image}
+                            alt={tierMilestone.label}
+                            width={22}
+                            height={22}
+                            unoptimized
+                          />
+                          <span>{tierMilestone.label}</span>
+                        </div>
+                      )}
+                      {!tierMilestone && tierAtTime.nextTier && (
+                        <div className={styles.hTierChipPending}>
+                          → {tierAtTime.nextTier.label}
+                          <span className={styles.hTierChipCount}>
+                            {tierAtTime.daysRemaining}d
+                          </span>
+                        </div>
+                      )}
+                      <div className={styles.hCalsBig}>
+                        <span className={styles.hCalsNum}>{r.totalCalories.toLocaleString()}</span>
+                        <span className={styles.hCalsUnit}>kcal</span>
+                      </div>
                     </div>
                   </div>
 
@@ -489,7 +519,8 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -553,6 +584,70 @@ export default function ProfilePage() {
       {/* ── Today / Latest Training Report banner ── */}
       {(() => {
         const latest = reports[0];
+
+        // Shared medal-progress strip — prominently shows the next award
+        const medalStrip = (
+          <div className={styles.medalStrip}>
+            {trophyProgress.nextTier ? (
+              <>
+                <Image
+                  src={trophyProgress.nextTier.image}
+                  alt={trophyProgress.nextTier.label}
+                  width={56}
+                  height={56}
+                  className={styles.medalStripIcon}
+                  unoptimized
+                />
+                <div className={styles.medalStripBody}>
+                  <div className={styles.medalStripTopRow}>
+                    <span className={styles.medalStripDay}>
+                      Workout Day <b>#{workoutDays}</b>
+                    </span>
+                    <span className={styles.medalStripCount}>
+                      {trophyProgress.daysIntoCurrent}/
+                      {trophyProgress.nextTier.threshold - (trophyProgress.currentTier?.threshold ?? 0)}
+                    </span>
+                  </div>
+                  <div className={styles.medalStripRemaining}>
+                    <b>{trophyProgress.daysRemaining}</b> day
+                    {trophyProgress.daysRemaining === 1 ? "" : "s"} to{" "}
+                    <span className={styles.medalStripNextName}>{trophyProgress.nextTier.label}</span>
+                  </div>
+                  <div className={styles.medalStripBar}>
+                    <div
+                      className={styles.medalStripBarFill}
+                      style={{ width: `${trophyProgress.segmentPercent}%` }}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : trophyProgress.currentTier ? (
+              <>
+                <Image
+                  src={trophyProgress.currentTier.image}
+                  alt={trophyProgress.currentTier.label}
+                  width={56}
+                  height={56}
+                  className={styles.medalStripIcon}
+                  unoptimized
+                />
+                <div className={styles.medalStripBody}>
+                  <div className={styles.medalStripTopRow}>
+                    <span className={styles.medalStripDay}>
+                      Workout Day <b>#{workoutDays}</b>
+                    </span>
+                    <span className={styles.medalStripCount}>MAX</span>
+                  </div>
+                  <div className={styles.medalStripRemaining}>
+                    All tiers unlocked —{" "}
+                    <span className={styles.medalStripNextName}>Diamond Legend</span>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </div>
+        );
+
         if (!latest) {
           return (
             <section className={styles.reportBanner}>
@@ -562,8 +657,10 @@ export default function ProfilePage() {
                   <h3 className={styles.reportTitle}>No workouts yet</h3>
                 </div>
               </div>
+              {medalStrip}
               <p className={styles.reportEmpty}>
-                Start a routine today to see your daily training report here.
+                Start a routine today to begin your journey to{" "}
+                {trophyProgress.nextTier?.label ?? "glory"}.
               </p>
             </section>
           );
@@ -586,9 +683,14 @@ export default function ProfilePage() {
               <div className={styles.reportTitleWrap}>
                 <span className={styles.reportKicker}>{kicker}</span>
                 <h3 className={styles.reportTitle}>
-                  Day {latest.dayNumber} · {latest.title}
+                  {latest.title}
                 </h3>
-                <span className={styles.reportDate}>{formatDate(latest.date)}</span>
+                <span className={styles.reportDate}>
+                  Workout #{latest.dayNumber}
+                  {typeof latest.trainingDay === "number"
+                    ? ` · Training Day ${latest.trainingDay}`
+                    : ""} · {formatDate(latest.date)}
+                </span>
               </div>
               <button
                 type="button"
@@ -603,6 +705,8 @@ export default function ProfilePage() {
                 Share
               </button>
             </div>
+
+            {medalStrip}
 
             <div className={styles.reportCalsRow}>
               <span className={styles.reportCalsNum}>{latest.totalCalories.toLocaleString()}</span>
@@ -693,19 +797,123 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {/* ── Achievements ── */}
+      {/* ── Trophy Achievements ── */}
       <section className={styles.section}>
-        <div className={styles.sectionLabel}>Achievements</div>
-        <div className={styles.achievementGrid}>
-          {ACHIEVEMENTS.map(({ icon, label, desc, threshold }) => {
-            const unlocked = totalWorkouts >= threshold;
-            return (
-              <div key={label} className={[styles.achievementCard, unlocked ? styles.achievementUnlocked : ""].filter(Boolean).join(" ")}>
-                <div className={styles.achievementIcon}>
-                  {unlocked ? icon : "🔒"}
+        <div className={styles.sectionLabel}>Trophies</div>
+
+        {/* Progress indicator: days to next tier */}
+        <div className={styles.trophyProgressCard}>
+          <div className={styles.trophyProgressHead}>
+            <div className={styles.trophyProgressCurrent}>
+              {trophyProgress.currentTier ? (
+                <>
+                  <Image
+                    src={trophyProgress.currentTier.image}
+                    alt={trophyProgress.currentTier.label}
+                    width={44}
+                    height={44}
+                    className={styles.trophyProgressIcon}
+                    unoptimized
+                  />
+                  <div>
+                    <span className={styles.trophyProgressKicker}>Current tier</span>
+                    <span className={styles.trophyProgressTierName}>
+                      {trophyProgress.currentTier.label}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <span className={styles.trophyProgressKicker}>No tier yet</span>
+                  <span className={styles.trophyProgressTierName}>Aim for Bronze</span>
                 </div>
-                <p className={styles.achievementLabel}>{label}</p>
-                <p className={styles.achievementDesc}>{desc}</p>
+              )}
+            </div>
+            <div className={styles.trophyProgressDays}>
+              <span className={styles.trophyProgressDaysNum}>{workoutDays}</span>
+              <span className={styles.trophyProgressDaysLbl}>total days</span>
+            </div>
+          </div>
+
+          <div className={styles.trophyBar}>
+            <div
+              className={styles.trophyBarFill}
+              style={{ width: `${trophyProgress.segmentPercent}%` }}
+            />
+          </div>
+
+          <div className={styles.trophyProgressFoot}>
+            <span className={styles.trophyProgressNext}>{nextLabel}</span>
+            {trophyProgress.nextTier && (
+              <span className={styles.trophyProgressDelta}>
+                {trophyProgress.daysIntoCurrent} / {trophyProgress.nextTier.threshold - (trophyProgress.currentTier?.threshold ?? 0)} days
+              </span>
+            )}
+          </div>
+
+          {/* Dot grid: one dot per required day in current tier segment */}
+          {trophyProgress.nextTier && (() => {
+            const segmentLength = trophyProgress.nextTier.threshold - (trophyProgress.currentTier?.threshold ?? 0);
+            const filled = trophyProgress.daysIntoCurrent;
+            return (
+              <div
+                className={styles.dotGrid}
+                role="img"
+                aria-label={`${filled} of ${segmentLength} days completed toward ${trophyProgress.nextTier.label}`}
+              >
+                {Array.from({ length: segmentLength }).map((_, i) => {
+                  const isFilled = i < filled;
+                  const isEdge = i === filled - 1;
+                  return (
+                    <span
+                      key={i}
+                      className={[
+                        styles.dot,
+                        isFilled ? styles.dotFilled : styles.dotEmpty,
+                        isEdge ? styles.dotEdge : "",
+                      ].filter(Boolean).join(" ")}
+                      title={`Day ${i + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* 5-tier trophy cards */}
+        <div className={styles.trophyGrid}>
+          {TROPHIES.map((t) => {
+            const unlocked = workoutDays >= t.threshold;
+            const isNext = trophyProgress.nextTier?.tier === t.tier;
+            return (
+              <div
+                key={t.tier}
+                className={[
+                  styles.trophyCard,
+                  unlocked ? styles.trophyUnlocked : styles.trophyLocked,
+                  isNext ? styles.trophyNext : "",
+                ].filter(Boolean).join(" ")}
+              >
+                <div className={styles.trophyImgWrap}>
+                  <Image
+                    src={t.image}
+                    alt={t.label}
+                    width={84}
+                    height={84}
+                    className={styles.trophyImg}
+                    unoptimized
+                  />
+                  {!unlocked && <span className={styles.trophyLockBadge}>🔒</span>}
+                </div>
+                <p className={styles.trophyLabel}>{t.label}</p>
+                <p className={styles.trophyThreshold}>{t.threshold} days</p>
+                <p className={styles.trophyBlurb}>{t.blurb}</p>
+                {isNext && trophyProgress.daysRemaining > 0 && (
+                  <span className={styles.trophyRemaining}>
+                    {trophyProgress.daysRemaining} day{trophyProgress.daysRemaining === 1 ? "" : "s"} left
+                  </span>
+                )}
               </div>
             );
           })}

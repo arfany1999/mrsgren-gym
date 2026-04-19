@@ -71,7 +71,23 @@ create table workout_exercises (
   superset_id uuid
 );
 
--- 7. Workout Sets
+-- 7. Personal Records
+create table if not exists personal_records (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users on delete cascade not null,
+  exercise_id uuid references exercises on delete cascade not null,
+  weight numeric not null,
+  reps int not null,
+  estimated_1rm numeric not null,
+  achieved_at timestamptz default now() not null,
+  unique (user_id, exercise_id)
+);
+
+alter table personal_records enable row level security;
+create policy "Users can manage own PRs" on personal_records
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- 8. Workout Sets
 create table workout_sets (
   id uuid default gen_random_uuid() primary key,
   workout_exercise_id uuid references workout_exercises on delete cascade not null,

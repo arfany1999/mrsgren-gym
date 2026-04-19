@@ -14,18 +14,6 @@ function IconHome({ active }: { active: boolean }) {
   );
 }
 
-function IconWorkout({ active }: { active: boolean }) {
-  const c = active ? "var(--accent)" : "var(--text-tertiary)";
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="10" width="4" height="4" rx="1" stroke={c} strokeWidth="1.8"/>
-      <rect x="18" y="10" width="4" height="4" rx="1" stroke={c} strokeWidth="1.8"/>
-      <path d="M6 12h12" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>
-      <rect x="9" y="8" width="6" height="8" rx="1.5" stroke={c} strokeWidth="1.8"/>
-    </svg>
-  );
-}
-
 function IconProfile({ active }: { active: boolean }) {
   const c = active ? "var(--accent)" : "var(--text-tertiary)";
   return (

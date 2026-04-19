@@ -93,7 +93,8 @@ export interface WorkoutReportEntry {
   title: string;
   durationMins: number;
   totalCalories: number;
-  dayNumber: number;    // e.g. 87 → "Day 87"
+  dayNumber: number;    // Nth completed session overall (e.g. 87 → "Workout #87")
+  trainingDay?: number; // Nth UNIQUE calendar day trained (drives medal progression). Optional for back-compat with older reports.
   totalSets: number;
   totalVolume: number;  // kg
   exercises: WorkoutReportExercise[];

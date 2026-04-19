@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet/BottomSheet";
-import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
+import { BodyMuscleIcon } from "@/components/ui/BodyMuscleIcon/BodyMuscleIcon";
 import { browseExercises, searchFreeExercises } from "@/lib/freeExerciseDb";
 import type { FreeExercise } from "@/lib/freeExerciseDb";
 import type { Exercise } from "@/types/api";
@@ -147,7 +147,7 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
               <li key={ex.id}>
                 <button className={styles.item} onClick={() => handleSelect(ex)} type="button">
                   <div className={styles.mapWrap}>
-                    <ExerciseAnimation name={ex.name} muscles={ex.primaryMuscles} variant="thumb" />
+                    <BodyMuscleIcon muscles={ex.primaryMuscles} variant="thumb" />
                   </div>
                   <div className={styles.info}>
                     <p className={styles.itemName}>{ex.name}</p>

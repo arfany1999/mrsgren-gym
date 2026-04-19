@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="sGem" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"  stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#c9d1d8"/>
+      <stop offset="100%" stop-color="#6b7580"/>
+    </linearGradient>
+    <linearGradient id="sWing" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="#e7edf2"/>
+      <stop offset="100%" stop-color="#8c98a3"/>
+    </linearGradient>
+    <radialGradient id="sShine" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- side wings -->
+  <path d="M8 60 L30 52 L30 72 L8 82 Z M12 70 L32 62 L32 80 L12 90 Z"
+        fill="url(#sWing)" stroke="#556069" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M112 60 L90 52 L90 72 L112 82 Z M108 70 L88 62 L88 80 L108 90 Z"
+        fill="url(#sWing)" stroke="#556069" stroke-width="1.4" stroke-linejoin="round"/>
+  <!-- central diamond (rotated square with bevels) -->
+  <g stroke="#3f4951" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M60 18 L96 60 L60 102 L24 60 Z" fill="url(#sGem)"/>
+    <path d="M60 18 L60 102" stroke-width="1" opacity="0.4"/>
+    <path d="M24 60 L96 60" stroke-width="1" opacity="0.4"/>
+    <path d="M60 18 L42 60 L60 102" fill="#f4f7fa" opacity="0.55" stroke="none"/>
+  </g>
+  <path d="M38 45 Q45 55 38 68" stroke="#fff" stroke-width="3" fill="none" opacity="0.8"/>
+  <circle cx="42" cy="72" r="5" fill="url(#sShine)"/>
+</svg>

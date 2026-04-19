@@ -18,11 +18,11 @@
 
 /* ── Save button ─────────────────────────────────────────────── */
 .saveBtn {
-  background: rgba(74, 110, 245, 0.9);
-  border: 1px solid rgba(74, 110, 245, 0.5);
+  background: rgba(196, 118, 74, 0.9);
+  border: 1px solid rgba(196, 118, 74, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 3px 14px rgba(74, 110, 245, 0.26), inset 0 1px 0 rgba(255,255,255,0.18);
+  box-shadow: 0 3px 14px rgba(196, 118, 74, 0.26), inset 0 1px 0 rgba(255,255,255,0.18);
   border-radius: 12px;
   padding: 8px 18px;
   font-size: 14px;
@@ -34,7 +34,7 @@
 
 /* ── Title ───────────────────────────────────────────────────── */
 .titleWrap {
-  background: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.72);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -87,7 +87,7 @@
 .emptyIcon {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.06);
   border: 1.5px solid rgba(255,255,255,0.7);
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 4px;
@@ -107,7 +107,7 @@
 
 /* ── Exercise block ──────────────────────────────────────────── */
 .exBlock {
-  background: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.72);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -125,7 +125,7 @@
 
 .exIconCircle {
   width: 36px; height: 36px; border-radius: 50%;
-  background: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.07);
   border: 1px solid rgba(255,255,255,0.7);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -213,8 +213,8 @@
 .setNumBadge {
   width: 28px; height: 28px;
   border-radius: 8px;
-  background: rgba(26, 21, 16, 0.07);
-  border: 0.5px solid rgba(26,21,16,0.08);
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.5px solid rgba(255,255,255,0.07);
   display: flex; align-items: center; justify-content: center;
   font-size: 12px;
   font-weight: 700;
@@ -223,7 +223,7 @@
 }
 
 .setInput {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.07);
   border: 1.5px solid rgba(255,255,255,0.65);
   border-radius: 10px;
   padding: 9px 6px;
@@ -236,7 +236,7 @@
   min-width: 0;
 }
 .setInput::placeholder { color: var(--text-tertiary); font-weight: 400; font-size: 13px; }
-.setInput:focus { border-color: var(--accent); background: rgba(255,255,255,0.75); }
+.setInput:focus { border-color: var(--accent); background: rgba(255,255,255,0.10); }
 
 .setRemoveBtn {
   width: 28px; height: 28px;
@@ -257,7 +257,7 @@
   padding: 13px 14px;
   background: rgba(255,255,255,0.25);
   border: none;
-  border-top: 0.5px solid rgba(26,21,16,0.07);
+  border-top: 0.5px solid rgba(255,255,255,0.06);
   border-radius: 0 0 16px 16px;
   color: var(--accent);
   font-size: 13px;
@@ -266,8 +266,8 @@
   transition: background 120ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-.addSetBtn:hover  { background: rgba(74, 110, 245, 0.08); }
-.addSetBtn:active { background: rgba(74, 110, 245, 0.14); }
+.addSetBtn:hover  { background: rgba(196, 118, 74, 0.10); }
+.addSetBtn:active { background: rgba(196, 118, 74, 0.15); }
 
 /* ── Add Exercise button ─────────────────────────────────────── */
 .addExBtn {
@@ -277,8 +277,8 @@
   gap: 8px;
   width: 100%;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1.5px dashed rgba(74, 110, 245, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px dashed rgba(196, 118, 74, 0.35);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
@@ -290,14 +290,14 @@
   transition: background 150ms ease, border-color 150ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-.addExBtn:hover  { background: rgba(255,255,255,0.6); border-color: rgba(74, 110, 245, 0.6); }
+.addExBtn:hover  { background: rgba(255,255,255,0.10); border-color: rgba(196, 118, 74, 0.6); }
 .addExBtn:active { transform: scale(0.98); }
 
 /* ── Bottom sheet backdrop ───────────────────────────────────── */
 .sheetBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(26, 21, 16, 0.3);
+  background: rgba(0, 0, 0, 0.55);
   z-index: 100;
   animation: fadeIn 200ms ease both;
   backdrop-filter: blur(4px);
@@ -313,13 +313,11 @@
   left: 0;
   right: 0;
   z-index: 101;
-  background: rgba(243, 237, 225, 0.94);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-bottom: none;
   border-radius: 24px 24px 0 0;
-  box-shadow: 0 -8px 40px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9);
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.14);
   display: flex;
   flex-direction: column;
   max-height: 88dvh;
@@ -369,8 +367,8 @@
 }
 
 .sheetClose {
-  background: rgba(255,255,255,0.5);
-  border: 1px solid rgba(255,255,255,0.7);
+  background: rgba(26, 21, 16, 0.06);
+  border: 1px solid rgba(26, 21, 16, 0.1);
   border-radius: 50%;
   width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
@@ -385,7 +383,7 @@
   gap: 8px;
   margin: 0 14px 12px;
   background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(26, 21, 16, 0.1);
   border-radius: 14px;
   padding: 11px 14px;
   flex-shrink: 0;
@@ -419,11 +417,9 @@
   justify-content: center;
   gap: 3px;
   padding: 11px 6px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(26, 21, 16, 0.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   border-radius: 14px;
   cursor: pointer;
   transition: background 120ms ease, border-color 120ms ease, transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -447,7 +443,7 @@
 .chipLabel {
   font-size: 10px;
   font-weight: 700;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   white-space: nowrap;
@@ -485,7 +481,7 @@
 .equipLine {
   flex: 1;
   height: 1px;
-  background: rgba(26, 21, 16, 0.08);
+  background: var(--separator);
 }
 
 .sheetLoading { display: flex; justify-content: center; padding: 32px; }
@@ -504,7 +500,7 @@
   padding: 12px 16px;
   background: none;
   border: none;
-  border-bottom: 0.5px solid rgba(26, 21, 16, 0.06);
+  border-bottom: 0.5px solid var(--separator);
   cursor: pointer;
   text-align: left;
   width: 100%;
@@ -556,7 +552,7 @@
   border-radius: 20px;
   letter-spacing: 0.2px;
   text-transform: uppercase;
-  background: rgba(26,21,16,0.07);
+  background: rgba(26, 21, 16, 0.06);
   color: var(--text-tertiary);
 }
 .sheetItemTypePill[data-type="cardio"] {

@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import styles from "./page.module.css";
 
 interface PR {
+  exerciseId: string;
   exercise: string;
   weight: number;
   reps: number;
@@ -22,10 +23,37 @@ interface Stats {
   avgDurationMins: number;
 }
 
+function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const W = 64, H = 22;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * W;
+    const y = H - ((v - min) / range) * (H - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const lastPt = pts[pts.length - 1]!.split(",");
+  const lastX = parseFloat(lastPt[0]!);
+  const lastY = parseFloat(lastPt[1]!);
+  return (
+    <svg width={W} height={H} className={styles.sparkline} viewBox={`0 0 ${W} ${H}`}>
+      <polyline
+        points={pts.join(" ")}
+        fill="none" stroke="var(--accent)" strokeWidth="1.6"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.6"
+      />
+      <circle cx={lastX} cy={lastY} r="2.5" fill="var(--accent)" opacity="0.9" />
+    </svg>
+  );
+}
+
 export default function StatisticsPage() {
   const { supabase } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [prs, setPrs] = useState<PR[]>([]);
+  const [sparklines, setSparklines] = useState<Map<string, number[]>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,7 +66,7 @@ export default function StatisticsPage() {
             .not("finished_at", "is", null),
           supabase
             .from("personal_records")
-            .select("weight, reps, estimated_1rm, achieved_at, exercises(name)")
+            .select("exercise_id, weight, reps, estimated_1rm, achieved_at, exercises(name)")
             .order("estimated_1rm", { ascending: false })
             .limit(10),
           supabase
@@ -59,18 +87,71 @@ export default function StatisticsPage() {
           avgDurationMins: totalWorkouts > 0 ? totalDurationSecs / totalWorkouts / 60 : 0,
         });
 
-        setPrs(
-          (prsRes.data ?? []).map((r: Record<string, unknown>) => {
-            const ex = r.exercises as Record<string, unknown> | null;
-            return {
-              exercise: (ex?.name as string) ?? "Unknown",
-              weight: r.weight as number,
-              reps: r.reps as number,
-              estimated1rm: r.estimated_1rm as number,
-              achievedAt: r.achieved_at as string,
-            };
-          })
-        );
+        const prList = (prsRes.data ?? []).map((r: Record<string, unknown>) => {
+          const ex = r.exercises as Record<string, unknown> | null;
+          return {
+            exerciseId: r.exercise_id as string,
+            exercise: (ex?.name as string) ?? "Unknown",
+            weight: r.weight as number,
+            reps: r.reps as number,
+            estimated1rm: r.estimated_1rm as number,
+            achievedAt: r.achieved_at as string,
+          };
+        });
+        setPrs(prList);
+
+        // ── Fetch sparkline history per exercise ─────────────────
+        const exerciseIds = prList.map(p => p.exerciseId).filter(Boolean);
+        if (exerciseIds.length > 0) {
+          const { data: weData } = await supabase
+            .from("workout_exercises")
+            .select("id, exercise_id, workouts(started_at, finished_at)")
+            .in("exercise_id", exerciseIds);
+
+          const completedWEs = (weData ?? []).filter((we: Record<string, unknown>) => {
+            const w = we.workouts as Record<string, unknown> | null;
+            return w?.finished_at != null;
+          });
+
+          const weIds = completedWEs.map((we: Record<string, unknown>) => we.id as string);
+          if (weIds.length > 0) {
+            const { data: setsData } = await supabase
+              .from("workout_sets")
+              .select("workout_exercise_id, weight, reps")
+              .in("workout_exercise_id", weIds)
+              .gt("weight", 0);
+
+            // Build per-exercise sparkline: date -> max e1rm
+            const sparkMap = new Map<string, Map<string, number>>();
+            for (const we of completedWEs as Record<string, unknown>[]) {
+              const w = we.workouts as Record<string, unknown>;
+              const exId = we.exercise_id as string;
+              const date = (w.started_at as string).slice(0, 10);
+              const sets = (setsData ?? []).filter(
+                (s: Record<string, unknown>) => s.workout_exercise_id === we.id
+              );
+              if (sets.length === 0) continue;
+              const maxE1rm = Math.max(...sets.map((s: Record<string, unknown>) => {
+                const wt = (s.weight as number) ?? 0;
+                const r = (s.reps as number) ?? 0;
+                return r > 0 ? wt * (1 + r / 30) : wt;
+              }));
+              if (!sparkMap.has(exId)) sparkMap.set(exId, new Map());
+              const cur = sparkMap.get(exId)!.get(date) ?? 0;
+              if (maxE1rm > cur) sparkMap.get(exId)!.set(date, maxE1rm);
+            }
+
+            const result = new Map<string, number[]>();
+            sparkMap.forEach((dateMap, exId) => {
+              const sorted = [...dateMap.entries()]
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .slice(-8)
+                .map(([, v]) => v);
+              result.set(exId, sorted);
+            });
+            setSparklines(result);
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -116,14 +197,15 @@ export default function StatisticsPage() {
             ) : (
               <div className={styles.prList}>
                 {prs.map((pr, i) => (
-                  <div key={i} className={styles.prRow}>
-                    <div className={styles.prInfo}>
+                  <div key={i} className={styles.prCard} style={{ animationDelay: `${i * 40}ms` }}>
+                    <div className={styles.prLeft}>
                       <p className={styles.prExercise}>{pr.exercise}</p>
                       <p className={styles.prMeta}>{pr.weight} kg × {pr.reps} reps</p>
+                      <Sparkline values={sparklines.get(pr.exerciseId) ?? []} />
                     </div>
                     <div className={styles.prRight}>
-                      <p className={styles.pr1rm}>{pr.estimated1rm.toFixed(1)} kg</p>
-                      <p className={styles.pr1rmLabel}>est. 1RM</p>
+                      <p className={styles.pr1rm}>{pr.estimated1rm.toFixed(1)}</p>
+                      <p className={styles.pr1rmLabel}>est. 1RM kg</p>
                     </div>
                   </div>
                 ))}

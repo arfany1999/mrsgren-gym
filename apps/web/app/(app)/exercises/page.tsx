@@ -4,9 +4,14 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
+import { BodyMuscleIcon } from "@/components/ui/BodyMuscleIcon/BodyMuscleIcon";
 import { browseExercises, searchFreeExercises } from "@/lib/freeExerciseDb";
 import type { FreeExercise } from "@/lib/freeExerciseDb";
+import {
+  classifySubRegion,
+  getSubRegions,
+  matchesSubRegion,
+} from "@/lib/exerciseSubRegions";
 import styles from "./page.module.css";
 
 const MUSCLE_GROUPS = [
@@ -37,14 +42,24 @@ export default function ExercisesPage() {
   const [offset, setOffset] = useState(0);
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState("All");
+  const [subMuscle, setSubMuscle] = useState("all");
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load paginated browse list
-  const loadPage = useCallback(async (off: number, replace: boolean) => {
+  // Reset sub-filter when primary muscle changes.
+  useEffect(() => {
+    setSubMuscle("all");
+  }, [muscle]);
+
+  // Load paginated browse list (respects current muscle filter)
+  const loadPage = useCallback(async (off: number, replace: boolean, muscleFilter: string) => {
     if (off === 0) setLoading(true);
     else setLoadingMore(true);
     try {
-      const { exercises, total: t } = await browseExercises({ limit: PAGE_SIZE, offset: off });
+      const { exercises, total: t } = await browseExercises({
+        limit: PAGE_SIZE,
+        offset: off,
+        muscle: muscleFilter === "All" ? "" : muscleFilter,
+      });
       setAllExercises((prev) => replace ? exercises : [...prev, ...exercises]);
       setTotal(t);
       setOffset(off + exercises.length);
@@ -72,34 +87,39 @@ export default function ExercisesPage() {
     }
   }, []);
 
-  // Initial load
-  useEffect(() => {
-    loadPage(0, true);
-  }, [loadPage]);
-
-  // Debounced search / reset to browse
+  // Load whenever muscle filter changes (and no active search)
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     if (!query) {
-      loadPage(0, true);
+      loadPage(0, true, muscle);
       return;
     }
     searchTimer.current = setTimeout(() => doSearch(query), 300);
     return () => {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
-  }, [query, doSearch, loadPage]);
+  }, [query, muscle, doSearch, loadPage]);
 
-  // Derived: apply muscle filter client-side
-  const displayed =
-    muscle === "All"
+  // Apply filters. When searching, primary-muscle filter is re-applied
+  // client-side on the search results. Sub-muscle filter is always client-side
+  // since classification is derived from the exercise name.
+  const primaryFiltered =
+    !query || muscle === "All"
       ? allExercises
       : allExercises.filter((ex) =>
-          [...ex.primaryMuscles, ...ex.secondaryMuscles].some(
-            (m) => m.toLowerCase() === muscle.toLowerCase()
-          )
+          ex.primaryMuscles.some(
+            (m) => m.toLowerCase() === muscle.toLowerCase(),
+          ),
         );
 
+  const displayed =
+    muscle === "All" || subMuscle === "all"
+      ? primaryFiltered
+      : primaryFiltered.filter((ex) =>
+          matchesSubRegion(ex.name, muscle, subMuscle),
+        );
+
+  const subRegions = muscle === "All" ? [] : getSubRegions(muscle);
   const canLoadMore = !query && offset < total;
 
   return (
@@ -162,6 +182,29 @@ export default function ExercisesPage() {
         ))}
       </div>
 
+      {/* Sub-region chips (only when the primary muscle has sub-regions) */}
+      {subRegions.length > 0 && (
+        <div className={styles.subFiltersScroll}>
+          <button
+            className={[styles.subChip, subMuscle === "all" ? styles.subChipActive : ""].join(" ")}
+            onClick={() => setSubMuscle("all")}
+            type="button"
+          >
+            All
+          </button>
+          {subRegions.map((r) => (
+            <button
+              key={r.id}
+              className={[styles.subChip, subMuscle === r.id ? styles.subChipActive : ""].join(" ")}
+              onClick={() => setSubMuscle(r.id)}
+              type="button"
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Count */}
       <div className={styles.countRow}>
         <p className={styles.count}>{displayed.length} exercises</p>
@@ -179,11 +222,18 @@ export default function ExercisesPage() {
       ) : (
         <>
           <ul className={styles.list}>
-            {displayed.map((ex) => (
+            {displayed.map((ex) => {
+              const primary = ex.primaryMuscles[0]?.toLowerCase() ?? "";
+              const sub = classifySubRegion(ex.name, primary);
+              return (
               <li key={ex.id}>
                 <Link href={`/exercises/${encodeURIComponent(ex.id)}`} className={styles.item}>
                   <div className={styles.mapWrap}>
-                    <ExerciseAnimation name={ex.name} muscles={ex.primaryMuscles} variant="thumb" />
+                    <BodyMuscleIcon
+                      muscles={ex.primaryMuscles}
+                      variant="thumb"
+                      overrideIds={sub ? { front: sub.front, back: sub.back } : undefined}
+                    />
                   </div>
                   <div className={styles.itemInfo}>
                     <p className={styles.itemName}>{ex.name}</p>
@@ -206,14 +256,15 @@ export default function ExercisesPage() {
                   </div>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
 
           {canLoadMore && (
             <div className={styles.loadMoreRow}>
               <button
                 className={styles.loadMoreBtn}
-                onClick={() => loadPage(offset, false)}
+                onClick={() => loadPage(offset, false, muscle)}
                 disabled={loadingMore}
                 type="button"
               >

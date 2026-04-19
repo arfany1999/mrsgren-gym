@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { MuscleMap } from "@/components/ui/MuscleMap/MuscleMap";
-import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
+import { BodyMuscleIcon } from "@/components/ui/BodyMuscleIcon/BodyMuscleIcon";
 import { findById } from "@/lib/freeExerciseDb";
 import type { FreeExercise } from "@/lib/freeExerciseDb";
 import styles from "./page.module.css";
@@ -46,22 +45,10 @@ export default function ExerciseDetailPage() {
         {/* Name */}
         <h1 className={styles.name}>{exercise.name}</h1>
 
-        {/* Exercise animation hero — flipbook from free-exercise-db */}
-        <div className={styles.animCard}>
-          <p className={styles.cardLabel}>How to Perform</p>
-          <div className={styles.animWrap}>
-            <ExerciseAnimation
-              name={exercise.name}
-              muscles={exercise.primaryMuscles}
-              variant="full"
-            />
-          </div>
-        </div>
-
-        {/* Muscle diagram */}
+        {/* Target muscles hero */}
         <div className={styles.diagramCard}>
-          <p className={styles.cardLabel}>Muscles Worked</p>
-          <MuscleMap muscles={allMuscles} variant="full" />
+          <p className={styles.cardLabel}>Target Muscles</p>
+          <BodyMuscleIcon muscles={exercise.primaryMuscles} variant="full" />
           <div className={styles.tagsRow}>
             {allMuscles.map((m) => (
               <span key={m} className={styles.muscleTag}>

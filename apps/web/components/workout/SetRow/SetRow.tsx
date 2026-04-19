@@ -85,7 +85,6 @@ export function SetRow({ set, index, weId, prevSet, measurementType, onUpdateFie
             onChange={(e) => onUpdateField("weightKg", e.target.value)}
             onFocus={(e) => e.target.select()}
           />
-          <span className={styles.inputLabel}>kg</span>
         </div>
       )}
 
@@ -102,7 +101,6 @@ export function SetRow({ set, index, weId, prevSet, measurementType, onUpdateFie
             onChange={(e) => onUpdateField("reps", e.target.value)}
             onFocus={(e) => e.target.select()}
           />
-          <span className={styles.inputLabel}>reps</span>
         </div>
       )}
 
@@ -119,7 +117,6 @@ export function SetRow({ set, index, weId, prevSet, measurementType, onUpdateFie
             onChange={(e) => onUpdateField("duration", e.target.value)}
             onFocus={(e) => e.target.select()}
           />
-          <span className={styles.inputLabel}>{isTimed ? "sec" : "min"}</span>
         </div>
       )}
 
@@ -136,7 +133,6 @@ export function SetRow({ set, index, weId, prevSet, measurementType, onUpdateFie
             onChange={(e) => onUpdateField("distance", e.target.value)}
             onFocus={(e) => e.target.select()}
           />
-          <span className={styles.inputLabel}>km</span>
         </div>
       )}
 

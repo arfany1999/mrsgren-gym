@@ -23,6 +23,12 @@ interface Routine {
   totalSets: number;
 }
 
+interface WorkoutInfo {
+  lastDate: string | null;
+  lastVolume: number;
+  prevVolume: number; // -1 = no previous workout
+}
+
 const MUSCLE_GRADIENTS: Record<string, [string, string]> = {
   chest:      ["#e05c5c", "#f97316"],
   lats:       ["#5b7cf8", "#818cf8"],
@@ -62,12 +68,58 @@ function getMuscleLabel(muscles: string[]) {
   return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
 }
 
+function relativeDate(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+}
+
+function ProgressRing({ lastVolume, prevVolume }: { lastVolume: number; prevVolume: number }) {
+  const r = 13;
+  const c = 2 * Math.PI * r;
+  let pct = 1;
+  let color = "rgba(26,21,16,0.18)";
+
+  if (lastVolume > 0 && prevVolume < 0) {
+    // First ever workout for this routine
+    pct = 1;
+    color = "#4a6ef5";
+  } else if (lastVolume > 0 && prevVolume >= 0) {
+    const ratio = prevVolume > 0 ? lastVolume / prevVolume : 1;
+    pct = Math.min(ratio, 1);
+    if (ratio >= 1) color = "#22a85a";       // improved — green
+    else if (ratio >= 0.85) color = "#f59e0b"; // close — amber
+    else color = "#ef4444";                    // dropped — red
+  }
+
+  const dash = (pct * c).toFixed(1);
+
+  return (
+    <svg width="34" height="34" viewBox="0 0 34 34" className={styles.ring}>
+      <circle cx="17" cy="17" r={r} fill="none" stroke="rgba(26,21,16,0.08)" strokeWidth="3"/>
+      <circle
+        cx="17" cy="17" r={r} fill="none"
+        stroke={color} strokeWidth="3"
+        strokeDasharray={`${dash} ${c.toFixed(1)}`}
+        strokeLinecap="round"
+        transform="rotate(-90 17 17)"
+        style={{ transition: "stroke-dasharray 0.45s ease" }}
+      />
+    </svg>
+  );
+}
+
 export default function DashboardPage() {
   const { supabase, user } = useAuth();
   const { startWorkout } = useWorkout();
   const router = useRouter();
 
   const [routines, setRoutines] = useState<Routine[]>([]);
+  const [workoutInfoMap, setWorkoutInfoMap] = useState<Map<string, WorkoutInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [startingEmpty, setStartingEmpty] = useState(false);
@@ -105,31 +157,63 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false });
 
       if (data) {
-        setRoutines(
-          data.map((r: Record<string, unknown>) => {
-            const res = (r.routine_exercises as Record<string, unknown>[]) ?? [];
-            return {
-              id: r.id as string,
-              title: (r.name as string) ?? "Routine",
-              exercises: res.map((re) => {
-                const ex = (re.exercises as Record<string, unknown>) ?? {};
-                const cfg = re.sets_config as Array<Record<string, unknown>> | null;
-                return {
-                  id: ex.id as string,
-                  name: ex.name as string,
-                  muscleGroups: parseMuscleGroup(ex.muscle_group as string),
-                  setsConfig: Array.isArray(cfg) && cfg.length > 0
-                    ? cfg.map(s => ({ reps: (s.reps as number) ?? null, weightKg: (s.weight as number) ?? null }))
-                    : Array.from({ length: 3 }, () => ({ reps: null, weightKg: null })),
-                };
-              }),
-              totalSets: res.reduce((sum, re) => {
-                const cfg = re.sets_config as unknown[] | null;
-                return sum + (Array.isArray(cfg) ? cfg.length : 0);
-              }, 0),
-            };
-          })
-        );
+        const mapped = data.map((r: Record<string, unknown>) => {
+          const res = (r.routine_exercises as Record<string, unknown>[]) ?? [];
+          return {
+            id: r.id as string,
+            title: (r.name as string) ?? "Routine",
+            exercises: res.map((re) => {
+              const ex = (re.exercises as Record<string, unknown>) ?? {};
+              const cfg = re.sets_config as Array<Record<string, unknown>> | null;
+              return {
+                id: ex.id as string,
+                name: ex.name as string,
+                muscleGroups: parseMuscleGroup(ex.muscle_group as string),
+                setsConfig: Array.isArray(cfg) && cfg.length > 0
+                  ? cfg.map(s => ({ reps: (s.reps as number) ?? null, weightKg: (s.weight as number) ?? null }))
+                  : Array.from({ length: 3 }, () => ({ reps: null, weightKg: null })),
+              };
+            }),
+            totalSets: res.reduce((sum, re) => {
+              const cfg = re.sets_config as unknown[] | null;
+              return sum + (Array.isArray(cfg) ? cfg.length : 0);
+            }, 0),
+          };
+        });
+
+        setRoutines(mapped);
+
+        // Fetch last 2 workouts per routine for last-performed + progress ring
+        const routineIds = mapped.map((r) => r.id);
+        if (routineIds.length > 0) {
+          const { data: wData } = await supabase
+            .from("workouts")
+            .select("routine_id, started_at, total_volume")
+            .in("routine_id", routineIds)
+            .not("finished_at", "is", null)
+            .order("started_at", { ascending: false });
+
+          const byRoutine = new Map<string, Array<{ date: string; volume: number }>>();
+          for (const w of (wData ?? []) as Record<string, unknown>[]) {
+            const rid = w.routine_id as string;
+            if (!rid) continue;
+            if (!byRoutine.has(rid)) byRoutine.set(rid, []);
+            byRoutine.get(rid)!.push({
+              date: w.started_at as string,
+              volume: (w.total_volume as number) ?? 0,
+            });
+          }
+
+          const infoMap = new Map<string, WorkoutInfo>();
+          for (const [rid, list] of byRoutine) {
+            infoMap.set(rid, {
+              lastDate: list[0]?.date ?? null,
+              lastVolume: list[0]?.volume ?? 0,
+              prevVolume: list.length > 1 ? (list[1]?.volume ?? 0) : -1,
+            });
+          }
+          setWorkoutInfoMap(infoMap);
+        }
       }
     } finally {
       setLoading(false);
@@ -188,18 +272,6 @@ export default function DashboardPage() {
         <Link href="/routines/new" className={styles.newBtn} aria-label="New routine">+</Link>
       </header>
 
-      <div className={styles.quickStart}>
-        <button
-          type="button"
-          className={styles.emptyBtn}
-          onClick={handleStartEmpty}
-          disabled={startingEmpty}
-        >
-          <span className={styles.emptyBtnIcon}>▶</span>
-          <span>{startingEmpty ? "Starting…" : "Start Empty Workout"}</span>
-        </button>
-      </div>
-
       {loading ? (
         <div className={styles.loading}><Spinner size={28} /></div>
       ) : routines.length === 0 ? (
@@ -214,6 +286,7 @@ export default function DashboardPage() {
             const allMuscles = [...new Set(r.exercises.flatMap((e) => e.muscleGroups))];
             const [from, to] = getGradient(allMuscles);
             const muscleLabel = getMuscleLabel(allMuscles);
+            const info = workoutInfoMap.get(r.id) ?? null;
             return (
               <div
                 key={r.id}
@@ -222,7 +295,7 @@ export default function DashboardPage() {
               >
                 <div className={styles.cardGlow} />
                 <div className={styles.cardBody}>
-                  {/* Top row: link + 3-dots */}
+                  {/* Top row: content + ring + 3-dots */}
                   <div className={styles.cardTopRow}>
                     <Link href={`/routines/${r.id}`} className={styles.cardLink} style={{ flex: 1 }}>
                       <h2 className={styles.cardTitle}>{r.title}</h2>
@@ -237,6 +310,11 @@ export default function DashboardPage() {
                           </>
                         )}
                       </div>
+                      {info?.lastDate && (
+                        <p className={styles.lastPerformed}>
+                          Last: {relativeDate(info.lastDate)}
+                        </p>
+                      )}
                       {r.exercises.length > 0 && (
                         <div className={styles.pills}>
                           {r.exercises.slice(0, 3).map((e) => (
@@ -249,39 +327,44 @@ export default function DashboardPage() {
                       )}
                     </Link>
 
-                    {/* 3-dots */}
-                    <div className={styles.menuWrap}>
-                      <button
-                        type="button"
-                        className={styles.more}
-                        aria-label="More options"
-                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === r.id ? null : r.id); }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="5" r="1.8" fill="currentColor"/>
-                          <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
-                          <circle cx="12" cy="19" r="1.8" fill="currentColor"/>
-                        </svg>
-                      </button>
-                      {menuOpenId === r.id && (
-                        <div className={styles.dropdown}>
-                          <button type="button" className={styles.dropItem}
-                            onClick={() => { setMenuOpenId(null); router.push(`/routines/${r.id}/edit`); }}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            Edit Routine
-                          </button>
-                          <button type="button" className={[styles.dropItem, styles.dropDanger].join(" ")}
-                            onClick={() => { setMenuOpenId(null); setDeleteId(r.id); }}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                              <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            Delete
-                          </button>
-                        </div>
+                    {/* Right column: ring + 3-dots */}
+                    <div className={styles.cardRight}>
+                      {info && (
+                        <ProgressRing lastVolume={info.lastVolume} prevVolume={info.prevVolume} />
                       )}
+                      <div className={styles.menuWrap}>
+                        <button
+                          type="button"
+                          className={styles.more}
+                          aria-label="More options"
+                          onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === r.id ? null : r.id); }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="5" r="1.8" fill="currentColor"/>
+                            <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
+                            <circle cx="12" cy="19" r="1.8" fill="currentColor"/>
+                          </svg>
+                        </button>
+                        {menuOpenId === r.id && (
+                          <div className={styles.dropdown}>
+                            <button type="button" className={styles.dropItem}
+                              onClick={() => { setMenuOpenId(null); router.push(`/routines/${r.id}/edit`); }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              Edit Routine
+                            </button>
+                            <button type="button" className={[styles.dropItem, styles.dropDanger].join(" ")}
+                              onClick={() => { setMenuOpenId(null); setDeleteId(r.id); }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -300,6 +383,24 @@ export default function DashboardPage() {
           })}
         </div>
       )}
+
+      {/* ── FAB: Start Empty Workout ── */}
+      <button
+        type="button"
+        className={styles.fab}
+        onClick={handleStartEmpty}
+        disabled={startingEmpty}
+        aria-label="Start empty workout"
+        title="Start Empty Workout"
+      >
+        {startingEmpty ? (
+          <Spinner size={22} />
+        ) : (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M6 4l14 8-14 8V4z" fill="#fff"/>
+          </svg>
+        )}
+      </button>
 
       {/* Delete confirm modal */}
       {deleteId && (

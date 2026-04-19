@@ -28,8 +28,9 @@
 
 .name {
   font-size: var(--text-base);
-  font-weight: 700;
-  color: var(--accent);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .muscles {

@@ -51,6 +51,9 @@ export function imageUrlById(id: string, frame: 0 | 1): string {
 }
 
 // ── Browse (paginated) ────────────────────────────────────────────
+// `muscle` filter matches on primary muscles only (exact, case-insensitive),
+// so "Chest" returns exercises that target chest, not ones where chest
+// is merely a secondary mover.
 export async function browseExercises(opts: {
   limit?: number;
   offset?: number;
@@ -59,11 +62,10 @@ export async function browseExercises(opts: {
   const all = await loadExercises();
   const { limit = 50, offset = 0, muscle = "" } = opts;
 
-  const filtered = muscle
+  const needle = muscle.trim().toLowerCase();
+  const filtered = needle
     ? all.filter((e) =>
-        [...(e.primaryMuscles ?? []), ...(e.secondaryMuscles ?? [])].some((m) =>
-          m.toLowerCase().includes(muscle.toLowerCase())
-        )
+        (e.primaryMuscles ?? []).some((m) => m.toLowerCase() === needle),
       )
     : all;
 
@@ -91,7 +93,7 @@ export async function findById(id: string): Promise<FreeExercise | null> {
   return all.find((e) => e.id === id) ?? null;
 }
 
-// ── Fuzzy name match (for ExerciseAnimation) ──────────────────────
+// ── Fuzzy name match ──────────────────────────────────────────────
 function normalize(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, "");
 }

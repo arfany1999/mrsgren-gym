@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { ExerciseAnimation } from "@/components/ui/ExerciseAnimation/ExerciseAnimation";
+import { BodyMuscleIcon } from "@/components/ui/BodyMuscleIcon/BodyMuscleIcon";
 import {
   EXERCISES,
   MUSCLE_GROUPS,
@@ -338,7 +338,7 @@ export default function EditRoutinePage() {
                 {/* Header */}
                 <div className={styles.exHeader}>
                   <div className={styles.exIconCircle}>
-                    <ExerciseAnimation name={ex.name} muscles={[ex.muscle]} variant="thumb" />
+                    <BodyMuscleIcon muscles={[ex.muscle]} variant="thumb" />
                   </div>
                   <div className={styles.exMeta}>
                     <p className={styles.exName}>{ex.name}</p>
@@ -582,7 +582,7 @@ function SheetItem({
       disabled={alreadyAdded}
     >
       <div className={styles.sheetItemIcon}>
-        <ExerciseAnimation name={def.name} muscles={[def.muscle]} variant="thumb" />
+        <BodyMuscleIcon muscles={[def.muscle]} variant="thumb" />
       </div>
       <div className={styles.sheetItemInfo}>
         <p className={styles.sheetItemName}>{def.name}</p>
