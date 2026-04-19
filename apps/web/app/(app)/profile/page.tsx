@@ -659,6 +659,13 @@ export default function ProfilePage() {
           return (
             <section className={styles.reportBanner}>
               <div className={styles.reportHead}>
+                <Avatar
+                  name={displayName}
+                  email={user?.email ?? profile?.email}
+                  src={profile?.avatar_url}
+                  size={48}
+                  className={styles.reportAvatar}
+                />
                 <div className={styles.reportTitleWrap}>
                   <span className={styles.reportKicker}>Training Report</span>
                   <h3 className={styles.reportTitle}>No workouts yet</h3>
@@ -687,6 +694,13 @@ export default function ProfilePage() {
         return (
           <section className={styles.reportBanner}>
             <div className={styles.reportHead}>
+              <Avatar
+                name={displayName}
+                email={user?.email ?? profile?.email}
+                src={profile?.avatar_url}
+                size={48}
+                className={styles.reportAvatar}
+              />
               <div className={styles.reportTitleWrap}>
                 <span className={styles.reportKicker}>{kicker}</span>
                 <h3 className={styles.reportTitle}>

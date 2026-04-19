@@ -40,6 +40,15 @@
 
 .searchInput:focus { border-color: var(--accent); }
 
+:global(html[data-theme="dark"]) .searchInput {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+}
+:global(html[data-theme="dark"]) .searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
 .clearBtn {
   position: absolute;
   right: calc(var(--sp-4) + 8px);
@@ -89,6 +98,28 @@
 .activeChip {
   background: var(--accent);
   color: #fff;
+  border-color: var(--accent);
+}
+
+:global(html[data-theme="dark"]) .filterChip {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+:global(html[data-theme="dark"]) .activeChip {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+:global(html[data-theme="dark"]) .subChip {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-tertiary);
+}
+:global(html[data-theme="dark"]) .subChipActive {
+  background: var(--accent);
+  color: #000;
   border-color: var(--accent);
 }
 
@@ -240,6 +271,12 @@
 .loadMoreBtn:hover { border-color: var(--accent); color: var(--accent); }
 .loadMoreBtn:active { transform: scale(0.985); }
 .loadMoreBtn:disabled { opacity: 0.6; cursor: default; }
+
+:global(html[data-theme="dark"]) .loadMoreBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--text-primary);
+}
 
 /* ── Loading / Empty ─────────────────────────────────────────── */
 .loadingCenter {

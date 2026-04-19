@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
@@ -23,7 +24,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#f3ede1",
+  themeColor: "#000000",
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
 };
@@ -32,18 +33,18 @@ export const viewport: Viewport = {
 const themeInitScript = `
 (function(){try{
   var t = localStorage.getItem('gym_theme');
-  if (t !== 'light' && t !== 'dark') t = 'light';
+  if (t !== 'light' && t !== 'dark') t = 'dark';
   document.documentElement.setAttribute('data-theme', t);
 }catch(e){}})();
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="light" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeInitScript}
+        </Script>
         <Providers>{children}</Providers>
         <ServiceWorkerRegister />
       </body>

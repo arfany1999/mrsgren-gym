@@ -616,9 +616,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 14px;
   position: relative;
 }
+.reportAvatar { flex-shrink: 0; }
 
 /* ── Medal progress strip inside report banner ───────────────── */
 .medalStrip {
@@ -719,7 +721,7 @@
   border-radius: 999px;
   transition: width 0.4s ease;
 }
-.reportTitleWrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.reportTitleWrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .reportKicker {
   font-size: 11px;
   font-weight: 800;

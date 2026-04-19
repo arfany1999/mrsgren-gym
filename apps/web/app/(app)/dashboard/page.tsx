@@ -366,6 +366,7 @@ export default function DashboardPage() {
                 height={48}
                 className={styles.medalIcon}
                 unoptimized
+                priority
               />
               <div className={styles.medalInfo}>
                 <p className={styles.medalLine}>
