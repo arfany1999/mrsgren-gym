@@ -141,7 +141,6 @@ export default function DashboardPage() {
   const [workoutInfoMap, setWorkoutInfoMap] = useState<Map<string, WorkoutInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState<string | null>(null);
-  const [startingEmpty, setStartingEmpty] = useState(false);
 
   // Greeting hero state
   const [workoutDays, setWorkoutDays] = useState(0);
@@ -304,16 +303,6 @@ export default function DashboardPage() {
       router.push("/active");
     } finally {
       setStartingId(null);
-    }
-  }
-
-  async function handleStartEmpty() {
-    setStartingEmpty(true);
-    try {
-      await startWorkout();
-      router.push("/active");
-    } finally {
-      setStartingEmpty(false);
     }
   }
 
@@ -579,23 +568,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── FAB: Start Empty Workout ── */}
-      <button
-        type="button"
-        className={styles.fab}
-        onClick={handleStartEmpty}
-        disabled={startingEmpty}
-        aria-label="Start empty workout"
-        title="Start Empty Workout"
-      >
-        {startingEmpty ? (
-          <Spinner size={22} />
-        ) : (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M6 4l14 8-14 8V4z" fill="#fff"/>
-          </svg>
-        )}
-      </button>
 
       {/* Delete confirm modal */}
       {deleteId && (
