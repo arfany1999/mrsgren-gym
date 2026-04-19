@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { parseMuscleGroup } from "@/lib/formatters";
+import { getTrophyProgress } from "@/lib/trophies";
+import { MuscleHero } from "@/components/dashboard/MuscleHero/MuscleHero";
 import styles from "./page.module.css";
 
 interface RoutineExercise {
@@ -78,6 +81,21 @@ function relativeDate(iso: string): string {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
+function greetingFor(hour: number): string {
+  if (hour < 5)  return "Still up";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 22) return "Good evening";
+  return "Late night grind";
+}
+
+function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+const DAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"] as const;
+
+
 function ProgressRing({ lastVolume, prevVolume }: { lastVolume: number; prevVolume: number }) {
   const r = 13;
   const c = 2 * Math.PI * r;
@@ -114,7 +132,7 @@ function ProgressRing({ lastVolume, prevVolume }: { lastVolume: number; prevVolu
 }
 
 export default function DashboardPage() {
-  const { supabase, user } = useAuth();
+  const { supabase, user, profile } = useAuth();
   const { startWorkout } = useWorkout();
   const router = useRouter();
 
@@ -123,6 +141,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [startingEmpty, setStartingEmpty] = useState(false);
+
+  // Greeting hero state
+  const [workoutDays, setWorkoutDays] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [weekDots, setWeekDots] = useState<boolean[]>([false, false, false, false, false, false, false]);
+  const [greetingHour] = useState(() => new Date().getHours());
 
   // 3-dots menu
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -135,7 +159,50 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!user) return;
     loadRoutines();
+    loadGreetingStats();
   }, [user, supabase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadGreetingStats() {
+    try {
+      const { data } = await supabase
+        .from("workouts")
+        .select("started_at")
+        .not("finished_at", "is", null)
+        .order("started_at", { ascending: false });
+
+      const rows = (data ?? []) as Array<{ started_at: string }>;
+      const dayKeys = new Set<string>();
+      rows.forEach((r) => dayKeys.add(dayKey(new Date(r.started_at))));
+      setWorkoutDays(dayKeys.size);
+
+      // Current streak: walk back from today
+      const msPerDay = 86400000;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const yesterday = new Date(today.getTime() - msPerDay);
+      let streak = 0;
+      if (dayKeys.has(dayKey(today)) || dayKeys.has(dayKey(yesterday))) {
+        const startRef = dayKeys.has(dayKey(today)) ? today : yesterday;
+        const cursor = new Date(startRef);
+        while (dayKeys.has(dayKey(cursor))) {
+          streak++;
+          cursor.setTime(cursor.getTime() - msPerDay);
+        }
+      }
+      setCurrentStreak(streak);
+
+      // Last 7 days (Sun..Sat relative to today)
+      const todayDow = today.getDay();
+      const weekStart = new Date(today.getTime() - todayDow * msPerDay);
+      const dots = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart.getTime() + i * msPerDay);
+        if (d.getTime() > today.getTime()) return false;
+        return dayKeys.has(dayKey(d));
+      });
+      setWeekDots(dots);
+    } catch {
+      // leave defaults
+    }
+  }
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -265,8 +332,103 @@ export default function DashboardPage() {
     }
   }
 
+  const displayName = profile?.name
+    || (user?.user_metadata?.name as string | undefined)
+    || user?.email?.split("@")[0]
+    || "Athlete";
+  const firstName = displayName.split(" ")[0] ?? displayName;
+  const trophyProgress = getTrophyProgress(workoutDays);
+  const todayDow = new Date().getDay();
+
   return (
     <div className={styles.page}>
+      {/* ── Greeting hero ───────────────────────────── */}
+      <section className={styles.greetHero}>
+        <div className={styles.greetRow}>
+          <div className={styles.greetTextWrap}>
+            <p className={styles.greetKicker}>{greetingFor(greetingHour)},</p>
+            <h1 className={styles.greetName}>{firstName} 👋</h1>
+          </div>
+          {currentStreak > 0 && (
+            <div className={styles.streakChip} aria-label={`${currentStreak} day streak`}>
+              <span className={styles.streakEmoji}>🔥</span>
+              <span className={styles.streakNum}>{currentStreak}</span>
+              <span className={styles.streakLbl}>day{currentStreak === 1 ? "" : "s"}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Medal strip */}
+        <div className={styles.medalRow}>
+          {trophyProgress.nextTier ? (
+            <>
+              <Image
+                src={trophyProgress.nextTier.image}
+                alt={trophyProgress.nextTier.label}
+                width={48}
+                height={48}
+                className={styles.medalIcon}
+                unoptimized
+              />
+              <div className={styles.medalInfo}>
+                <p className={styles.medalLine}>
+                  <b>{trophyProgress.daysRemaining}</b> day{trophyProgress.daysRemaining === 1 ? "" : "s"} to{" "}
+                  <span className={styles.medalTier}>{trophyProgress.nextTier.label}</span>
+                </p>
+                <div className={styles.medalBar}>
+                  <div
+                    className={styles.medalBarFill}
+                    style={{ width: `${trophyProgress.segmentPercent}%` }}
+                  />
+                </div>
+                <p className={styles.medalSub}>
+                  Training Day {workoutDays} · {trophyProgress.daysIntoCurrent} /
+                  {" "}
+                  {trophyProgress.nextTier.threshold - (trophyProgress.currentTier?.threshold ?? 0)}
+                </p>
+              </div>
+            </>
+          ) : trophyProgress.currentTier && (
+            <>
+              <Image
+                src={trophyProgress.currentTier.image}
+                alt={trophyProgress.currentTier.label}
+                width={48}
+                height={48}
+                className={styles.medalIcon}
+                unoptimized
+              />
+              <div className={styles.medalInfo}>
+                <p className={styles.medalLine}>
+                  <span className={styles.medalTier}>{trophyProgress.currentTier.label} Legend</span>
+                </p>
+                <p className={styles.medalSub}>All tiers unlocked 🏆</p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Weekly dot strip */}
+        <div className={styles.weekRow} role="img" aria-label="Workouts this week">
+          {weekDots.map((filled, i) => {
+            const isToday = i === todayDow;
+            return (
+              <div
+                key={i}
+                className={[
+                  styles.weekCell,
+                  filled ? styles.weekFilled : "",
+                  isToday ? styles.weekToday : "",
+                ].filter(Boolean).join(" ")}
+              >
+                <span className={styles.weekLbl}>{DAY_INITIALS[i]}</span>
+                <span className={styles.weekDot} />
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       <header className={styles.header}>
         <h1 className={styles.title}>My Routines</h1>
         <Link href="/routines/new" className={styles.newBtn} aria-label="New routine">+</Link>
@@ -298,7 +460,16 @@ export default function DashboardPage() {
                   {/* Top row: content + ring + 3-dots */}
                   <div className={styles.cardTopRow}>
                     <Link href={`/routines/${r.id}`} className={styles.cardLink} style={{ flex: 1 }}>
-                      <h2 className={styles.cardTitle}>{r.title}</h2>
+                      <div className={styles.cardTitleRow}>
+                        <span
+                          className={styles.muscleEmoji}
+                          style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
+                          aria-hidden="true"
+                        >
+                          <MuscleHero muscles={allMuscles} size={20} />
+                        </span>
+                        <h2 className={styles.cardTitle}>{r.title}</h2>
+                      </div>
                       <div className={styles.cardMeta}>
                         <span>{r.exercises.length} exercise{r.exercises.length !== 1 ? "s" : ""}</span>
                         <span className={styles.metaDot}>·</span>
@@ -311,9 +482,25 @@ export default function DashboardPage() {
                         )}
                       </div>
                       {info?.lastDate && (
-                        <p className={styles.lastPerformed}>
-                          Last: {relativeDate(info.lastDate)}
-                        </p>
+                        <div className={styles.lastRow}>
+                          <span className={styles.lastPerformed}>
+                            <svg className={styles.lastIcon} width="11" height="11" viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.4"/>
+                              <path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+                            </svg>
+                            Last: <b>{relativeDate(info.lastDate)}</b>
+                          </span>
+                          {info.prevVolume > 0 && info.lastVolume > 0 && (() => {
+                            const delta = Math.round(((info.lastVolume - info.prevVolume) / info.prevVolume) * 100);
+                            if (delta === 0) return null;
+                            const up = delta > 0;
+                            return (
+                              <span className={[styles.deltaChip, up ? styles.deltaUp : styles.deltaDown].join(" ")}>
+                                {up ? "▲" : "▼"} {Math.abs(delta)}%
+                              </span>
+                            );
+                          })()}
+                        </div>
                       )}
                       {r.exercises.length > 0 && (
                         <div className={styles.pills}>
