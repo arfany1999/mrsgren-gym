@@ -39,6 +39,21 @@ function formatVolume(kg: number): string {
   return `${Math.round(kg)}kg`;
 }
 
+/** Sum reps across a setSummary string like "50kg × 12 · 55kg × 10" → 22 */
+function repsFromSetSummary(summary: string | undefined): number {
+  if (!summary) return 0;
+  return summary.split(" · ").reduce((total, part) => {
+    // "50kg × 12" → take the number after ×
+    const x = part.match(/×\s*(\d+)/);
+    if (x?.[1]) return total + parseInt(x[1], 10);
+    // "12 reps" / "12 rep" → take the leading number
+    const r = part.match(/^\s*(\d+)\s*reps?/i);
+    if (r?.[1]) return total + parseInt(r[1], 10);
+    // Timed / cardio parts don't count toward reps
+    return total;
+  }, 0);
+}
+
 /** 10 lego-style workout avatars — user can pick one or let it rotate daily */
 const WORKOUT_LEGOS = [
   "💪", "🏋️", "🦾", "🔥", "⚡",
@@ -294,13 +309,7 @@ export default function ProfilePage() {
     const latest = reports[0];
     let lines: string[];
     if (latest) {
-      const totalReps = latest.exercises.reduce((a, ex) => {
-        const parts = ex.setSummary ? ex.setSummary.split(" · ") : [];
-        return a + parts.reduce((rs, p) => {
-          const n = parseInt(p, 10);
-          return rs + (isNaN(n) ? 0 : n);
-        }, 0);
-      }, 0);
+      const totalReps = latest.exercises.reduce((a, ex) => a + repsFromSetSummary(ex.setSummary), 0);
       const legoIcon = legoForToday();
       lines = [
         `${legoIcon} Day ${latest.dayNumber} — ${latest.title}`,
@@ -682,14 +691,7 @@ export default function ProfilePage() {
 
         const todayReport = isToday(latest.date);
         const kicker = todayReport ? "Today's Training" : "Last Session";
-        const totalReps = latest.exercises.reduce((a, ex) => {
-          // setSummary is like "10 × 60 · 10 × 65 · ...", fall back to sets count
-          const parts = ex.setSummary ? ex.setSummary.split(" · ") : [];
-          return a + parts.reduce((rs, p) => {
-            const n = parseInt(p, 10);
-            return rs + (isNaN(n) ? 0 : n);
-          }, 0);
-        }, 0);
+        const totalReps = latest.exercises.reduce((a, ex) => a + repsFromSetSummary(ex.setSummary), 0);
 
         return (
           <section className={styles.reportBanner}>
