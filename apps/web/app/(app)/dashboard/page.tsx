@@ -101,25 +101,25 @@ function ProgressRing({ lastVolume, prevVolume }: { lastVolume: number; prevVolu
   const r = 13;
   const c = 2 * Math.PI * r;
   let pct = 1;
-  let color = "rgba(26,21,16,0.18)";
+  // Defaults use CSS var so dark theme re-maps automatically
+  let color = "var(--accent)";
 
   if (lastVolume > 0 && prevVolume < 0) {
-    // First ever workout for this routine
     pct = 1;
-    color = "#4a6ef5";
+    color = "var(--accent-blue)";
   } else if (lastVolume > 0 && prevVolume >= 0) {
     const ratio = prevVolume > 0 ? lastVolume / prevVolume : 1;
     pct = Math.min(ratio, 1);
-    if (ratio >= 1) color = "#22a85a";       // improved — green
-    else if (ratio >= 0.85) color = "#f59e0b"; // close — amber
-    else color = "#ef4444";                    // dropped — red
+    if (ratio >= 1) color = "var(--accent-green)";
+    else if (ratio >= 0.85) color = "var(--accent-orange)";
+    else color = "var(--accent-red)";
   }
 
   const dash = (pct * c).toFixed(1);
 
   return (
     <svg width="34" height="34" viewBox="0 0 34 34" className={styles.ring}>
-      <circle cx="17" cy="17" r={r} fill="none" stroke="rgba(26,21,16,0.08)" strokeWidth="3"/>
+      <circle cx="17" cy="17" r={r} fill="none" stroke="rgba(128,128,128,0.2)" strokeWidth="3"/>
       <circle
         cx="17" cy="17" r={r} fill="none"
         stroke={color} strokeWidth="3"

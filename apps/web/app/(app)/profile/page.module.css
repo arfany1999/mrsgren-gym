@@ -1031,3 +1031,118 @@
   from { opacity: 0; transform: translateX(-50%) translateY(10px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+
+/* ═══════════ DARK THEME — strict yellow/white/black ═══════════ */
+:global(html[data-theme="dark"]) .reportBanner {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--border-color);
+}
+:global(html[data-theme="dark"]) .reportBanner::before {
+  background: linear-gradient(135deg,
+              rgba(252, 211, 77, 0.08) 0%,
+              rgba(255, 255, 255, 0.02) 100%) !important;
+}
+:global(html[data-theme="dark"]) .reportShareBtn {
+  background: var(--accent) !important;
+  color: #000 !important;
+  border-color: var(--accent) !important;
+}
+:global(html[data-theme="dark"]) .reportKicker,
+:global(html[data-theme="dark"]) .reportCalsNum,
+:global(html[data-theme="dark"]) .reportCalsUnit { color: var(--accent) !important; }
+
+/* Medal strip inside banner: green-tinted background → yellow-tinted */
+:global(html[data-theme="dark"]) .medalStrip {
+  background: rgba(252, 211, 77, 0.08) !important;
+  border-color: rgba(252, 211, 77, 0.28) !important;
+}
+:global(html[data-theme="dark"]) .medalStripBarFill {
+  background: var(--accent) !important;
+}
+:global(html[data-theme="dark"]) .medalStripRemaining b { color: var(--accent) !important; }
+
+/* Trophy progress bar + segment bar — force yellow */
+:global(html[data-theme="dark"]) .trophyBarFill,
+:global(html[data-theme="dark"]) .medalStripBarFill {
+  background: var(--accent) !important;
+}
+
+/* Dot grid pulse dot was light green */
+:global(html[data-theme="dark"]) .dotEdge {
+  background: var(--accent) !important;
+  box-shadow: 0 0 6px rgba(252, 211, 77, 0.7) !important;
+}
+:global(html[data-theme="dark"]) .dotFilled {
+  background: var(--accent) !important;
+  box-shadow: 0 0 4px rgba(252, 211, 77, 0.4) !important;
+}
+
+/* Chart bars default purple → white-tinted */
+:global(html[data-theme="dark"]) .bar {
+  background: var(--accent) !important;
+  opacity: 0.85;
+}
+
+/* Segmented control Duration/Volume/Reps active */
+:global(html[data-theme="dark"]) .segActive {
+  background: var(--accent) !important;
+  color: #000 !important;
+  border-color: var(--accent) !important;
+}
+
+/* Tier highlight (was green border for "next" trophy) */
+:global(html[data-theme="dark"]) .trophyNext {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(252, 211, 77, 0.25) !important;
+}
+:global(html[data-theme="dark"]) .trophyRemaining {
+  color: var(--accent);
+  background: rgba(252, 211, 77, 0.14);
+  border-color: rgba(252, 211, 77, 0.5);
+}
+
+/* History card tier chip (was green) */
+:global(html[data-theme="dark"]) .hTierChip {
+  background: rgba(252, 211, 77, 0.12);
+  border-color: rgba(252, 211, 77, 0.4);
+  color: var(--accent);
+}
+:global(html[data-theme="dark"]) .hDayBadge {
+  background: rgba(252, 211, 77, 0.12);
+  border-color: rgba(252, 211, 77, 0.3);
+  color: var(--accent);
+}
+:global(html[data-theme="dark"]) .hTrainingBadge {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--text-primary);
+}
+:global(html[data-theme="dark"]) .hCalsNum,
+:global(html[data-theme="dark"]) .hCalsUnit { color: var(--accent); }
+
+/* History back + titles */
+:global(html[data-theme="dark"]) .historyCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-color);
+}
+:global(html[data-theme="dark"]) .historyOverlay { background: var(--bg-primary); }
+
+/* Hero header avatar was blue lego */
+:global(html[data-theme="dark"]) .avatar {
+  background: var(--accent) !important;
+  color: #000 !important;
+}
+
+/* Log Out danger → yellow outlined on black */
+:global(html[data-theme="dark"]) .modalSave {
+  background: var(--accent) !important;
+  color: #000 !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 14px rgba(252, 211, 77, 0.28), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+}
+
+/* Toast */
+:global(html[data-theme="dark"]) .toast {
+  background: var(--accent);
+  color: #000;
+}

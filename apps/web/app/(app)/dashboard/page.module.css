@@ -77,6 +77,90 @@
   letter-spacing: 0.4px;
 }
 
+/* ═══════════ DARK THEME — strict yellow/white/black ═══════════ */
+:global(html[data-theme="dark"]) .greetHero {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+}
+:global(html[data-theme="dark"]) .greetKicker { color: var(--text-tertiary); }
+:global(html[data-theme="dark"]) .greetName { color: var(--text-primary); }
+
+:global(html[data-theme="dark"]) .streakChip {
+  background: rgba(252, 211, 77, 0.14);
+  border-color: rgba(252, 211, 77, 0.45);
+  box-shadow: 0 4px 14px rgba(252, 211, 77, 0.18);
+}
+:global(html[data-theme="dark"]) .streakNum,
+:global(html[data-theme="dark"]) .streakLbl { color: var(--accent); }
+
+:global(html[data-theme="dark"]) .medalRow {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-color);
+}
+:global(html[data-theme="dark"]) .medalLine b,
+:global(html[data-theme="dark"]) .medalTier { color: var(--text-primary); }
+:global(html[data-theme="dark"]) .medalBarFill {
+  background: var(--accent);
+}
+
+:global(html[data-theme="dark"]) .weekCell.weekToday {
+  background: rgba(252, 211, 77, 0.10);
+  border-color: rgba(252, 211, 77, 0.45);
+}
+:global(html[data-theme="dark"]) .weekFilled .weekDot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 6px rgba(252, 211, 77, 0.55);
+}
+
+/* Routine cards */
+:global(html[data-theme="dark"]) .card {
+  background: rgba(255, 255, 255, 0.04);
+}
+:global(html[data-theme="dark"]) .cardGlow {
+  background: var(--accent) !important;
+}
+:global(html[data-theme="dark"]) .muscleEmoji {
+  background: var(--accent) !important;
+  color: #000;
+}
+:global(html[data-theme="dark"]) .startBtn {
+  background: var(--accent) !important;
+  color: #000 !important;
+}
+
+/* Delta chips: map up to yellow, down to white */
+:global(html[data-theme="dark"]) .deltaUp {
+  color: #000;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+:global(html[data-theme="dark"]) .deltaDown {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* FAB — yellow pill */
+:global(html[data-theme="dark"]) .fab {
+  background: var(--accent) !important;
+  color: #000 !important;
+  box-shadow: 0 6px 20px rgba(252, 211, 77, 0.35) !important;
+}
+:global(html[data-theme="dark"]) .fab svg path {
+  fill: #000 !important;
+}
+
+/* "New routine" plus button */
+:global(html[data-theme="dark"]) .newBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+:global(html[data-theme="dark"]) .newBtn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 /* Medal strip */
 .medalRow {
   display: flex;

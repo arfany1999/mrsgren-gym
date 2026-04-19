@@ -444,3 +444,68 @@
   transition: all 0.18s ease; letter-spacing: -0.01em;
 }
 .doneBtn:active { transform: scale(0.97); box-shadow: 0 3px 12px rgba(74,110,245,0.2); }
+
+/* ═══════════ DARK THEME — strict yellow/white/black ═══════════ */
+:global(html[data-theme="dark"]) .overlay {
+  background: var(--bg-primary);
+}
+:global(html[data-theme="dark"]) .hero {
+  background: #000;
+}
+/* Disable colored orbs in dark */
+:global(html[data-theme="dark"]) .orb1,
+:global(html[data-theme="dark"]) .orb2,
+:global(html[data-theme="dark"]) .orb3 {
+  display: none;
+}
+:global(html[data-theme="dark"]) .fireRing {
+  background: rgba(252, 211, 77, 0.12);
+  border-color: rgba(252, 211, 77, 0.5);
+  box-shadow: 0 0 30px rgba(252, 211, 77, 0.2);
+}
+:global(html[data-theme="dark"]) .dayBadge {
+  background: rgba(252, 211, 77, 0.18);
+  border-color: rgba(252, 211, 77, 0.45);
+  color: var(--accent);
+}
+:global(html[data-theme="dark"]) .trainingDayBadge {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--text-primary);
+}
+:global(html[data-theme="dark"]) .chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+}
+
+/* Championship card */
+:global(html[data-theme="dark"]) .champCard {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(252, 211, 77, 0.25);
+}
+:global(html[data-theme="dark"]) .champBarFill {
+  background: var(--accent);
+}
+
+/* Share + Done buttons */
+:global(html[data-theme="dark"]) .shareBtn,
+:global(html[data-theme="dark"]) .doneBtn {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  box-shadow: 0 6px 24px rgba(252, 211, 77, 0.3), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+:global(html[data-theme="dark"]) .shareBtn:active,
+:global(html[data-theme="dark"]) .doneBtn:active {
+  box-shadow: 0 3px 12px rgba(252, 211, 77, 0.3);
+}
+
+/* Exercise rows */
+:global(html[data-theme="dark"]) .exCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-color);
+}
+:global(html[data-theme="dark"]) .exCalNum { color: var(--accent); }
+:global(html[data-theme="dark"]) .totalNum { color: var(--accent); }
+:global(html[data-theme="dark"]) .calsNum { color: var(--text-primary); }
