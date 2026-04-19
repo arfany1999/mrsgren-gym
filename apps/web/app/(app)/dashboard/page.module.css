@@ -292,6 +292,16 @@
   animation: cardIn 0.3s ease both;
   will-change: transform;
   -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.card:active {
+  transform: scale(0.985);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+@media (hover: hover) {
+  .card:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  }
 }
 
 /* Gradient accent strip on left side */
@@ -413,7 +423,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin: 2px 0 10px;
 }
 .lastPerformed {
   display: inline-flex;

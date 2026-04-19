@@ -916,7 +916,7 @@ export default function ProfilePage() {
                 <p className={styles.trophyBlurb}>{t.blurb}</p>
                 {isNext && trophyProgress.daysRemaining > 0 && (
                   <span className={styles.trophyRemaining}>
-                    {trophyProgress.daysRemaining} day{trophyProgress.daysRemaining === 1 ? "" : "s"} left
+                    {trophyProgress.daysRemaining}d left
                   </span>
                 )}
               </div>
