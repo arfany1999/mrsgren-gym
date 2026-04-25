@@ -20,32 +20,107 @@
   position: relative;
   overflow: hidden;
   background: linear-gradient(150deg, #1a0a2e 0%, #2d1b4e 40%, #0f172a 100%);
-  padding: 56px 24px 48px;
+  padding: 0 0 48px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 440px;
 }
 
-/* Animated orbs */
+/* The chosen banner is rendered as a literal "certificate" filling the
+   full mobile width — flush at the top of the report so the workout's
+   printed card is the headline. Aspect ratio is set inline per banner so
+   the dotted form lines stay aligned with the artwork. */
+.certificate {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 24px;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow:
+    0 12px 30px -16px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+  animation: certIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  z-index: 1;
+}
+
+.certImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Per-banner horizontal anchor so the form column survives the 9:16 crop.
+     Set inline via --cert-obj-pos-x on the .certificate container. */
+  object-position: var(--cert-obj-pos-x, 50%) center;
+  filter: saturate(1.05);
+}
+
+/* The data we paint on top of the banner. The container is sized in % so a
+   single set of coordinates per banner lines up regardless of viewport. The
+   font is keyed off the container's pixel width (--cert-font-vw, set per
+   banner) so it scales between phones and tablets. */
+.certField {
+  position: absolute;
+  display: inline-block;
+  font-family:
+    "Bebas Neue", "Anton", "Oswald",
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #ffd98a;       /* warm gold to match the printed labels */
+  /* Now that the banner is full-bleed, scale the overlay font with viewport
+     width but cap so it never breaks layout on tablets. */
+  font-size: clamp(13px, var(--cert-font-vw, 1.6vw), 26px);
+  line-height: 1.05;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.65),
+    0 0 8px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  /* Anchor each field to the bottom of its dotted underline. */
+  transform: translateY(-100%);
+}
+
+@keyframes certIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .certificate { animation: none; }
+}
+
+/* Animated orbs — toned down so they tint the banner without obscuring it. */
 .orb1 {
   position: absolute; top: -60px; left: -40px;
   width: 260px; height: 260px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(249,115,22,0.35) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(249,115,22,0.18) 0%, transparent 65%);
   animation: float1 6s ease-in-out infinite;
+  z-index: 0;
+  mix-blend-mode: screen;
 }
 .orb2 {
   position: absolute; top: 20px; right: -60px;
   width: 220px; height: 220px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(168,85,247,0.28) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 65%);
   animation: float2 8s ease-in-out infinite;
+  z-index: 0;
+  mix-blend-mode: screen;
 }
 .orb3 {
   position: absolute; bottom: -30px; left: 50%;
   transform: translateX(-50%);
   width: 300px; height: 200px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(234,179,8,0.18) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(234,179,8,0.12) 0%, transparent 65%);
   animation: float3 7s ease-in-out infinite;
+  z-index: 0;
+  mix-blend-mode: screen;
 }
 @keyframes float1 {
   0%,100% { transform: translate(0,0); }
@@ -60,7 +135,9 @@
   50%     { transform: translateX(-50%) scale(1.1); }
 }
 
-/* Inner stack */
+/* Inner stack — sits below the full-bleed banner. Side padding gives the
+   stats cards breathing room without affecting the banner's edge-to-edge
+   look. */
 .heroInner {
   position: relative;
   z-index: 1;
@@ -70,6 +147,7 @@
   gap: 18px;
   width: 100%;
   max-width: 380px;
+  padding: 0 24px;
 }
 
 /* Fire ring */

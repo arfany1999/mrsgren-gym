@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useMemo, useState, useCallback } from "react";
 import type { ActiveExercise } from "@/contexts/WorkoutContext";
 import { estimateCalories, saveReport, type WorkoutReportExercise } from "@/lib/gymProfile";
-import { getTrophyProgress } from "@/lib/trophies";
 import styles from "./WorkoutReport.module.css";
 
 interface WorkoutReportProps {
@@ -15,16 +14,9 @@ interface WorkoutReportProps {
   workoutDays: number;
   weightKg: number;
   userEmail: string | null;
+  userName?: string | null;
   workoutId: string;
   onDone: (id: string) => void;
-}
-
-function formatDuration(mins: number): string {
-  if (mins < 1)  return "< 1 min";
-  if (mins < 60) return `${Math.round(mins)} min`;
-  const h = Math.floor(mins / 60);
-  const m = Math.round(mins % 60);
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
 function calcVolume(exercises: ActiveExercise[]): number {
@@ -33,17 +25,144 @@ function calcVolume(exercises: ActiveExercise[]): number {
       v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0);
 }
 
-function formatVolume(v: number) {
-  return v > 0 ? `${Math.round(v).toLocaleString()} kg` : null;
+// Custom artwork shown behind the report hero. One is picked at random per
+// report so the celebration screen feels fresh after every workout. Files
+// live under /public/banners — see public/banners/.
+//
+// Each banner has its own printed form ("NAME / DATE / CLASS / SUBJECT") and
+// the field positions differ per layout. We overlay our actual workout data
+// directly onto those blank lines via per-banner % coordinates so the report
+// reads as the printed certificate filled in.
+// The on-screen certificate is rendered as a 9:16 portrait card so it fills
+// the phone viewport like a story screen. Source artwork is landscape, so
+// we cover-crop it (object-fit: cover) and pin object-position-x per banner
+// to the column where that banner's printed form sits — that's the slice
+// of artwork that survives the crop.
+const TARGET_RATIO = 9 / 16; // 0.5625
+
+type FieldRect = { top: number; left: number; width: number };
+
+type BannerSpec = {
+  src: string;
+  /** Width / height of the source image — used by the share canvas (still landscape). */
+  ratio: number;
+  /** Image x% to center horizontally inside the 9:16 frame (object-position-x). */
+  objectPosX: number;
+  /** Field positions in % of the source image dimensions. Container coords
+   *  are derived at render time via coverFieldStyle(). */
+  fields: {
+    name:    FieldRect;
+    date:    FieldRect;
+    class:   FieldRect;
+    subject: FieldRect;
+  };
+  /** Overlay font size is set by aspect-aware multiplier on container width. */
+  fontVw: number;
+};
+
+const REPORT_BANNERS: BannerSpec[] = [
+  // banner-1 — landscape (1536x1024). Form clusters around x≈41.5% of image,
+  // so that's our crop center; the form mostly survives the 9:16 crop.
+  {
+    src: "/banners/report-1.jpg",
+    ratio: 1536 / 1024,
+    fontVw: 4.0,
+    objectPosX: 41.5,
+    fields: {
+      name:    { top: 39.6, left: 25.5, width: 32.0 },
+      date:    { top: 47.5, left: 25.5, width: 32.0 },
+      class:   { top: 55.2, left: 32.5, width: 25.0 },
+      subject: { top: 63.0, left: 28.5, width: 28.5 },
+    },
+  },
+  // banner-2 — ultrawide 2-col (1536x350). Centering on the left column
+  // (name+date) — class/subject's right column is unavoidably cropped.
+  {
+    src: "/banners/report-2.jpg",
+    ratio: 1536 / 350,
+    fontVw: 2.6,
+    objectPosX: 42.5,
+    fields: {
+      name:    { top: 47.0, left: 33.0, width: 19.0 },
+      date:    { top: 65.0, left: 33.0, width: 19.0 },
+      class:   { top: 47.0, left: 67.5, width: 21.0 },
+      subject: { top: 65.0, left: 60.0, width: 28.5 },
+    },
+  },
+  // banner-3 — ultrawide form-on-the-right (1536x305). Form spans 39.5–89.5%;
+  // crop centers on its midpoint so the whole form rides into view.
+  {
+    src: "/banners/report-3.jpg",
+    ratio: 1536 / 305,
+    fontVw: 2.6,
+    objectPosX: 64.5,
+    fields: {
+      name:    { top: 23.0, left: 39.5, width: 50.0 },
+      date:    { top: 38.5, left: 39.5, width: 50.0 },
+      class:   { top: 53.5, left: 49.5, width: 40.0 },
+      subject: { top: 68.5, left: 44.0, width: 45.5 },
+    },
+  },
+  // banner-4 — ultrawide 2-col with hand-drawn icons (1536x272). Same
+  // tradeoff as banner-2 — left column gets the crop.
+  {
+    src: "/banners/report-4.jpg",
+    ratio: 1536 / 272,
+    fontVw: 2.2,
+    objectPosX: 48,
+    fields: {
+      name:    { top: 47.0, left: 35.0, width: 26.0 },
+      date:    { top: 65.0, left: 33.0, width: 28.0 },
+      class:   { top: 47.0, left: 75.5, width: 17.0 },
+      subject: { top: 65.0, left: 67.0, width: 23.5 },
+    },
+  },
+];
+
+/** Maps a field's image-relative %-coordinates into 9:16 container
+ *  coordinates after object-fit:cover with object-position-x = objectPosX%.
+ *
+ *  Cover into a portrait frame from a landscape image: the image scales to
+ *  cover the container *height* (vertical fully visible → top% unchanged),
+ *  and overflows horizontally. The horizontal scale factor is
+ *  ratio_image / ratio_target. The image x = objectPosX% lands at container
+ *  x = 50%; every other image x maps linearly from there.
+ */
+function coverFieldStyle(banner: BannerSpec, key: keyof BannerSpec["fields"]): React.CSSProperties {
+  const f = banner.fields[key];
+  const horizScale = banner.ratio / TARGET_RATIO;
+  return {
+    top:   `${f.top}%`,
+    left:  `${50 + (f.left - banner.objectPosX) * horizScale}%`,
+    width: `${f.width * horizScale}%`,
+  };
 }
 
 export function WorkoutReport({
-  title, exercises, durationMins, dayNumber, workoutDays, weightKg, userEmail, workoutId, onDone,
+  title, exercises, durationMins, dayNumber, workoutDays, weightKg, userEmail, userName, workoutId, onDone,
 }: WorkoutReportProps) {
-  const trophy = getTrophyProgress(workoutDays);
-  const segmentLength = trophy.nextTier
-    ? trophy.nextTier.threshold - (trophy.currentTier?.threshold ?? 0)
-    : 0;
+  // Pick a random banner once per mount. `useState` initialiser runs only on
+  // the first render, so the chosen banner is stable across re-renders for
+  // a given workout — switching out only when the user finishes a new one.
+  const [banner] = useState<BannerSpec>(
+    () => REPORT_BANNERS[Math.floor(Math.random() * REPORT_BANNERS.length)] ?? REPORT_BANNERS[0]!,
+  );
+
+  // Values that get written onto the banner's printed form fields.
+  const fillValues = useMemo(() => {
+    const fallbackName = userEmail ? userEmail.split("@")[0] : "ATHLETE";
+    const today = new Date();
+    const dateStr = today.toLocaleDateString(undefined, {
+      year: "numeric", month: "short", day: "numeric",
+    });
+    const sectionStr = `Workout #${dayNumber} · Day ${workoutDays}`;
+    return {
+      name:    (userName?.trim() || fallbackName || "ATHLETE").toUpperCase(),
+      date:    dateStr,
+      section: sectionStr,
+      subject: title?.trim() || "Free Workout",
+    };
+  }, [userName, userEmail, dayNumber, workoutDays, title]);
   const totalSets = useMemo(
     () => exercises.reduce((sum, e) => sum + e.sets.filter(s => s.isSaved).length, 0),
     [exercises]
@@ -93,157 +212,86 @@ export function WorkoutReport({
     [exerciseRows]
   );
 
-  const volume     = calcVolume(exercises);
-  const volumeStr  = formatVolume(volume);
-  const totalExs   = exerciseRows.length;
+  // `volume` is still used by saveReport() below as the total-volume
+  // ledger entry. `volumeStr` and `totalExs` were used by the old hero
+  // chips — those got removed when the report became the certificate.
+  const volume = calcVolume(exercises);
 
   const [sharing, setSharing] = useState(false);
 
-  // ── Generate share card image on canvas ──────────────────────
+  // ── Generate share card ───────────────────────────────────────
+  // Match what the user just saw on screen: a 9:16 portrait card,
+  // banner cover-cropped with the same per-banner object-position-x,
+  // and fields laid out via the same coverFieldStyle math.
   const handleShare = useCallback(async () => {
     setSharing(true);
     try {
-      const SIZE = 1080;
+      // 9:16 share card. 1080x1920 is the IG-story standard.
+      const W = 1080;
+      const H = 1920;
       const canvas = document.createElement("canvas");
-      canvas.width = SIZE;
-      canvas.height = SIZE;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      canvas.width = W;
+      canvas.height = H;
+      const ctxOrNull = canvas.getContext("2d");
+      if (!ctxOrNull) return;
+      const ctx: CanvasRenderingContext2D = ctxOrNull;
 
-      // ── Background ──────────────────────────────────────────
-      const bg = ctx.createLinearGradient(0, 0, SIZE, SIZE);
-      bg.addColorStop(0,   "#1a0a2e");
-      bg.addColorStop(0.4, "#2d1b4e");
-      bg.addColorStop(1,   "#0f172a");
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, SIZE, SIZE);
-
-      // Glow blobs
-      const g1 = ctx.createRadialGradient(100, 160, 0, 100, 160, 420);
-      g1.addColorStop(0, "rgba(249,115,22,0.45)");
-      g1.addColorStop(1, "transparent");
-      ctx.fillStyle = g1; ctx.fillRect(0, 0, SIZE, SIZE);
-
-      const g2 = ctx.createRadialGradient(980, 220, 0, 980, 220, 380);
-      g2.addColorStop(0, "rgba(168,85,247,0.38)");
-      g2.addColorStop(1, "transparent");
-      ctx.fillStyle = g2; ctx.fillRect(0, 0, SIZE, SIZE);
-
-      const g3 = ctx.createRadialGradient(SIZE / 2, SIZE - 60, 0, SIZE / 2, SIZE - 60, 320);
-      g3.addColorStop(0, "rgba(234,179,8,0.22)");
-      g3.addColorStop(1, "transparent");
-      ctx.fillStyle = g3; ctx.fillRect(0, 0, SIZE, SIZE);
-
-      const cx = SIZE / 2;
-
-      // ── Fire ring ────────────────────────────────────────────
-      ctx.beginPath();
-      ctx.arc(cx, 200, 106, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(249,115,22,0.18)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(249,115,22,0.5)";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.font = "88px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("🔥", cx, 200);
-
-      // ── Day badge ────────────────────────────────────────────
-      const badgeTxt = `DAY ${dayNumber}`;
-      ctx.font = "800 30px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textAlign = "center";
-      const bw = ctx.measureText(badgeTxt).width + 56;
-      const bh = 48, bx = cx - bw / 2, by = 334;
-      ctx.beginPath();
-      (ctx as CanvasRenderingContext2D & { roundRect: Function }).roundRect(bx, by, bw, bh, 24);
-      ctx.fillStyle = "rgba(249,115,22,0.28)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(249,115,22,0.55)";
-      ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = "rgba(255,200,100,0.95)";
-      ctx.textBaseline = "middle";
-      ctx.fillText(badgeTxt, cx, by + bh / 2);
-
-      // ── Headline ─────────────────────────────────────────────
-      ctx.font = "900 80px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillStyle = "#ffffff";
-      ctx.textBaseline = "top";
-      ctx.fillText("Well done! 💪", cx, 402);
-
-      // ── Calorie card ─────────────────────────────────────────
-      const cardX = 120, cardY = 520, cardW = SIZE - 240, cardH = 176;
-      ctx.beginPath();
-      (ctx as CanvasRenderingContext2D & { roundRect: Function }).roundRect(cardX, cardY, cardW, cardH, 30);
-      ctx.fillStyle = "rgba(255,255,255,0.07)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.13)";
-      ctx.lineWidth = 2; ctx.stroke();
-
-      ctx.font = "900 108px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillStyle = "#ffffff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillText(totalCalories.toLocaleString(), cx, cardY + 16);
-      ctx.font = "800 22px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.42)";
-      ctx.textBaseline = "bottom";
-      ctx.fillText("K C A L   B U R N E D", cx, cardY + cardH - 14);
-
-      // ── Stat chips row ───────────────────────────────────────
-      const chips = [
-        `⏱ ${formatDuration(durationMins)}`,
-        `🏋️ ${totalExs} exercise${totalExs !== 1 ? "s" : ""}`,
-        `✅ ${totalSets} sets`,
-        ...(volumeStr ? [`⚡ ${volumeStr}`] : []),
-      ];
-      const step = SIZE / (chips.length + 1);
-      ctx.font = "700 28px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textBaseline = "middle";
-      chips.forEach((txt, i) => {
-        ctx.fillStyle = "rgba(255,255,255,0.75)";
-        ctx.fillText(txt, step * (i + 1), 740);
+      // Banner artwork — cover-fit into the 9:16 canvas with the same
+      // object-position-x we use on screen, so the share matches the UI.
+      const bannerImg = await new Promise<HTMLImageElement | null>((resolve) => {
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = banner.src;
       });
-
-      // ── Exercise rows (top 4) ─────────────────────────────────
-      const exRows = exerciseRows.slice(0, 4);
-      const rowStart = 800, rowH = 56;
-      exRows.forEach(({ ex, savedSets }, i) => {
-        const ry = rowStart + i * rowH;
-        // Row bg
-        ctx.beginPath();
-        (ctx as CanvasRenderingContext2D & { roundRect: Function }).roundRect(120, ry - 20, SIZE - 240, 46, 12);
-        ctx.fillStyle = "rgba(255,255,255,0.05)";
-        ctx.fill();
-        // Name
-        ctx.font = "700 26px -apple-system, BlinkMacSystemFont, sans-serif";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "rgba(255,255,255,0.85)";
-        const nameMaxW = SIZE - 320;
-        let name = ex.name;
-        while (ctx.measureText(name).width > nameMaxW && name.length > 6) name = name.slice(0, -1) + "…";
-        ctx.fillText(name, 140, ry + 3);
-        // Sets count
-        ctx.font = "600 24px -apple-system, BlinkMacSystemFont, sans-serif";
-        ctx.textAlign = "right";
-        ctx.fillStyle = "rgba(255,255,255,0.38)";
-        ctx.fillText(`${savedSets.length} set${savedSets.length !== 1 ? "s" : ""}`, SIZE - 140, ry + 3);
-      });
-      if (exerciseRows.length > 4) {
-        ctx.font = "600 22px -apple-system, BlinkMacSystemFont, sans-serif";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "rgba(255,255,255,0.28)";
-        ctx.fillText(`+${exerciseRows.length - 4} more exercises`, 140, rowStart + 4 * rowH + 3);
+      if (bannerImg) {
+        const iw = bannerImg.naturalWidth;
+        const ih = bannerImg.naturalHeight;
+        // Cover scale = max(W/iw, H/ih). Source is landscape into portrait,
+        // so scale_y dominates → image fills H, overflows W.
+        const scale = Math.max(W / iw, H / ih);
+        const drawW = iw * scale;
+        const drawH = ih * scale;
+        // Anchor on object-position-x: source x = objectPosX% lands at canvas x = 50%.
+        const drawX = W / 2 - (banner.objectPosX / 100) * drawW;
+        const drawY = (H - drawH) / 2;
+        ctx.drawImage(bannerImg, drawX, drawY, drawW, drawH);
+      } else {
+        ctx.fillStyle = "#1a0a2e";
+        ctx.fillRect(0, 0, W, H);
       }
 
-      // ── Branding footer ───────────────────────────────────────
-      ctx.font = "500 24px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      ctx.fillStyle = "rgba(255,255,255,0.22)";
-      ctx.fillText("gym.mrgren.store", cx, SIZE - 24);
+      // Paint each field at its container-relative position (same math as
+      // coverFieldStyle, but in pixels).
+      const horizScale = banner.ratio / TARGET_RATIO;
+      function paintField(value: string, top: number, left: number, width: number, sizePx: number) {
+        const containerLeftPct = 50 + (left - banner.objectPosX) * horizScale;
+        const containerWidthPct = width * horizScale;
+        const x = (containerLeftPct / 100) * W;
+        const y = (top / 100) * H;
+        const wMax = (containerWidthPct / 100) * W;
+        ctx.save();
+        ctx.font = `800 ${sizePx}px "Bebas Neue", "Anton", "Oswald", -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillStyle = "#ffd98a";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.shadowColor = "rgba(0,0,0,0.6)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 1;
+        let txt = value.toUpperCase();
+        while (ctx.measureText(txt).width > wMax && txt.length > 3) txt = txt.slice(0, -2) + "…";
+        // Sit just above the underline (matches translateY(-100%) in CSS).
+        ctx.fillText(txt, x, y - sizePx * 0.12);
+        ctx.restore();
+      }
+
+      // 9:16 → ~5% of height per em looks balanced with the on-screen card.
+      const fieldFont = Math.round(H * 0.05);
+      paintField(fillValues.name,    banner.fields.name.top,    banner.fields.name.left,    banner.fields.name.width,    fieldFont);
+      paintField(fillValues.date,    banner.fields.date.top,    banner.fields.date.left,    banner.fields.date.width,    fieldFont);
+      paintField(fillValues.section, banner.fields.class.top,   banner.fields.class.left,   banner.fields.class.width,   Math.round(fieldFont * 0.85));
+      paintField(fillValues.subject, banner.fields.subject.top, banner.fields.subject.left, banner.fields.subject.width, fieldFont);
 
       // ── Share or download ─────────────────────────────────────
       canvas.toBlob(async (blob) => {
@@ -252,8 +300,8 @@ export function WorkoutReport({
         if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: `${title} · Day ${dayNumber}`,
-            text: `${totalSets} sets · ${totalCalories} kcal burned 🔥`,
+            title: `${fillValues.subject} · Workout #${dayNumber}`,
+            text: `${fillValues.subject} — ${totalSets} sets`,
           });
         } else {
           const url = URL.createObjectURL(blob);
@@ -269,7 +317,7 @@ export function WorkoutReport({
     } finally {
       setSharing(false);
     }
-  }, [title, dayNumber, totalCalories, durationMins, totalExs, totalSets, volumeStr, exerciseRows]);
+  }, [banner, fillValues, dayNumber, totalSets]);
 
   // ── Save report & navigate ───────────────────────────────────
   function handleDone() {
@@ -305,142 +353,40 @@ export function WorkoutReport({
         <div className={styles.orb2} />
         <div className={styles.orb3} />
 
-        <div className={styles.heroInner}>
-          <div className={styles.fireRing}>
-            <div className={styles.fireEmoji}>🔥</div>
-          </div>
-
-          <div className={styles.textBlock}>
-            <div className={styles.dayBadgeRow}>
-              <span className={styles.dayBadge}>Workout #{dayNumber}</span>
-              <span className={styles.trainingDayBadge}>Training Day {workoutDays}</span>
-            </div>
-            <h1 className={styles.wellDone}>Well done, G!</h1>
-            <p className={styles.tagline}>Another session in the books 💪</p>
-          </div>
-
-          <div className={styles.calsCard}>
-            <span className={styles.calsNum}>{totalCalories.toLocaleString()}</span>
-            <span className={styles.calsUnit}>KCAL BURNED</span>
-          </div>
-
-          <div className={styles.chips}>
-            <div className={styles.chip}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
-                <path d="M12 7v5l3 3" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              {formatDuration(durationMins)}
-            </div>
-            <div className={styles.chip}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="9" width="4" height="6" rx="1" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
-                <rect x="17" y="9" width="4" height="6" rx="1" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
-                <rect x="7" y="10.5" width="10" height="3" rx="1.5" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
-              </svg>
-              {totalExs} exercise{totalExs !== 1 ? "s" : ""}
-            </div>
-            <div className={styles.chip}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <path d="M5 12l5 5L19 7" stroke="rgba(255,255,255,0.6)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {totalSets} sets
-            </div>
-            {volumeStr && (
-              <div className={styles.chip}>⚡ {volumeStr}</div>
-            )}
-          </div>
-
-          {/* ── Championship status ──────────────────────────── */}
-          <div className={styles.champCard}>
-            <div className={styles.champTopBar}>
-              <span className={styles.champKicker}>Championship Status</span>
-              <span className={styles.champWorkoutNum}>
-                Workout #{dayNumber} · Day {workoutDays}
-              </span>
-            </div>
-
-            <div className={styles.champBody}>
-              {trophy.nextTier ? (
-                <>
-                  <div className={styles.champMedalWrap}>
-                    <Image
-                      src={trophy.nextTier.image}
-                      alt={trophy.nextTier.label}
-                      width={72}
-                      height={72}
-                      className={styles.champMedal}
-                      unoptimized
-                    />
-                    <span className={styles.champMedalHalo} />
-                  </div>
-
-                  <div className={styles.champInfo}>
-                    <div className={styles.champCurrentLine}>
-                      {trophy.currentTier ? (
-                        <>
-                          <span className={styles.champCurrentLbl}>Current tier</span>
-                          <span className={styles.champCurrentName}>
-                            {trophy.currentTier.label}
-                          </span>
-                        </>
-                      ) : (
-                        <span className={styles.champCurrentLbl}>
-                          First medal on the line
-                        </span>
-                      )}
-                    </div>
-
-                    <div className={styles.champNextLine}>
-                      <span className={styles.champDays}>{trophy.daysRemaining}</span>
-                      <span className={styles.champDaysWord}>
-                        day{trophy.daysRemaining === 1 ? "" : "s"} to
-                      </span>
-                      <span className={styles.champNextName}>
-                        {trophy.nextTier.label}
-                      </span>
-                    </div>
-
-                    <div className={styles.champBar}>
-                      <div
-                        className={styles.champBarFill}
-                        style={{ width: `${trophy.segmentPercent}%` }}
-                      />
-                    </div>
-
-                    <div className={styles.champCount}>
-                      Day <b>{trophy.daysIntoCurrent}</b> of {segmentLength} in this tier
-                    </div>
-                  </div>
-                </>
-              ) : trophy.currentTier ? (
-                <>
-                  <div className={styles.champMedalWrap}>
-                    <Image
-                      src={trophy.currentTier.image}
-                      alt={trophy.currentTier.label}
-                      width={72}
-                      height={72}
-                      className={styles.champMedal}
-                      unoptimized
-                    />
-                    <span className={styles.champMedalHalo} />
-                  </div>
-                  <div className={styles.champInfo}>
-                    <div className={styles.champNextLine}>
-                      <span className={styles.champNextName}>
-                        {trophy.currentTier.label} Legend
-                      </span>
-                    </div>
-                    <div className={styles.champCount}>
-                      All tiers unlocked — you reached the top 🏆
-                    </div>
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </div>
+        {/* Full-bleed banner ("certificate") sits flush at the top of the
+            report so it reads as the workout's printed report card. Field
+            text is positioned over the banner's dotted lines via per-banner
+            % coords (BannerSpec.fields above). */}
+        <div
+          className={styles.certificate}
+          style={{
+            aspectRatio: `${TARGET_RATIO}`,
+            ["--cert-font-vw" as string]: `${banner.fontVw}vw`,
+            ["--cert-obj-pos-x" as string]: `${banner.objectPosX}%`,
+          }}
+        >
+          <Image
+            src={banner.src}
+            alt="Workout certificate"
+            fill
+            priority
+            sizes="100vw"
+            className={styles.certImg}
+          />
+          <span className={styles.certField} style={coverFieldStyle(banner, "name")}>
+            {fillValues.name}
+          </span>
+          <span className={styles.certField} style={coverFieldStyle(banner, "date")}>
+            {fillValues.date}
+          </span>
+          <span className={styles.certField} style={coverFieldStyle(banner, "class")}>
+            {fillValues.section}
+          </span>
+          <span className={styles.certField} style={coverFieldStyle(banner, "subject")}>
+            {fillValues.subject}
+          </span>
         </div>
+
       </div>
 
       {/* ═══════════════════ BREAKDOWN ═══════════════════ */}
