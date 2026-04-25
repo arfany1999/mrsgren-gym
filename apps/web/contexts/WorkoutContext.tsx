@@ -18,7 +18,7 @@ import {
 } from "@/lib/storage";
 import type { SetType, Exercise } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
-import { getMeasurementType, type MeasurementType } from "@/lib/exercises-data";
+import { getMeasurementType, resolveMeasurementType, type MeasurementType } from "@/lib/exercises-data";
 import { fetchPRsForExercises } from "@/lib/exerciseHistory";
 import { enqueue as queueMutation, startOnlineAutoFlush } from "@/lib/offlineQueue";
 
@@ -112,9 +112,14 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const [showPrBanner, setShowPrBanner] = useState(false);
   const [prExerciseName, setPrExerciseName] = useState("");
 
-  function stopTimer() { /* no-op — timer is local to WorkoutTimer component */ }
+  // Always-fresh ref for hot-path callbacks (saveSet etc.) so they don't
+  // need `exercises` in their dep array. Listing `exercises` there causes
+  // the callback identity to churn on every keystroke, breaking memoization
+  // of SetRow/ExerciseBlock and triggering keystroke-cascade rerenders.
+  const exercisesRef = useRef<ActiveExercise[]>([]);
+  useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
 
-  useEffect(() => () => { /* cleanup on unmount */ }, []);
+  function stopTimer() { /* no-op — timer is local to WorkoutTimer component */ }
 
   // Start the offline-queue auto-flush whenever the provider is mounted
   useEffect(() => {
@@ -220,8 +225,14 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         (s: Record<string, unknown>) => s.workout_exercise_id === we.id
       );
       const exName = (exercise?.name as string) ?? "";
-      const measurementType: MeasurementType =
-        (exercise?.measurement_type as MeasurementType) ?? getMeasurementType(exName);
+      // Coerce the DB value through the validated resolver — guards against
+      // historical rows with null/empty/typo'd `measurement_type` (a common
+      // cause of "no KG or sets inputs" for shoulder exercises that were
+      // originally seeded by the free-exercise-db picker).
+      const measurementType: MeasurementType = resolveMeasurementType(
+        exercise?.measurement_type,
+        exName,
+      );
       return {
         weId: we.id as string,
         exerciseId: we.exercise_id as string,
@@ -558,8 +569,10 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         fetchPRsForExercises(supabase, [exerciseUuid]),
       ]);
       const pr = prMap.get(exerciseUuid);
-      const mType: MeasurementType =
-        (exercise.measurementType as MeasurementType) ?? getMeasurementType(exercise.name);
+      const mType = resolveMeasurementType(
+        (exercise as unknown as { measurementType?: unknown }).measurementType,
+        exercise.name,
+      );
       setExercises((prev) => [
         ...prev,
         {
@@ -637,86 +650,89 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     async (weId: string, idx: number) => {
       if (!activeWorkout) return;
       if (weId.startsWith("temp-")) return; // DB not ready yet — background init still running
-      const exercise = exercises.find((e) => e.weId === weId);
+      // Read from ref so this callback's identity stays stable across keystrokes
+      const exercise = exercisesRef.current.find((e) => e.weId === weId);
       if (!exercise) return;
       const set = exercise.sets[idx];
       if (!set) return;
 
-      // Optimistic update — mark saved immediately for instant UI feedback
+      const isCardio = exercise.measurementType === "cardio";
+      const durationMins = parseFloat(set.duration) || null;
+      const distanceKm = parseFloat(set.distance) || null;
+      const reps = isCardio ? null : (parseInt(set.reps) || null);
+      const weightKg = isCardio ? null : (parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : null);
+      const dbReps = isCardio ? durationMins : reps;
+      const dbWeight = isCardio ? distanceKm : weightKg;
+
+      // Determine the final ID synchronously so the UI lands in its
+      // terminal state on the very first render after the tap.
+      const isNewSet = !set.id;
+      const orderIndex = exercise.sets.filter((s) => s.isSaved).length;
+      const generatedId = typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const savedSetId = set.id ?? generatedId;
+
+      // ── Optimistic flip — instant ✓ on the row, with the final ID
+      //    persisted so subsequent saves/deletes route correctly even
+      //    while the background writes are still in-flight.
       setExercises((prev) =>
         prev.map((e) => {
           if (e.weId !== weId) return e;
           const sets = [...e.sets];
           const existing = sets[idx];
           if (!existing) return e;
-          sets[idx] = { ...existing, isSaved: true };
+          sets[idx] = { ...existing, id: savedSetId, isSaved: true };
           return { ...e, sets };
         })
       );
 
-      const isCardio = exercise.measurementType === "cardio";
-      const durationMins = parseFloat(set.duration) || null;
-      const distanceKm = parseFloat(set.distance) || null;
-
-      // Cardio: store duration (mins) in `reps`, distance (km) in `weight`
-      const reps = isCardio ? null : (parseInt(set.reps) || null);
-      const weightKg = isCardio ? null : (parseFloat(set.weightKg) >= 0 ? parseFloat(set.weightKg) : null);
-      const dbReps = isCardio ? durationMins : reps;
-      const dbWeight = isCardio ? distanceKm : weightKg;
-
-      let savedSetId = set.id;
-
-      if (set.id) {
-        // Pre-created set from routine — just mark completed + update values
-        const updateData = { reps: dbReps, weight: dbWeight, is_completed: true };
+      // ── Background: DB write + PR check. We don't await this from the
+      //    caller, so the save tap returns immediately and rest-timer /
+      //    next-set focus aren't gated on Supabase round-trips.
+      void (async () => {
         try {
-          const { error } = await supabase
+          if (!isNewSet) {
+            const updateData = { reps: dbReps, weight: dbWeight, is_completed: true };
+            try {
+              const { error } = await supabase
+                .from("workout_sets")
+                .update(updateData)
+                .eq("id", savedSetId);
+              if (error) throw error;
+            } catch {
+              await queueMutation("upsertSet", { setId: savedSetId, data: updateData });
+            }
+          } else {
+            const insertData = {
+              id: savedSetId,
+              workout_exercise_id: weId,
+              reps: dbReps,
+              weight: dbWeight,
+              set_type: set.setType,
+              rpe: set.rpe ?? null,
+              is_pr: false,
+              is_completed: true,
+              order_index: orderIndex,
+            };
+            try {
+              const { error } = await supabase.from("workout_sets").insert(insertData);
+              if (error) throw error;
+            } catch {
+              await queueMutation("upsertSet", { data: insertData });
+            }
+          }
+
+          // PR detection only matters for weight×reps lifts
+          if (!reps || !weightKg || weightKg <= 0) return;
+
+          const { data: prevSets } = await supabase
             .from("workout_sets")
-            .update(updateData)
-            .eq("id", set.id);
-          if (error) throw error;
-        } catch {
-          // Queue for retry when online
-          await queueMutation("upsertSet", { setId: set.id, data: updateData });
-        }
-      } else {
-        // Manually added set — insert new row. Use client-side UUID so we can
-        // queue the insert offline and keep UI stable.
-        const existingSets = exercise.sets.filter((s) => s.isSaved);
-        const orderIndex = existingSets.length;
-        const newId = typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const insertData = {
-          id: newId,
-          workout_exercise_id: weId,
-          reps: dbReps,
-          weight: dbWeight,
-          set_type: set.setType,
-          rpe: set.rpe ?? null,
-          is_pr: false,
-          is_completed: true,
-          order_index: orderIndex,
-        };
-        try {
-          const { error } = await supabase.from("workout_sets").insert(insertData);
-          if (error) throw error;
-        } catch {
-          await queueMutation("upsertSet", { data: insertData });
-        }
-        savedSetId = newId;
-      }
+            .select("weight, reps, workout_exercises!inner(exercise_id)")
+            .eq("workout_exercises.exercise_id", exercise.exerciseId)
+            .not("id", "eq", savedSetId);
+          if (!prevSets || prevSets.length === 0) return;
 
-      // Check for PR in background
-      let isPr = false;
-      if (reps && weightKg && weightKg > 0 && savedSetId) {
-        const { data: prevSets } = await supabase
-          .from("workout_sets")
-          .select("weight, reps, workout_exercises!inner(exercise_id)")
-          .eq("workout_exercises.exercise_id", exercise.exerciseId)
-          .not("id", "eq", savedSetId);
-
-        if (prevSets) {
           const prevMax = Math.max(
             0,
             ...prevSets.map(
@@ -726,52 +742,42 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
             )
           );
           const current1RM = weightKg * (1 + reps / 30);
-          isPr = current1RM > prevMax && prevSets.length > 0;
-        }
-      }
+          if (current1RM <= prevMax) return;
 
-      if (isPr && savedSetId) {
-        await supabase.from("workout_sets").update({ is_pr: true }).eq("id", savedSetId);
-        // Write to personal_records so Statistics page can show it
-        if (user && reps && weightKg) {
-          await supabase.from("personal_records").upsert(
-            {
-              user_id: user.id,
-              exercise_id: exercise.exerciseId,
-              weight: weightKg,
-              reps,
-              estimated_1rm: parseFloat((weightKg * (1 + reps / 30)).toFixed(1)),
-              achieved_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id,exercise_id" }
+          // PR! Persist + flip UI badge.
+          await supabase.from("workout_sets").update({ is_pr: true }).eq("id", savedSetId);
+          if (user) {
+            await supabase.from("personal_records").upsert(
+              {
+                user_id: user.id,
+                exercise_id: exercise.exerciseId,
+                weight: weightKg,
+                reps,
+                estimated_1rm: parseFloat((weightKg * (1 + reps / 30)).toFixed(1)),
+                achieved_at: new Date().toISOString(),
+              },
+              { onConflict: "user_id,exercise_id" }
+            );
+          }
+          setExercises((prev) =>
+            prev.map((e) => {
+              if (e.weId !== weId) return e;
+              const sets = [...e.sets];
+              const setIdx = sets.findIndex((s) => s.id === savedSetId);
+              if (setIdx < 0) return e;
+              sets[setIdx] = { ...sets[setIdx]!, isPr: true };
+              return { ...e, sets };
+            })
           );
+          setPrExerciseName(exercise.name);
+          setShowPrBanner(true);
+          setTimeout(() => setShowPrBanner(false), 3500);
+        } catch (err) {
+          console.error("[saveSet] background task failed:", err);
         }
-      }
-
-      // Final update with real ID and PR status
-      setExercises((prev) =>
-        prev.map((e) => {
-          if (e.weId !== weId) return e;
-          const sets = [...e.sets];
-          const existing = sets[idx];
-          if (!existing) return e;
-          sets[idx] = {
-            ...existing,
-            id: savedSetId,
-            isSaved: true,
-            isPr,
-          };
-          return { ...e, sets };
-        })
-      );
-
-      if (isPr) {
-        setPrExerciseName(exercise.name);
-        setShowPrBanner(true);
-        setTimeout(() => setShowPrBanner(false), 3500);
-      }
+      })();
     },
-    [activeWorkout, exercises, supabase]
+    [activeWorkout, supabase, user]
   );
 
   const deleteSet = useCallback(

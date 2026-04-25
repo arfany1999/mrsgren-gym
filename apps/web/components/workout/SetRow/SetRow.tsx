@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { SetTypeSelector } from "@/components/workout/SetTypeSelector/SetTypeSelector";
 import type { ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
@@ -29,14 +29,17 @@ function prevLabel(prevSet: { reps: string; weightKg: string } | undefined, type
   return "—";
 }
 
-export function SetRow({ set, index, weId, prevSet, measurementType, onUpdateField, onSave, onDelete }: SetRowProps) {
+function SetRowImpl({ set, index, weId, prevSet, measurementType, onUpdateField, onSave, onDelete }: SetRowProps) {
   const ref1 = useRef<HTMLInputElement>(null);
   const ref2 = useRef<HTMLInputElement>(null);
 
   const isCardio = measurementType === "cardio";
   const isTimed = measurementType === "timed";
-  const isWeightReps = measurementType === "weight_reps";
   const isRepsOnly = measurementType === "bodyweight_reps" || measurementType === "reps_only";
+  // Default to weight_reps semantics for any unexpected value so the user
+  // always sees KG + REPS inputs (last-resort safety net for legacy DB rows
+  // with a `null` or typo'd measurement_type).
+  const isWeightReps = !isCardio && !isTimed && !isRepsOnly;
 
   const canSave =
     isWeightReps ? (set.reps !== "" || set.weightKg !== "") :
@@ -155,3 +158,30 @@ export function SetRow({ set, index, weId, prevSet, measurementType, onUpdateFie
     </div>
   );
 }
+
+// Memoize with a custom comparator: keystrokes in *other* SetRows on the
+// same exercise re-render the parent ExerciseBlock and produce fresh
+// inline function refs for `onUpdateField`/`onSave`/`onDelete`. The default
+// shallow compare treats those new refs as a change and rerenders every
+// row. We only care about the data props — function refs are safe to
+// ignore because they always close over the latest context state via the
+// stable callbacks in WorkoutContext.
+export const SetRow = memo(SetRowImpl, (a, b) => {
+  if (a.index !== b.index || a.weId !== b.weId || a.measurementType !== b.measurementType) return false;
+  const sa = a.set, sb = b.set;
+  if (
+    sa.id !== sb.id ||
+    sa.isSaved !== sb.isSaved ||
+    sa.isPr !== sb.isPr ||
+    sa.reps !== sb.reps ||
+    sa.weightKg !== sb.weightKg ||
+    sa.duration !== sb.duration ||
+    sa.distance !== sb.distance ||
+    sa.setType !== sb.setType ||
+    sa.rpe !== sb.rpe
+  ) return false;
+  const pa = a.prevSet, pb = b.prevSet;
+  if (!pa !== !pb) return false;
+  if (pa && pb && (pa.reps !== pb.reps || pa.weightKg !== pb.weightKg)) return false;
+  return true;
+});
