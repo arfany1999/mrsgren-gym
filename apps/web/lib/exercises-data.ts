@@ -32,6 +32,7 @@ export interface ExerciseDef {
 export const MUSCLE_GROUPS: { id: string; label: string; emoji: string }[] = [
   { id: "chest",      label: "Chest",      emoji: "🫀" },
   { id: "back",       label: "Back",       emoji: "🔙" },
+  { id: "shoulders",  label: "Shoulders",  emoji: "🏋️" },
   { id: "triceps",    label: "Triceps",    emoji: "🦾" },
   { id: "biceps",     label: "Biceps",     emoji: "💪" },
   { id: "forearms",   label: "Forearms",   emoji: "🖐️" },
@@ -93,6 +94,41 @@ export const EXERCISES: ExerciseDef[] = [
   { name: "High Cable Row",                     muscle: "back",     type: "weight_reps",    equipment: "cable"      },
   // — Bodyweight ————————————————————————————————————————
   { name: "Pull-Up",                            muscle: "back",     type: "bodyweight_reps", equipment: "bodyweight" },
+
+  // ╔══════════════════════════════════════════════════╗
+  // ║  SHOULDERS                                       ║
+  // ╚══════════════════════════════════════════════════╝
+  // — Barbell ——————————————————————————————————————————
+  { name: "Overhead Barbell Press",             muscle: "shoulders", type: "weight_reps",    equipment: "barbell"    },
+  { name: "Seated Barbell Shoulder Press",      muscle: "shoulders", type: "weight_reps",    equipment: "barbell"    },
+  { name: "Barbell Push Press",                 muscle: "shoulders", type: "weight_reps",    equipment: "barbell"    },
+  { name: "Behind-the-Neck Press",              muscle: "shoulders", type: "weight_reps",    equipment: "barbell"    },
+  { name: "Barbell Upright Row",                muscle: "shoulders", type: "weight_reps",    equipment: "barbell"    },
+  { name: "Landmine Press",                     muscle: "shoulders", type: "weight_reps",    equipment: "barbell"    },
+  // — Dumbbell —————————————————————————————————————————
+  { name: "Seated Dumbbell Shoulder Press",     muscle: "shoulders", type: "weight_reps",    equipment: "dumbbell"   },
+  { name: "Standing Dumbbell Shoulder Press",   muscle: "shoulders", type: "weight_reps",    equipment: "dumbbell"   },
+  { name: "Arnold Press",                       muscle: "shoulders", type: "weight_reps",    equipment: "dumbbell"   },
+  { name: "Dumbbell Lateral Raise",             muscle: "shoulders", type: "weight_reps",    equipment: "dumbbell"   },
+  { name: "Dumbbell Front Raise",               muscle: "shoulders", type: "weight_reps",    equipment: "dumbbell"   },
+  { name: "Dumbbell Rear Delt Fly",             muscle: "shoulders", type: "weight_reps",    equipment: "dumbbell"   },
+  { name: "Dumbbell Upright Row",               muscle: "shoulders", type: "weight_reps",    equipment: "dumbbell"   },
+  { name: "Dumbbell Shrug",                     muscle: "shoulders", type: "weight_reps",    equipment: "dumbbell"   },
+  // — Cable ————————————————————————————————————————————
+  { name: "Cable Lateral Raise",                muscle: "shoulders", type: "weight_reps",    equipment: "cable"      },
+  { name: "Cable Front Raise",                  muscle: "shoulders", type: "weight_reps",    equipment: "cable"      },
+  { name: "Cable Reverse Fly",                  muscle: "shoulders", type: "weight_reps",    equipment: "cable"      },
+  { name: "Cable Face Pull (Shoulders)",        muscle: "shoulders", type: "weight_reps",    equipment: "cable"      },
+  { name: "Cable Upright Row",                  muscle: "shoulders", type: "weight_reps",    equipment: "cable"      },
+  // — Machine ——————————————————————————————————————————
+  { name: "Machine Shoulder Press",             muscle: "shoulders", type: "weight_reps",    equipment: "machine"    },
+  { name: "Machine Lateral Raise",              muscle: "shoulders", type: "weight_reps",    equipment: "machine"    },
+  { name: "Reverse Pec Deck (Rear Delts)",      muscle: "shoulders", type: "weight_reps",    equipment: "machine"    },
+  { name: "Smith Machine Shoulder Press",       muscle: "shoulders", type: "weight_reps",    equipment: "machine"    },
+  // — Bodyweight ————————————————————————————————————————
+  { name: "Pike Push-Up",                       muscle: "shoulders", type: "bodyweight_reps", equipment: "bodyweight" },
+  { name: "Handstand Push-Up",                  muscle: "shoulders", type: "bodyweight_reps", equipment: "bodyweight" },
+  { name: "Wall Walk",                          muscle: "shoulders", type: "bodyweight_reps", equipment: "bodyweight" },
 
   // ╔══════════════════════════════════════════════════╗
   // ║  TRICEPS                                         ║
@@ -271,6 +307,32 @@ export const EXERCISES: ExerciseDef[] = [
 /** Look up measurement type for an exercise name (fallback = weight_reps) */
 export function getMeasurementType(name: string): MeasurementType {
   return EXERCISES.find(e => e.name.toLowerCase() === name.toLowerCase())?.type ?? "weight_reps";
+}
+
+const VALID_MEASUREMENT_TYPES: ReadonlySet<MeasurementType> = new Set([
+  "weight_reps",
+  "bodyweight_reps",
+  "timed",
+  "cardio",
+  "reps_only",
+]);
+
+/**
+ * Resolve the measurement type for an exercise, given a raw value possibly
+ * pulled from the DB and the exercise name. Returns the raw value only if it
+ * is a known MeasurementType; otherwise falls back to a name-based lookup
+ * (and finally to `weight_reps`).
+ *
+ * This is the single source of truth used everywhere we materialise an
+ * exercise into the active workout / routine editor, so historical rows that
+ * stored `null`, `""`, or a typo (e.g. "weight_rep") still render the right
+ * inputs (KG + REPS) instead of an empty SetRow with no fields.
+ */
+export function resolveMeasurementType(raw: unknown, name: string): MeasurementType {
+  if (typeof raw === "string" && VALID_MEASUREMENT_TYPES.has(raw as MeasurementType)) {
+    return raw as MeasurementType;
+  }
+  return getMeasurementType(name);
 }
 
 /**
