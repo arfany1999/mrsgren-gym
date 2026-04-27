@@ -85,6 +85,9 @@ export default function EditRoutinePage() {
   // Live mirror of `exercises` so handleSave can wait on the latest state
   // without being trapped by a stale closure.
   const exercisesRef = useRef<DraftExercise[]>([]);
+  // Pending background upserts. handleSave awaits these so a save tapped
+  // mid-add never persists a row with an empty exercise_id.
+  const pendingPromisesRef = useRef<Set<Promise<void>>>(new Set());
 
   // ── Exercise lists ───────────────────────────────────────────
   // O(1) lookup for "is this exercise already in the routine?" so the
@@ -222,8 +225,10 @@ export default function EditRoutinePage() {
       last?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
-    // Background: resolve exerciseId, patch local state when ready.
-    void (async () => {
+    // Background: resolve exerciseId, patch local state when ready. We
+    // also stash the promise in pendingPromisesRef so handleSave can
+    // explicitly await it instead of polling exercisesRef.
+    const promise = (async () => {
       try {
         let exerciseId = "";
         const { data: existing } = await supabase
@@ -272,6 +277,8 @@ export default function EditRoutinePage() {
         });
       }
     })();
+    pendingPromisesRef.current.add(promise);
+    promise.finally(() => pendingPromisesRef.current.delete(promise));
   }
 
   // ── Exercise / set mutations ─────────────────────────────────
@@ -307,21 +314,18 @@ export default function EditRoutinePage() {
     setSaving(true);
     setError("");
     try {
-      // If a background upsert from a recent optimistic add is still in
-      // flight, wait for it. We don't want to save routine_exercises rows
-      // with an empty exercise_id. Polls the live ref so we see fresh
-      // state, not the stale closure value.
-      const start = Date.now();
-      while (
-        exercisesRef.current.some(e => !e.exerciseId) &&
-        Date.now() - start < 4000
-      ) {
-        await new Promise(r => setTimeout(r, 100));
+      // Wait on any background upserts kicked off by recent optimistic
+      // adds. Awaiting the actual promises (rather than polling) means
+      // save just queues behind the lookup — no false "still in
+      // progress" warning on a slow network.
+      if (pendingPromisesRef.current.size > 0) {
+        await Promise.all(Array.from(pendingPromisesRef.current));
       }
-      if (exercisesRef.current.some(e => !e.exerciseId)) {
-        throw new Error("Adding an exercise is still in progress — try again in a moment.");
-      }
-      const latestExercises = exercisesRef.current;
+      // After awaiting, drop any rows that still failed to resolve an
+      // exerciseId (the background insert rolled back). We persist what
+      // we can rather than blocking the save.
+      const latestExercises = exercisesRef.current.filter(e => e.exerciseId);
+      const dropped = exercisesRef.current.length - latestExercises.length;
 
       const { error: nameErr } = await supabase.from("routines").update({ name: title.trim() }).eq("id", id);
       if (nameErr) throw new Error(nameErr.message);
@@ -346,6 +350,17 @@ export default function EditRoutinePage() {
         });
         const { error: insertErr } = await supabase.from("routine_exercises").insert(rows);
         if (insertErr) throw new Error(insertErr.message);
+      }
+
+      // If a background insert into `exercises` failed for some rows
+      // (RLS, duplicate, offline), surface a soft heads-up instead of
+      // bouncing the user — the rest of the routine still saved.
+      if (dropped > 0) {
+        setError(
+          `Saved — but ${dropped} exercise${dropped === 1 ? "" : "s"} could not be added to the library and ${dropped === 1 ? "was" : "were"} skipped. Try adding ${dropped === 1 ? "it" : "them"} again.`,
+        );
+        setSaving(false);
+        return;
       }
 
       router.replace("/dashboard");

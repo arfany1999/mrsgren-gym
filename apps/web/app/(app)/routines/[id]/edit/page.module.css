@@ -16,31 +16,39 @@
   gap: 12px;
 }
 
-/* ── Save button ─────────────────────────────────────────────── */
+/* ── Save button (gold gradient + shimmer) ───────────────────── */
 .saveBtn {
-  background: rgba(196, 118, 74, 0.9);
-  border: 1px solid rgba(196, 118, 74, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 3px 14px rgba(196, 118, 74, 0.26), inset 0 1px 0 rgba(255,255,255,0.18);
-  border-radius: 12px;
+  background: linear-gradient(135deg, #8B7335, #D4A843, #E8C56D);
+  border: none;
+  border-radius: 10px;
   padding: 8px 18px;
-  font-size: 14px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 11px;
   font-weight: 800;
-  color: #fff;
+  letter-spacing: 3px;
+  color: #05050A;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
+.saveBtn:active { transform: scale(0.97); }
 .saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Title ───────────────────────────────────────────────────── */
 .titleWrap {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-shadow);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.titleWrap::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 12%; right: 12%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.45), transparent);
+  pointer-events: none;
 }
 
 .titleLabel {
@@ -87,8 +95,8 @@
 .emptyIcon {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.06);
-  border: 1.5px solid rgba(255,255,255,0.7);
+  background: var(--bg-elevated);
+  border: 1px solid rgba(212, 168, 67, 0.25);
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 4px;
 }
@@ -107,13 +115,19 @@
 
 /* ── Exercise block ──────────────────────────────────────────── */
 .exBlock {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-shadow);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
+  position: relative;
+  box-shadow: var(--card-shadow);
+}
+.exBlock::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 14%; right: 14%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.35), transparent);
+  pointer-events: none;
 }
 
 .exHeader {
@@ -125,8 +139,8 @@
 
 .exIconCircle {
   width: 36px; height: 36px; border-radius: 50%;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.7);
+  background: var(--bg-elevated);
+  border: 1px solid rgba(212, 168, 67, 0.22);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -213,12 +227,13 @@
 .setNumBadge {
   width: 28px; height: 28px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 0.5px solid rgba(255,255,255,0.07);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 12px;
   font-weight: 700;
-  color: var(--text-tertiary);
+  color: var(--accent);
   flex-shrink: 0;
 }
 
@@ -261,42 +276,45 @@
   gap: 6px;
   width: 100%;
   padding: 13px 14px;
-  background: rgba(255,255,255,0.25);
+  background: var(--bg-elevated);
   border: none;
-  border-top: 0.5px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(212, 168, 67, 0.15);
   border-radius: 0 0 16px 16px;
   color: var(--accent);
-  font-size: 13px;
-  font-weight: 800;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
   cursor: pointer;
   transition: background 120ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-.addSetBtn:hover  { background: rgba(196, 118, 74, 0.10); }
-.addSetBtn:active { background: rgba(196, 118, 74, 0.15); }
+.addSetBtn:hover  { background: var(--bg-overlay); }
+.addSetBtn:active { background: var(--bg-overlay); }
 
 /* ── Add Exercise button ─────────────────────────────────────── */
 .addExBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1.5px dashed rgba(196, 118, 74, 0.35);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-shadow);
-  border-radius: 18px;
+  background: var(--bg-surface);
+  border: 1.5px dashed rgba(212, 168, 67, 0.35);
+  border-radius: 16px;
   color: var(--accent);
-  font-size: 16px;
-  font-weight: 800;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-.addExBtn:hover  { background: rgba(255,255,255,0.10); border-color: rgba(196, 118, 74, 0.6); }
+.addExBtn:hover  { background: var(--bg-elevated); border-color: rgba(212, 168, 67, 0.6); }
 .addExBtn:active { transform: scale(0.98); }
 
 /* ── Bottom sheet backdrop ───────────────────────────────────── */
@@ -351,7 +369,7 @@
 /* Handle */
 .sheetHandle {
   width: 36px; height: 4px;
-  background: rgba(26, 21, 16, 0.15);
+  background: var(--border-color);
   border-radius: 2px;
   margin: 10px auto 0;
   flex-shrink: 0;
@@ -373,8 +391,8 @@
 }
 
 .sheetClose {
-  background: rgba(26, 21, 16, 0.06);
-  border: 1px solid rgba(26, 21, 16, 0.1);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   border-radius: 50%;
   width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
@@ -388,8 +406,8 @@
   align-items: center;
   gap: 8px;
   margin: 0 14px 12px;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(26, 21, 16, 0.1);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
   padding: 11px 14px;
   flex-shrink: 0;
@@ -423,8 +441,8 @@
   justify-content: center;
   gap: 3px;
   padding: 11px 6px;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(26, 21, 16, 0.08);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   border-radius: 14px;
   cursor: pointer;
@@ -513,7 +531,7 @@
   transition: background 100ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-.sheetItem:active { background: rgba(26, 21, 16, 0.04); }
+.sheetItem:active { background: var(--bg-overlay); }
 
 .sheetItemAdded {
   opacity: 0.4;
@@ -558,7 +576,7 @@
   border-radius: 20px;
   letter-spacing: 0.2px;
   text-transform: uppercase;
-  background: rgba(26, 21, 16, 0.06);
+  background: var(--bg-elevated);
   color: var(--text-tertiary);
 }
 .sheetItemTypePill[data-type="cardio"] {
