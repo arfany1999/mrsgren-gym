@@ -18,7 +18,7 @@
   width: 320px;
   height: 320px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(74,110,245,0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(212, 168, 67, 0.10) 0%, transparent 70%);
   pointer-events: none;
 }
 .blob2 {
@@ -28,7 +28,7 @@
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(221,141,10,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(232, 197, 109, 0.06) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -36,14 +36,21 @@
 .card {
   width: 100%;
   max-width: 420px;
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
-  border-radius: 28px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
   padding: 28px 24px 32px;
   animation: cardIn 0.4s cubic-bezier(0.34,1.3,0.64,1) both;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 12%; right: 12%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.45), transparent);
+  pointer-events: none;
 }
 
 @keyframes cardIn {
@@ -139,18 +146,22 @@
 .numInput {
   flex: 1;
   height: 52px;
-  background: rgba(255,255,255,0.6);
-  border: 1.5px solid rgba(255,255,255,0.8);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.9);
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
   text-align: center;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
-.numInput:focus { border-color: var(--accent); }
+.numInput:focus {
+  border-color: var(--accent);
+  background: var(--bg-overlay);
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.12);
+}
 
 .unit {
   font-size: 14px;
@@ -162,7 +173,7 @@
 /* ── Segmented control ───────────────────────────────────────── */
 .segmented {
   display: flex;
-  background: rgba(26,21,16,0.06);
+  background: var(--bg-elevated);
   border-radius: 12px;
   padding: 4px;
   gap: 4px;
@@ -180,15 +191,15 @@
   transition: all 0.18s ease;
 }
 .segActive {
-  background: rgba(255,255,255,0.85);
-  color: var(--text-primary);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--accent);
+  color: var(--bg-primary);
+  box-shadow: 0 2px 10px rgba(212, 168, 67, 0.3);
 }
 
 /* ── Unit toggle ─────────────────────────────────────────────── */
 .unitToggle {
   display: flex;
-  background: rgba(26,21,16,0.06);
+  background: var(--bg-elevated);
   border-radius: 10px;
   padding: 3px;
   gap: 2px;
@@ -204,9 +215,9 @@
   cursor: pointer;
 }
 .unitBtnActive {
-  background: rgba(255,255,255,0.85);
-  color: var(--accent);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  background: var(--accent);
+  color: var(--bg-primary);
+  box-shadow: 0 1px 6px rgba(212, 168, 67, 0.3);
 }
 
 /* ── Activity cards ──────────────────────────────────────────── */
@@ -220,19 +231,18 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: rgba(255,255,255,0.45);
-  border: 1.5px solid rgba(255,255,255,0.7);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   cursor: pointer;
   text-align: left;
-  transition: all 0.18s ease;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
 }
 .activityCard:active { transform: scale(0.98); }
 .activityCardActive {
-  background: rgba(74,110,245,0.1);
-  border-color: rgba(74,110,245,0.4);
-  box-shadow: 0 2px 12px rgba(74,110,245,0.15);
+  background: rgba(212, 168, 67, 0.10);
+  border-color: rgba(212, 168, 67, 0.45);
+  box-shadow: 0 2px 14px rgba(212, 168, 67, 0.18);
 }
 .activityCardInner {
   display: flex;
@@ -258,16 +268,19 @@
 .backBtn {
   height: 52px;
   padding: 0 20px;
-  background: rgba(255,255,255,0.42);
-  border: 1px solid rgba(255,255,255,0.72);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px;
-  font-size: 15px;
-  font-weight: 800;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
   color: var(--text-secondary);
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
+.backBtn:hover { background: var(--bg-overlay); color: var(--text-primary); }
 
 .nextBtn {
   flex: 1;
@@ -276,15 +289,32 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  box-shadow: 0 4px 18px rgba(212, 168, 67, 0.32);
-  border-radius: 16px;
-  font-size: 16px;
+  background: linear-gradient(135deg, #8B7335, #D4A843, #E8C56D);
+  border: none;
+  border-radius: 14px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 12px;
   font-weight: 800;
-  color: #fff;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #05050A;
   cursor: pointer;
-  transition: all 0.18s ease;
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.18s ease, transform 0.15s ease;
+}
+.nextBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: nextBtnShimmer 3s ease infinite;
+  pointer-events: none;
+}
+@keyframes nextBtnShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 .nextBtn:disabled {
   opacity: 0.4;
