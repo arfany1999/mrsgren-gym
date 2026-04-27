@@ -8,6 +8,7 @@ import { useWorkout } from "@/contexts/WorkoutContext";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { parseMuscleGroup } from "@/lib/formatters";
 import { getTrophyProgress } from "@/lib/trophies";
+import { getStreakStats } from "@/lib/streakStats";
 import { MuscleHero } from "@/components/dashboard/MuscleHero/MuscleHero";
 import { TrophyRing } from "@/components/dashboard/TrophyRing/TrophyRing";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
@@ -179,6 +180,8 @@ export default function DashboardPage() {
 
   async function loadGreetingStats() {
     try {
+      // Fetch the workout-day list once; we need it for the week-dot strip
+      // and as a local fallback if the RPC is unavailable.
       const { data } = await supabase
         .from("workouts")
         .select("started_at")
@@ -186,26 +189,21 @@ export default function DashboardPage() {
         .order("started_at", { ascending: false });
 
       const rows = (data ?? []) as Array<{ started_at: string }>;
+      const dates = rows.map((r) => r.started_at).filter(Boolean);
+
+      // Single source of truth for workoutDays + currentStreak: the
+      // get_user_streak_stats RPC. Falls back to the local list above so
+      // the page still renders if the migration is not yet applied.
+      const stats = await getStreakStats(supabase, () => Promise.resolve(dates));
+      setWorkoutDays(stats.workoutDays);
+      setCurrentStreak(stats.currentStreak);
+
+      // Last 7 days (Sun..Sat relative to today). Local-only because the
+      // visual dot strip needs per-day flags that aren't in the RPC.
       const dayKeys = new Set<string>();
       rows.forEach((r) => dayKeys.add(dayKey(new Date(r.started_at))));
-      setWorkoutDays(dayKeys.size);
-
-      // Current streak: walk back from today
       const msPerDay = 86400000;
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      const yesterday = new Date(today.getTime() - msPerDay);
-      let streak = 0;
-      if (dayKeys.has(dayKey(today)) || dayKeys.has(dayKey(yesterday))) {
-        const startRef = dayKeys.has(dayKey(today)) ? today : yesterday;
-        const cursor = new Date(startRef);
-        while (dayKeys.has(dayKey(cursor))) {
-          streak++;
-          cursor.setTime(cursor.getTime() - msPerDay);
-        }
-      }
-      setCurrentStreak(streak);
-
-      // Last 7 days (Sun..Sat relative to today)
       const todayDow = today.getDay();
       const weekStart = new Date(today.getTime() - todayDow * msPerDay);
       const dots = Array.from({ length: 7 }, (_, i) => {
