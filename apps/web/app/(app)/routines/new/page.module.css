@@ -13,18 +13,18 @@
   to   { opacity: 1; transform: none; }
 }
 
-/* ── Animated background blobs ───────────────────────────────── */
+/* ── Ambient background glows (proto palette) ─────────────────── */
 .blob1 {
   position: absolute; top: -80px; right: -60px;
   width: 320px; height: 320px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(196,118,74,0.18) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(212, 168, 67, 0.10) 0%, transparent 65%);
   pointer-events: none;
   animation: blobFloat1 8s ease-in-out infinite;
 }
 .blob2 {
   position: absolute; bottom: 60px; left: -80px;
   width: 280px; height: 280px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(232, 197, 109, 0.06) 0%, transparent 65%);
   pointer-events: none;
   animation: blobFloat2 10s ease-in-out infinite;
 }
@@ -60,16 +60,17 @@
 .heroRing {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(196,118,74,0.22), rgba(168,85,247,0.16));
-  border: 2px solid rgba(196,118,74,0.3);
-  box-shadow: 0 0 32px rgba(196,118,74,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
+  background: radial-gradient(circle at 35% 30%, rgba(212, 168, 67, 0.18), rgba(139, 115, 53, 0.12));
+  border: 1px solid rgba(212, 168, 67, 0.35);
+  box-shadow: 0 0 32px rgba(212, 168, 67, 0.18), inset 0 1px 0 rgba(255,255,255,0.05);
   display: flex; align-items: center; justify-content: center;
   font-size: 32px;
+  filter: drop-shadow(0 0 8px rgba(212, 168, 67, 0.25));
   animation: ringPulse 2.5s ease-in-out infinite;
 }
 @keyframes ringPulse {
-  0%,100% { box-shadow: 0 0 24px rgba(196,118,74,0.18); }
-  50%     { box-shadow: 0 0 44px rgba(196,118,74,0.38); }
+  0%,100% { box-shadow: 0 0 24px rgba(212, 168, 67, 0.18); }
+  50%     { box-shadow: 0 0 44px rgba(212, 168, 67, 0.38); }
 }
 .heroTitle {
   font-size: 26px;
@@ -87,13 +88,19 @@
 
 /* ── Name card ───────────────────────────────────────────────── */
 .nameCard {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.nameCard::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 12%; right: 12%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.45), transparent);
+  pointer-events: none;
 }
 .nameLabel {
   font-size: 11px;
@@ -136,43 +143,60 @@
   flex-wrap: wrap;
 }
 .tip {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.65);
-  backdrop-filter: blur(10px);
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
-  padding: 6px 12px;
+  padding: 7px 14px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
 }
-.tip:hover, .tip:active { background: rgba(255,255,255,0.10); }
+.tip:hover, .tip:active {
+  background: var(--bg-overlay);
+  border-color: rgba(212, 168, 67, 0.35);
+  color: var(--text-primary);
+}
 .tipIcon { font-size: 14px; }
 
-/* ── Create button ───────────────────────────────────────────── */
+/* ── Create button (GYM123 gold gradient + shimmer sweep) ─────── */
 .createCard {
-  background: rgba(196,118,74,0.9);
-  border: 1px solid rgba(196,118,74,0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 6px 28px rgba(196,118,74,0.32), inset 0 1px 0 rgba(255,255,255,0.22);
-  border-radius: 18px;
-  height: 58px;
+  background: linear-gradient(135deg, #8B7335 0%, #D4A843 50%, #E8C56D 100%);
+  border: none;
+  border-radius: 14px;
+  height: 56px;
   display: flex; align-items: center; justify-content: center;
   gap: 8px;
-  font-size: 17px; font-weight: 800; color: #fff;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #05050A;
   cursor: pointer;
-  transition: all 0.18s ease;
-  letter-spacing: -0.01em;
-  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, opacity 0.15s ease;
   width: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
-.createCard:hover { box-shadow: 0 8px 32px rgba(196,118,74,0.4); }
+.createCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: createShimmer 3s ease infinite;
+  pointer-events: none;
+}
+@keyframes createShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 .createCard:active { transform: scale(0.97); }
-.createCard:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.createCard:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 /* ── TopBar create button ────────────────────────────────────── */
 .createBtn {

@@ -39,7 +39,10 @@ interface DraftExercise {
 function emptySet(type: MeasurementType): DraftSet {
   switch (type) {
     case "timed":   return { reps: "", weight: "", duration: "30", distance: "" };
-    case "cardio":  return { reps: "", weight: "", duration: "30", distance: "5" };
+    // Cardio is time-only now — distance is no longer tracked. We still
+    // store the field as "" so the persisted shape stays compatible with
+    // any older routine_exercises rows that have a distance set.
+    case "cardio":  return { reps: "", weight: "", duration: "20", distance: "" };
     default:        return { reps: "12", weight: "", duration: "", distance: "" };
   }
 }
@@ -55,7 +58,7 @@ const COL_LABELS: Record<MeasurementType, string[]> = {
   bodyweight_reps: ["SET", "REPS"],
   reps_only:       ["SET", "REPS"],
   timed:           ["SET", "SEC"],
-  cardio:          ["MIN", "KM"],
+  cardio:          ["MIN"],
 };
 
 export default function EditRoutinePage() {
@@ -471,24 +474,15 @@ export default function EditRoutinePage() {
                       />
                     )}
 
-                    {/* DURATION + DISTANCE — cardio */}
+                    {/* DURATION (minutes) — cardio (time-only) */}
                     {isCardio && (
-                      <>
-                        <input
-                          className={styles.setInput}
-                          type="number" inputMode="numeric" min="1"
-                          value={s.duration}
-                          onChange={e => updateSet(exIdx, setIdx, "duration", e.target.value)}
-                          placeholder="30"
-                        />
-                        <input
-                          className={styles.setInput}
-                          type="number" inputMode="decimal" min="0" step="0.1"
-                          value={s.distance}
-                          onChange={e => updateSet(exIdx, setIdx, "distance", e.target.value)}
-                          placeholder="5"
-                        />
-                      </>
+                      <input
+                        className={styles.setInput}
+                        type="number" inputMode="numeric" min="1"
+                        value={s.duration}
+                        onChange={e => updateSet(exIdx, setIdx, "duration", e.target.value)}
+                        placeholder="20"
+                      />
                     )}
 
                     {/* Remove set */}

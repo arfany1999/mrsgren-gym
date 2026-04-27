@@ -153,7 +153,7 @@ export function ExerciseBlock({
             {isWeightReps && <><span>KG</span><span>REPS</span></>}
             {isRepsOnly  && <span>REPS</span>}
             {isTimed     && <span>SEC</span>}
-            {isCardio    && <><span>MIN</span><span>KM</span></>}
+            {isCardio    && <span>MIN</span>}
             <span />
           </div>
         );

@@ -22,9 +22,9 @@
   grid-template-columns: 40px 52px 1fr 48px;
 }
 
-/* cardio → MIN | KM | ✓ (no SET/PREV columns) */
+/* cardio → MIN | ✓ (time-only, no SET/PREV/KM columns) */
 .row[data-type="cardio"] {
-  grid-template-columns: 1fr 1fr 48px;
+  grid-template-columns: 1fr 48px;
 }
 
 .saved {
