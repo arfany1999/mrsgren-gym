@@ -15,6 +15,7 @@ import {
   type MeasurementType,
   type ExerciseDef,
 } from "@/lib/exercises-data";
+import { haptic } from "@/lib/haptics";
 import styles from "./page.module.css";
 
 // ── Draft types ───────────────────────────────────────────────
@@ -195,6 +196,7 @@ export default function EditRoutinePage() {
   // sets / weights / reps immediately; if they hit Save before the
   // round-trip finishes, handleSave waits via flushPendingExercises().
   function handleAdd(def: typeof EXERCISES[number]) {
+    haptic("light");
     const lowerName = def.name.toLowerCase();
     if (addedNames.has(lowerName)) {
       closeSheet();
@@ -287,6 +289,7 @@ export default function EditRoutinePage() {
   }
 
   function addSet(exIdx: number) {
+    haptic("light");
     setExercises(prev => prev.map((ex, i) => {
       if (i !== exIdx) return ex;
       const last = ex.sets[ex.sets.length - 1] ?? emptySet(ex.measurementType);
@@ -310,6 +313,7 @@ export default function EditRoutinePage() {
 
   // ── Save ─────────────────────────────────────────────────────
   async function handleSave() {
+    haptic("medium");
     if (!title.trim()) { setError("Routine name is required"); return; }
     setSaving(true);
     setError("");
