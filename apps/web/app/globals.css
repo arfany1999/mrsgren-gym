@@ -253,7 +253,7 @@ html[data-theme="dark"] select {
 html[data-theme="dark"] input:focus,
 html[data-theme="dark"] textarea:focus {
   background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 0 3px rgba(252, 211, 77, 0.18);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 /* Hide number spinners */

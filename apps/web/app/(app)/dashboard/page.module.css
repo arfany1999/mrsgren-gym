@@ -11,7 +11,7 @@
   padding: 16px 18px 14px;
   border-radius: 22px;
   background: linear-gradient(135deg,
-              rgba(74, 110, 245, 0.12) 0%,
+              rgba(212, 168, 67, 0.12) 0%,
               rgba(168, 85, 247, 0.08) 55%,
               rgba(48, 209, 88, 0.10) 100%);
   border: 1px solid rgba(255, 255, 255, 0.7);
@@ -86,9 +86,9 @@
 :global(html[data-theme="dark"]) .greetName { color: var(--text-primary); }
 
 :global(html[data-theme="dark"]) .streakChip {
-  background: rgba(252, 211, 77, 0.14);
-  border-color: rgba(252, 211, 77, 0.45);
-  box-shadow: 0 4px 14px rgba(252, 211, 77, 0.18);
+  background: rgba(212, 168, 67, 0.14);
+  border-color: rgba(212, 168, 67, 0.45);
+  box-shadow: 0 4px 14px rgba(212, 168, 67, 0.18);
 }
 :global(html[data-theme="dark"]) .streakNum,
 :global(html[data-theme="dark"]) .streakLbl { color: var(--accent); }
@@ -104,13 +104,13 @@
 }
 
 :global(html[data-theme="dark"]) .weekCell.weekToday {
-  background: rgba(252, 211, 77, 0.10);
-  border-color: rgba(252, 211, 77, 0.45);
+  background: rgba(212, 168, 67, 0.10);
+  border-color: rgba(212, 168, 67, 0.45);
 }
 :global(html[data-theme="dark"]) .weekFilled .weekDot {
   background: var(--accent);
   border-color: var(--accent);
-  box-shadow: 0 0 6px rgba(252, 211, 77, 0.55);
+  box-shadow: 0 0 6px rgba(212, 168, 67, 0.55);
 }
 
 /* Routine cards */
@@ -145,7 +145,7 @@
 :global(html[data-theme="dark"]) .fab {
   background: var(--accent) !important;
   color: #000 !important;
-  box-shadow: 0 6px 20px rgba(252, 211, 77, 0.35) !important;
+  box-shadow: 0 6px 20px rgba(212, 168, 67, 0.35) !important;
 }
 :global(html[data-theme="dark"]) .fab svg path {
   fill: #000 !important;
@@ -312,7 +312,7 @@
   border-radius: 50%;
   background: var(--accent);
   border: none;
-  box-shadow: 0 4px 20px rgba(74, 110, 245, 0.45), 0 2px 6px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 20px rgba(212, 168, 67, 0.45), 0 2px 6px rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -321,7 +321,7 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
-.fab:active  { transform: scale(0.91); box-shadow: 0 2px 10px rgba(74, 110, 245, 0.28); }
+.fab:active  { transform: scale(0.91); box-shadow: 0 2px 10px rgba(212, 168, 67, 0.28); }
 .fab:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* ── Loading / empty states ─────────────────────────────────── */
