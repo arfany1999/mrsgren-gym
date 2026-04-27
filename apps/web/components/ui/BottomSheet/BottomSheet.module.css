@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(26, 21, 16, 0.3);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 200;
@@ -14,13 +14,13 @@
 .sheet {
   width: 100%;
   max-width: var(--app-max-width);
-  background: rgba(243, 237, 225, 0.94);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.82);
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--border-color);
   border-bottom: none;
   border-radius: 24px 24px 0 0;
-  box-shadow: 0 -8px 40px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9);
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -32,7 +32,7 @@
   width: 36px;
   height: 4px;
   border-radius: var(--radius-full);
-  background: rgba(26, 21, 16, 0.15);
+  background: var(--text-disabled);
   margin: 10px auto 4px;
   flex-shrink: 0;
 }
@@ -50,11 +50,12 @@
   font-size: var(--text-md);
   font-weight: 800;
   color: var(--text-primary);
+  font-family: var(--font-sans), -apple-system, sans-serif;
 }
 
 .closeBtn {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
