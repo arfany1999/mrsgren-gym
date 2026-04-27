@@ -8,7 +8,7 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/Button/Button";
 import type { Workout, SetType } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
-import { computeStreakStatsLocal } from "@/lib/streakStats";
+import { getStreakStats, type StreakStats } from "@/lib/streakStats";
 import styles from "./page.module.css";
 
 const LIMIT = 20;
@@ -52,7 +52,19 @@ export default function WorkoutsPage() {
     () => workouts.map((w) => w.startedAt).filter(Boolean) as string[],
     [workouts],
   );
-  const streak = useMemo(() => computeStreakStatsLocal(workoutDates), [workoutDates]);
+
+  // Streak comes from the same RPC Home + Profile use, so the chip can't
+  // drift between screens. Falls back to whatever workouts the page has
+  // already paginated in if the RPC is unavailable.
+  const [streak, setStreak] = useState<StreakStats>({ workoutDays: 0, currentStreak: 0, longestStreak: 0 });
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const s = await getStreakStats(supabase, () => Promise.resolve(workoutDates));
+      if (!cancelled) setStreak(s);
+    })();
+    return () => { cancelled = true; };
+  }, [supabase, workoutDates]);
 
   function loadMore() {
     const next = page + 1;
