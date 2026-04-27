@@ -1,0 +1,95 @@
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 14px;
+  margin: 0 16px 16px;
+  border-radius: 16px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.navBtn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+.navBtn:hover { color: var(--text-primary); }
+
+.title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.dow {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-tertiary);
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 0 6px;
+}
+
+.pad {
+  display: block;
+  height: 30px;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 4px 0;
+  height: 30px;
+}
+
+.dayNum {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  background: transparent;
+  border-radius: 6px;
+  padding: 2px 5px;
+  display: inline-block;
+  line-height: 1;
+}
+
+.workoutDay {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.today {
+  color: var(--accent);
+  background: rgba(212, 168, 67, 0.12);
+  font-weight: 700;
+}
+
+.dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 3px;
+}

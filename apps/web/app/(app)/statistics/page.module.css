@@ -58,7 +58,25 @@
 .pr1rmLabel { font-size: 10px; color: var(--text-tertiary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
 .sparkline { display: block; margin-top: 6px; }
 
+/* ── Donut card wrapper ────────────────────────────────────── */
+.donutCard {
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  border-radius: 18px;
+  padding: 18px 16px;
+}
+
 /* ── Dark theme — proto palette ─────────────────────────────── */
+:global(html[data-theme="dark"]) .donutCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--card-shadow);
+}
+
 :global(html[data-theme="dark"]) .statCard,
 :global(html[data-theme="dark"]) .prCard {
   background: var(--bg-surface);

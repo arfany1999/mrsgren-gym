@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
@@ -10,6 +9,7 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { parseMuscleGroup } from "@/lib/formatters";
 import { getTrophyProgress } from "@/lib/trophies";
 import { MuscleHero } from "@/components/dashboard/MuscleHero/MuscleHero";
+import { TrophyRing } from "@/components/dashboard/TrophyRing/TrophyRing";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
 import styles from "./page.module.css";
 
@@ -370,56 +370,24 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Medal strip */}
-        <div className={styles.medalRow}>
-          {trophyProgress.nextTier ? (
-            <>
-              <Image
-                src={trophyProgress.nextTier.image}
-                alt={trophyProgress.nextTier.label}
-                width={48}
-                height={48}
-                className={styles.medalIcon}
-                unoptimized
-                priority
-              />
-              <div className={styles.medalInfo}>
-                <p className={styles.medalLine}>
-                  <b>{trophyProgress.daysRemaining}</b> day{trophyProgress.daysRemaining === 1 ? "" : "s"} to{" "}
-                  <span className={styles.medalTier}>{trophyProgress.nextTier.label}</span>
-                </p>
-                <div className={styles.medalBar}>
-                  <div
-                    className={styles.medalBarFill}
-                    style={{ width: `${trophyProgress.segmentPercent}%` }}
-                  />
-                </div>
-                <p className={styles.medalSub}>
-                  Training Day {workoutDays} · {trophyProgress.daysIntoCurrent} /
-                  {" "}
-                  {trophyProgress.nextTier.threshold - (trophyProgress.currentTier?.threshold ?? 0)}
-                </p>
-              </div>
-            </>
-          ) : trophyProgress.currentTier && (
-            <>
-              <Image
-                src={trophyProgress.currentTier.image}
-                alt={trophyProgress.currentTier.label}
-                width={48}
-                height={48}
-                className={styles.medalIcon}
-                unoptimized
-              />
-              <div className={styles.medalInfo}>
-                <p className={styles.medalLine}>
-                  <span className={styles.medalTier}>{trophyProgress.currentTier.label} Legend</span>
-                </p>
-                <p className={styles.medalSub}>All tiers unlocked 🏆</p>
-              </div>
-            </>
-          )}
-        </div>
+        {/* GYM123 trophy ring badge — big metallic-arc tier progress dial */}
+        {(trophyProgress.nextTier || trophyProgress.currentTier) && (
+          <TrophyRing
+            segCurrent={trophyProgress.daysIntoCurrent}
+            segTotal={
+              trophyProgress.nextTier
+                ? trophyProgress.nextTier.threshold - (trophyProgress.currentTier?.threshold ?? 0)
+                : 60
+            }
+            trophySrc={(trophyProgress.nextTier ?? trophyProgress.currentTier)!.image}
+            tierName={(trophyProgress.nextTier ?? trophyProgress.currentTier)!.label.toUpperCase()}
+            caption={
+              trophyProgress.nextTier
+                ? `DAY ${workoutDays} · ${trophyProgress.daysRemaining} DAYS TO ${trophyProgress.nextTier.label.toUpperCase()}`
+                : `DAY ${workoutDays} · ALL TIERS UNLOCKED`
+            }
+          />
+        )}
 
         {/* Weekly dot strip */}
         <div className={styles.weekRow} role="img" aria-label="Workouts this week">

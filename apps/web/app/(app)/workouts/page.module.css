@@ -3,6 +3,33 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 16px 8px;
+  gap: 10px;
+}
+
+.streakChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(212, 168, 67, 0.18);
+  flex-shrink: 0;
+}
+.streakNum {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.streakLbl {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .pageTitle {
