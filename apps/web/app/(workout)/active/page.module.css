@@ -13,9 +13,10 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--sp-3) var(--sp-4);
-  background: var(--bg-primary);
-  border-bottom: 0.5px solid var(--border-color);
-  box-shadow: 0 1px 0 rgba(26, 21, 16, 0.07);
+  background: color-mix(in srgb, var(--bg-primary) 95%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
   z-index: 20;
   gap: var(--sp-3);
@@ -132,13 +133,15 @@
   gap: 6px;
   margin: 8px auto 0;
   padding: 5px 12px;
-  background: rgba(249, 180, 45, 0.12);
-  border: 1px solid rgba(249, 180, 45, 0.3);
+  background: rgba(212, 168, 67, 0.10);
+  border: 1px solid rgba(212, 168, 67, 0.30);
   border-radius: 999px;
-  color: #b5780b;
-  font-size: 11px;
+  color: var(--accent);
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.2px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 .syncDot {
   width: 7px; height: 7px;
@@ -151,16 +154,16 @@
   50% { opacity: 0.35; }
 }
 
-/* ── Rest Timer Banner ───────────────────────────────────────── */
+/* ── Rest Timer Banner (gold proto) ─────────────────────────── */
 .restBanner {
   position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 10px 14px;
-  background: rgba(34, 168, 90, 0.12);
-  border-bottom: 1px solid rgba(34, 168, 90, 0.2);
-  color: #1a8a4a;
+  background: rgba(212, 168, 67, 0.08);
+  border-bottom: 1px solid rgba(212, 168, 67, 0.22);
+  color: var(--accent);
   flex-shrink: 0;
   animation: slideDown 0.2s ease both;
   overflow: hidden;
@@ -169,7 +172,7 @@
 .restBarFill {
   position: absolute;
   top: 0; left: 0; bottom: 0;
-  background: rgba(34, 168, 90, 0.18);
+  background: rgba(212, 168, 67, 0.15);
   z-index: 0;
   transition: width 0.95s linear;
   pointer-events: none;
@@ -182,11 +185,13 @@
 
 .restTime {
   position: relative; z-index: 1;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   min-width: 48px;
   font-variant-numeric: tabular-nums;
+  color: var(--accent);
 }
 
 .restLabel {
@@ -201,34 +206,38 @@
 
 .restAdjust {
   position: relative; z-index: 1;
-  background: rgba(255,255,255,0.5);
-  border: 1px solid rgba(34, 168, 90, 0.35);
-  border-radius: 10px;
-  color: #1a8a4a;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 5px 8px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(212, 168, 67, 0.30);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 9px;
   cursor: pointer;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
-.restAdjust:active { transform: scale(0.94); background: rgba(255,255,255,0.7); }
+.restAdjust:active { transform: scale(0.94); background: var(--bg-overlay); }
 
 .restSkip {
   position: relative; z-index: 1;
-  background: rgba(255,255,255,0.5);
-  border: 1px solid rgba(34, 168, 90, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 10px;
-  color: #1a8a4a;
-  font-size: 13px;
-  font-weight: 800;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(212, 168, 67, 0.30);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   padding: 6px 12px;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
-.restSkip:active { transform: scale(0.94); background: rgba(255,255,255,0.7); }
+.restSkip:active { transform: scale(0.94); background: var(--bg-overlay); }
 
 /* ── Content ─────────────────────────────────────────────────── */
 .content {
@@ -271,25 +280,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-2);
+  gap: 10px;
   width: calc(100% - 32px);
   margin: var(--sp-3) var(--sp-4) 0;
-  padding: var(--sp-4) var(--sp-5);
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-shadow);
-  border-radius: 18px;
-  font-size: var(--text-base);
-  font-weight: 800;
+  padding: 16px var(--sp-5);
+  background: var(--bg-surface);
+  border: 1.5px dashed rgba(212, 168, 67, 0.35);
+  border-radius: 16px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
   color: var(--accent);
   cursor: pointer;
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .addExerciseBtn:active {
-  background: rgba(255,255,255,0.6);
+  background: var(--bg-elevated);
+  border-color: rgba(212, 168, 67, 0.6);
   transform: scale(0.98);
 }
 
