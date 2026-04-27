@@ -1,0 +1,303 @@
+.card {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  background: #050508;
+  position: relative;
+  overflow: hidden;
+  color: #EAEAF0;
+  font-family: var(--font-display, "Cormorant Garamond"), Georgia, serif;
+}
+
+.topEdge {
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+}
+
+.corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 5.5% 7% 5%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: auto;
+}
+
+.headerEyebrow {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 7px;
+  letter-spacing: 5px;
+  color: #2A2A36;
+  font-weight: 400;
+}
+
+.headerMeta {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 7px;
+  letter-spacing: 3px;
+  color: #2A2A36;
+  text-align: right;
+}
+
+.heroLbl {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 7px;
+  letter-spacing: 9px;
+  color: #2A2A36;
+  text-align: center;
+  margin-bottom: 3%;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 3.5%;
+}
+
+.tierBadgeWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+}
+
+.tierBadgeHalo {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+}
+
+.tierBadgeImg {
+  width: 44px;
+  height: 44px;
+  display: block;
+  object-fit: contain;
+  position: relative;
+}
+
+.heroName {
+  font-family: var(--font-display, "Cormorant Garamond"), Georgia, serif;
+  font-size: clamp(24px, 7vw, 30px);
+  font-weight: 300;
+  letter-spacing: 0.45em;
+  color: #C8C8D0;
+  margin: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.duration {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: clamp(48px, 14vw, 60px);
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: #EAEAF0;
+  line-height: 1;
+  position: relative;
+  text-align: center;
+}
+
+.durationLbl {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 7px;
+  letter-spacing: 8px;
+  color: #404050;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 2%;
+}
+
+.statRow {
+  display: flex;
+  margin: 5% 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.025);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+}
+
+.statCol {
+  flex: 1;
+  padding: 4.5% 4%;
+  text-align: center;
+}
+
+.statCol + .statCol {
+  border-left: 1px solid rgba(255, 255, 255, 0.025);
+}
+
+.statLbl {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 6px;
+  letter-spacing: 3px;
+  color: #404050;
+  font-weight: 400;
+  margin-bottom: 6%;
+}
+
+.statValue {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: clamp(16px, 4.5vw, 22px);
+  font-weight: 300;
+  color: #C8C8D4;
+  letter-spacing: 0.04em;
+}
+
+.statUnit {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 6px;
+  color: #404050;
+  letter-spacing: 3px;
+  margin-top: 4%;
+}
+
+.summary {
+  margin-bottom: 4%;
+  padding: 5% 0;
+}
+
+.summaryHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5%;
+}
+
+.summaryTick {
+  width: 2px;
+  height: 10px;
+}
+
+.summaryLbl {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 7px;
+  letter-spacing: 5px;
+  font-weight: 400;
+}
+
+.summaryRow {
+  display: flex;
+}
+
+.summaryCell {
+  flex: 1;
+  text-align: center;
+  padding: 0 4%;
+}
+
+.summaryCell + .summaryCell {
+  border-left: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.summaryCellValue {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: clamp(22px, 6vw, 28px);
+  font-weight: 300;
+  color: #D0D0DC;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.summaryCellUnit {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 6px;
+  color: #404050;
+  letter-spacing: 3px;
+  margin-top: 6%;
+}
+
+.summaryCellLbl {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 6px;
+  letter-spacing: 2px;
+  color: #404050;
+  margin-top: 6%;
+  line-height: 1.4;
+}
+
+.tierFooter {
+  padding-top: 4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4%;
+}
+
+.streakNum {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: clamp(28px, 7vw, 36px);
+  font-weight: 300;
+  color: #D0D0DC;
+  letter-spacing: 0.04em;
+  display: block;
+}
+
+.streakLbl {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #303040;
+  line-height: 1.6;
+  display: block;
+  text-align: center;
+}
+
+.ringWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 120px;
+  height: 120px;
+}
+
+.ringSvg {
+  position: absolute;
+  inset: 0;
+}
+
+.ringHalo {
+  position: absolute;
+  inset: 8px;
+}
+
+.ringTrophy {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 62px;
+  height: 62px;
+  display: block;
+  object-fit: contain;
+}
+
+.tierName {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 13px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  display: block;
+  text-align: center;
+}
+
+.tierMeta {
+  font-family: var(--font-mono, "JetBrains Mono"), monospace;
+  font-size: 7px;
+  letter-spacing: 2px;
+  color: #303040;
+  margin-top: 8px;
+  text-align: center;
+}
