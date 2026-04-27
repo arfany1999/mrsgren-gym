@@ -348,6 +348,20 @@ ul, ol   { list-style: none; }
   to   { opacity: 1; backdrop-filter: blur(12px); }
 }
 
+/* ── GYM123 prototype keyframes ─────────────────────────────── */
+@keyframes ripple {
+  0%   { box-shadow: 0 0 0 0 rgba(212, 168, 67, 0.3); }
+  100% { box-shadow: 0 0 0 12px rgba(212, 168, 67, 0); }
+}
+@keyframes shimmerBar {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes goldPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.02); }
+}
+
 /* Touch-friendly active press for any interactive element */
 button:not(:disabled):active,
 a:active {
