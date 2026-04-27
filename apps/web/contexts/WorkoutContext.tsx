@@ -522,15 +522,24 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       if (existing?.id) {
         exerciseUuid = existing.id;
       } else {
+        // RLS on `exercises` requires `created_by_user_id = auth.uid()`. The
+        // earlier code used `user_id` (which doesn't exist on this table) and
+        // silently failed, leaving the exercise — and any subsequent set logs
+        // — out of the DB entirely. Fixing the column name + the user-id key
+        // makes the insert actually pass.
+        const inferredType =
+          (exercise as unknown as { measurementType?: string }).measurementType
+          ?? resolveMeasurementType(undefined, exercise.name);
         const { data: inserted, error: insertErr } = await supabase
           .from("exercises")
           .insert({
             name: exercise.name,
             muscle_group: exercise.muscleGroups[0] ?? "",
+            measurement_type: inferredType,
             equipment: exercise.equipment,
             instructions: exercise.instructions,
-            is_custom: false,
-            user_id: user?.id ?? null,
+            is_custom: true,
+            created_by_user_id: user?.id ?? null,
           })
           .select("id")
           .single();
@@ -542,7 +551,11 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         } else if (missingMuscleGroupsColumn) {
           const { data: fallbackInserted, error: fallbackErr } = await supabase
             .from("exercises")
-            .insert({ name: exercise.name, user_id: user?.id ?? null })
+            .insert({
+              name: exercise.name,
+              created_by_user_id: user?.id ?? null,
+              is_custom: true,
+            })
             .select("id")
             .single();
           if (fallbackErr || !fallbackInserted) return;

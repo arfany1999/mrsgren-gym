@@ -7,7 +7,7 @@
  *   - POST/PUT/PATCH/DELETE to Supabase pass through — the in-app offlineQueue handles retries.
  */
 
-const CACHE = "gym-tracker-v6";
+const CACHE = "gym-tracker-v8";
 const API_CACHE = "gym-supabase-v2";
 
 // Precache shell HTML for every primary route — lets the app boot fully offline on repeat launch.

@@ -11,10 +11,23 @@ export function WorkoutTimer() {
 
   useEffect(() => {
     if (!activeWorkout?.startedAt) { setElapsed(0); return; }
-    const base = Math.floor((Date.now() - new Date(activeWorkout.startedAt).getTime()) / 1000);
-    setElapsed(base);
-    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
-    return () => clearInterval(id);
+    const startedAtMs = new Date(activeWorkout.startedAt).getTime();
+    // Always derive elapsed from wall-clock so the counter stays correct
+    // through phone locks, app swipes and OS-paused timers. Plain accumulator
+    // would drift while the tab was backgrounded.
+    const recompute = () => setElapsed(Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000)));
+    recompute();
+    const id = setInterval(recompute, 1000);
+    const onVis = () => { if (!document.hidden) recompute(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", recompute);
+    window.addEventListener("pageshow", recompute);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", recompute);
+      window.removeEventListener("pageshow", recompute);
+    };
   }, [activeWorkout?.startedAt]);
 
   return (

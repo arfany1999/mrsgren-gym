@@ -163,12 +163,12 @@
 
 /* ═══════════ DARK THEME — strict yellow/white/black ═══════════ */
 :global(html[data-theme="dark"]) .saved {
-  background: rgba(252, 211, 77, 0.10);
+  background: rgba(212, 168, 67, 0.10);
 }
 :global(html[data-theme="dark"]) .saved .numInput {
-  background: rgba(252, 211, 77, 0.10);
+  background: rgba(212, 168, 67, 0.10);
   color: var(--accent);
-  border-color: rgba(252, 211, 77, 0.3);
+  border-color: rgba(212, 168, 67, 0.3);
 }
 :global(html[data-theme="dark"]) .numInput {
   background: rgba(255, 255, 255, 0.06);
@@ -189,12 +189,12 @@
   background: var(--accent);
   border-color: var(--accent);
   color: #000;
-  box-shadow: 0 2px 10px rgba(252, 211, 77, 0.4);
+  box-shadow: 0 2px 10px rgba(212, 168, 67, 0.4);
 }
 :global(html[data-theme="dark"]) .prBadge {
   background: var(--accent);
   color: #000;
 }
 :global(html[data-theme="dark"]) .pr {
-  background: rgba(252, 211, 77, 0.08);
+  background: rgba(212, 168, 67, 0.08);
 }

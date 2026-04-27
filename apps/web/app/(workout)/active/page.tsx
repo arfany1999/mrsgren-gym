@@ -11,7 +11,7 @@ import { PRBanner } from "@/components/workout/PRBanner/PRBanner";
 import { WorkoutReport } from "@/components/workout/WorkoutReport/WorkoutReport";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
-import { getActiveWorkoutId } from "@/lib/storage";
+import { getActiveWorkoutId, getRestTimer, setRestTimer } from "@/lib/storage";
 import { getProfile } from "@/lib/gymProfile";
 import {
   REST_BY_TYPE,
@@ -26,7 +26,7 @@ import styles from "./page.module.css";
 
 export default function ActiveWorkoutPage() {
   const router  = useRouter();
-  const { user, supabase } = useAuth();
+  const { user, supabase, profile } = useAuth();
   const {
     activeWorkout,
     exercises,
@@ -45,12 +45,33 @@ export default function ActiveWorkoutPage() {
   const [finishing,   setFinishing]   = useState(false);
   const [discarding,  setDiscarding]  = useState(false);
   const [done,        setDone]        = useState(false);
-  const [restSecs,    setRestSecs]    = useState(-1);
+  // Rest timer is stored as an absolute end-timestamp so the countdown stays
+  // accurate even if the phone is locked, the app is swiped away, or the tab
+  // is reloaded. `restSecs` / `restTotal` are derived for display only.
+  const [restEndsAt,  setRestEndsAt]  = useState<number | null>(null);
   const [restTotal,   setRestTotal]   = useState(0);
+  const [restSecs,    setRestSecs]    = useState(-1);
   const [restExerciseName, setRestExerciseName] = useState<string | undefined>(undefined);
   const restFiredRef  = useRef(false);
   const [pendingSync, setPendingSync] = useState(0);
   const [isOnline,    setIsOnline]    = useState(true);
+
+  // Rehydrate the rest timer from localStorage on mount so a phone-lock or
+  // a full reload doesn't lose the countdown. If the timer already finished
+  // while we were away, drop it — the user has clearly moved on.
+  useEffect(() => {
+    const saved = getRestTimer();
+    if (!saved) return;
+    if (saved.endsAt <= Date.now()) {
+      setRestTimer(null);
+      return;
+    }
+    restFiredRef.current = !!saved.alerted;
+    setRestTotal(saved.totalSecs);
+    setRestEndsAt(saved.endsAt);
+    setRestExerciseName(saved.exerciseName);
+    setRestSecs(Math.max(0, Math.ceil((saved.endsAt - Date.now()) / 1000)));
+  }, []);
 
   useEffect(() => subscribeQueue(setPendingSync), []);
   useEffect(() => {
@@ -84,27 +105,52 @@ export default function ActiveWorkoutPage() {
     if (exercises.length > 0) workoutExercisesRef.current = exercises;
   }, [exercises]);
 
-  // Rest timer countdown — fires alert once when it reaches 0
+  // Rest timer countdown — drives the displayed seconds from the absolute
+  // `restEndsAt` timestamp on every tick, so a phone lock / app-switch
+  // pause that freezes the JS timer never lets the timer drift. When we
+  // come back into focus (visibilitychange) we recompute immediately.
+  // Fires the "rest done" cue exactly once when we cross 0.
   useEffect(() => {
-    if (restSecs <= 0) return;
-    const t = setTimeout(() => setRestSecs((s) => {
-      const next = s - 1;
-      if (next === 0 && !restFiredRef.current) {
+    if (restEndsAt == null) {
+      setRestSecs(-1);
+      return;
+    }
+    let cancelled = false;
+    const tick = () => {
+      if (cancelled) return;
+      const remainingMs = restEndsAt - Date.now();
+      const secs = Math.max(0, Math.ceil(remainingMs / 1000));
+      setRestSecs(secs);
+      if (remainingMs <= 0 && !restFiredRef.current) {
         restFiredRef.current = true;
+        // Persist that we already played the cue so a quick remount (e.g.
+        // resume from background after the timer expired) doesn't replay it.
+        const saved = getRestTimer();
+        if (saved) setRestTimer({ ...saved, alerted: true });
         alertRestDone(restExerciseName);
       }
-      return next;
-    }), 1000);
-    return () => clearTimeout(t);
-  }, [restSecs, restExerciseName]);
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    const onVis = () => { if (!document.hidden) tick(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [restEndsAt, restExerciseName]);
 
   const permAskedRef = useRef(false);
   const startRest = useCallback((setType: SetType = "normal", exerciseName?: string) => {
     const secs = REST_BY_TYPE[setType] ?? 90;
+    const endsAt = Date.now() + secs * 1000;
     restFiredRef.current = false;
     setRestTotal(secs);
+    setRestEndsAt(endsAt);
     setRestSecs(secs);
     setRestExerciseName(exerciseName);
+    setRestTimer({ endsAt, totalSecs: secs, exerciseName, alerted: false });
     // Unlock audio + ask for notification permission ONCE (we're inside a user gesture)
     unlockAudio();
     if (!permAskedRef.current) {
@@ -114,15 +160,29 @@ export default function ActiveWorkoutPage() {
   }, []);
 
   const adjustRest = useCallback((delta: number) => {
-    setRestSecs(s => Math.max(1, s + delta));
-    setRestTotal(t => Math.max(1, t + delta));
+    setRestEndsAt((curEndsAt) => {
+      if (curEndsAt == null) return curEndsAt;
+      const next = Math.max(Date.now() + 1000, curEndsAt + delta * 1000);
+      const saved = getRestTimer();
+      const totalSecs = Math.max(saved?.totalSecs ?? 0, Math.ceil((next - Date.now()) / 1000));
+      setRestTimer({
+        endsAt: next,
+        totalSecs,
+        exerciseName: saved?.exerciseName,
+        alerted: delta > 0 ? false : saved?.alerted,
+      });
+      return next;
+    });
+    setRestTotal((t) => Math.max(1, t + delta));
     if (delta > 0) restFiredRef.current = false;
   }, []);
 
   const skipRest = useCallback(() => {
+    setRestEndsAt(null);
     setRestSecs(-1);
     setRestTotal(0);
     restFiredRef.current = false;
+    setRestTimer(null);
   }, []);
 
   const formatRest = (s: number) => {
@@ -155,6 +215,7 @@ export default function ActiveWorkoutPage() {
 
   async function handleFinish() {
     setFinishing(true);
+    setRestTimer(null);
     try {
       // Calculate duration before finishing
       const startedAt = startedAtRef.current ?? activeWorkout!.startedAt;
@@ -199,6 +260,7 @@ export default function ActiveWorkoutPage() {
 
   async function handleDiscard() {
     setDiscarding(true);
+    setRestTimer(null);
     try {
       await discardWorkout();
     } finally {
@@ -225,6 +287,7 @@ export default function ActiveWorkoutPage() {
         workoutDays={report.workoutDays}
         weightKg={userWeightKg}
         userEmail={user?.email ?? null}
+        userName={profile?.name ?? null}
         workoutId={report.workoutId}
         onDone={handleReportDone}
       />

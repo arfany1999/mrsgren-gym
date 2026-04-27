@@ -136,18 +136,28 @@ export function ExerciseBlock({
         />
       </div>
 
-      {/* Column labels */}
-      {exercise.sets.length > 0 && (
-        <div className={styles.colLabels} data-type={exercise.measurementType}>
-          {exercise.measurementType !== "cardio" && <span>SET</span>}
-          {exercise.measurementType !== "cardio" && <span>PREV</span>}
-          {exercise.measurementType === "weight_reps" && <><span>KG</span><span>REPS</span></>}
-          {(exercise.measurementType === "bodyweight_reps" || exercise.measurementType === "reps_only") && <span>REPS</span>}
-          {exercise.measurementType === "timed"  && <span>SEC</span>}
-          {exercise.measurementType === "cardio" && <><span>MIN</span><span>KM</span></>}
-          <span />
-        </div>
-      )}
+      {/* Column labels — default to KG/REPS for any non-special type so a
+          legacy exercise with an unexpected `measurement_type` still gets
+          the right table header (matches the SetRow safety fallback). */}
+      {exercise.sets.length > 0 && (() => {
+        const t = exercise.measurementType;
+        const isCardio = t === "cardio";
+        const isTimed = t === "timed";
+        const isRepsOnly = t === "bodyweight_reps" || t === "reps_only";
+        const isWeightReps = !isCardio && !isTimed && !isRepsOnly;
+        const dataType = isWeightReps ? "weight_reps" : t;
+        return (
+          <div className={styles.colLabels} data-type={dataType}>
+            {!isCardio && <span>SET</span>}
+            {!isCardio && <span>PREV</span>}
+            {isWeightReps && <><span>KG</span><span>REPS</span></>}
+            {isRepsOnly  && <span>REPS</span>}
+            {isTimed     && <span>SEC</span>}
+            {isCardio    && <><span>MIN</span><span>KM</span></>}
+            <span />
+          </div>
+        );
+      })()}
 
       {/* Sets */}
       {exercise.sets.map((set, idx) => (

@@ -1,160 +1,76 @@
 .logo {
   position: relative;
   display: inline-grid;
-  place-items: end center;
+  place-items: center;
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--text-primary);
   cursor: pointer;
-  transform-origin: center bottom;
-  animation: idleFloat 2.2s ease-in-out infinite;
+  transform-origin: center center;
+  animation: idleFloat 2.6s ease-in-out infinite;
 }
 
 .logo:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
-  border-radius: 8px;
+  border-radius: 50%;
 }
 
-.word {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 0;
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  /* Subtle drop-shadow that picks up the brand red and feels like the
+     Spartan crest is sitting just above the page. */
+  filter: drop-shadow(0 6px 14px rgba(180, 24, 24, 0.28))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.30));
+  position: relative;
+  z-index: 1;
 }
 
-.letter {
-  font-size: 1.85rem;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: 0;
-}
-
-.joiner {
-  width: 10px;
-  height: 6px;
-  margin: 0 -2px 7px;
-  border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 0 10px rgba(48, 209, 88, 0.4);
-}
-
-.barbell {
+/* Soft halo behind the artwork — gives the shield depth on the warm-beige
+   light background without changing the artwork itself. */
+.glow {
   position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  transform-origin: center 16px;
-}
-
-.bar {
-  width: 30px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
-.plate {
-  width: 9px;
-  height: 13px;
-  border-radius: 2px;
-  background: var(--accent);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(180, 24, 24, 0.20), transparent 75%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .lifting.logo {
-  animation: burstBody 820ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  animation: liftBounce 820ms cubic-bezier(0.2, 0.9, 0.2, 1);
 }
-
-.lifting .barbell {
-  animation: powerLift 820ms cubic-bezier(0.2, 0.9, 0.2, 1);
-}
-
-.lifting .letter {
-  animation: squeeze 820ms cubic-bezier(0.2, 0.9, 0.2, 1);
-}
-
-.lifting .joiner {
-  animation: joinPulse 820ms ease;
+.lifting .img {
+  animation: liftImg 820ms cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 @keyframes idleFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-1.5px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
 }
 
-@keyframes burstBody {
-  0% {
-    transform: translateY(0) scale(1);
-  }
-  22% {
-    transform: translateY(1px) scale(0.98);
-  }
-  55% {
-    transform: translateY(-2px) scale(1.03);
-  }
-  100% {
-    transform: translateY(0) scale(1);
-  }
+@keyframes liftBounce {
+  0%   { transform: translateY(0)    scale(1); }
+  25%  { transform: translateY(2px)  scale(0.98); }
+  55%  { transform: translateY(-6px) scale(1.04); }
+  78%  { transform: translateY(-3px) scale(1.02); }
+  100% { transform: translateY(0)    scale(1); }
 }
 
-@keyframes powerLift {
-  0% {
-    transform: translateX(-50%) translateY(0) rotate(0deg);
-  }
-  35% {
-    transform: translateX(-50%) translateY(-16px) rotate(-3deg);
-  }
-  60% {
-    transform: translateX(-50%) translateY(-11px) rotate(2deg);
-  }
-  78% {
-    transform: translateX(-50%) translateY(-14px) rotate(-1deg);
-  }
-  100% {
-    transform: translateX(-50%) translateY(0) rotate(0deg);
-  }
-}
-
-@keyframes squeeze {
-  0%,
-  100% {
-    transform: translateY(0) scaleY(1);
-  }
-  26% {
-    transform: translateY(1px) scaleY(0.94);
-  }
-  58% {
-    transform: translateY(-1px) scaleY(1.04);
-  }
-}
-
-@keyframes joinPulse {
-  0%,
-  100% {
-    transform: scaleX(1);
-    opacity: 1;
-  }
-  45% {
-    transform: scaleX(1.35);
-    opacity: 0.85;
-  }
+@keyframes liftImg {
+  0%   { filter: drop-shadow(0 6px 14px rgba(180, 24, 24, 0.28)); }
+  55%  { filter: drop-shadow(0 14px 24px rgba(180, 24, 24, 0.42)); }
+  100% { filter: drop-shadow(0 6px 14px rgba(180, 24, 24, 0.28)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .logo,
   .lifting.logo,
-  .lifting .barbell,
-  .lifting .letter,
-  .lifting .joiner {
+  .lifting .img {
     animation: none;
   }
 }

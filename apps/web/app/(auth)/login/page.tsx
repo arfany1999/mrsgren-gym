@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
+import { InstallAppCard } from "@/components/ui/InstallAppCard/InstallAppCard";
 import { HALogo } from "@/components/branding/HALogo/HALogo";
 import styles from "./page.module.css";
 
@@ -40,6 +41,8 @@ export default function LoginPage() {
 
   return (
     <div className={styles.page}>
+      <span className={styles.glowA} aria-hidden />
+      <span className={styles.glowB} aria-hidden />
       <div className={styles.inner}>
         {/* Logo / Title */}
         <div className={styles.header}>
@@ -80,6 +83,8 @@ export default function LoginPage() {
           Don&apos;t have an account?{" "}
           <Link href="/register">Sign up</Link>
         </p>
+
+        <InstallAppCard />
       </div>
 
       <p className={styles.signature}>

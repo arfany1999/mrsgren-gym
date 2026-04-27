@@ -6,11 +6,10 @@
   align-items: center;
   height: var(--top-bar-height);
   padding: 0 var(--sp-4);
-  background: rgba(243, 237, 225, 0.82);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 1px 0 rgba(26, 21, 16, 0.07);
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 0.5px solid var(--border-color);
 }
 
 .left, .right {
@@ -33,48 +32,35 @@
   text-overflow: ellipsis;
   flex: 2;
   letter-spacing: -0.3px;
+  font-family: var(--font-sans), -apple-system, sans-serif;
 }
 
 .backBtn {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
   color: var(--accent);
   font-size: var(--text-base);
   font-weight: 700;
   cursor: pointer;
   padding: 6px 12px 6px 8px;
   border-radius: 20px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
-  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--glass-shadow);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast),
+    transform var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
   margin-left: -4px;
+  font-family: var(--font-sans), -apple-system, sans-serif;
 }
 
 .backBtn:hover {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--bg-elevated);
 }
 
 .backBtn:active {
   transform: scale(0.96);
-}
-
-/* Dark theme overrides */
-:global(html[data-theme="dark"]) .bar {
-  background: rgba(0, 0, 0, 0.85);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-:global(html[data-theme="dark"]) .backBtn {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: var(--accent);
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-:global(html[data-theme="dark"]) .backBtn:hover {
-  background: rgba(255, 255, 255, 0.14);
 }

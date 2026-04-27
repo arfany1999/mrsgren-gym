@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
+import { BodyMap } from "@/components/stats/BodyMap/BodyMap";
+import { fetchMuscleVolume, muscleVolumeMap } from "@/lib/muscleVolume";
 import styles from "./page.module.css";
 
 interface PR {
@@ -54,6 +56,7 @@ export default function StatisticsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [prs, setPrs] = useState<PR[]>([]);
   const [sparklines, setSparklines] = useState<Map<string, number[]>>(new Map());
+  const [muscleVol, setMuscleVol] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -157,6 +160,9 @@ export default function StatisticsPage() {
       }
     }
     load();
+    // 30-day muscle volume powers the BodyMap. Failing fetch ⇒ empty map ⇒
+    // BodyMap renders an unhighlighted figure rather than blocking the page.
+    fetchMuscleVolume(supabase, 30).then((rows) => setMuscleVol(muscleVolumeMap(rows)));
   }, [supabase]);
 
   return (
@@ -188,6 +194,11 @@ export default function StatisticsPage() {
               <p className={styles.statValue}>{Math.round(stats?.avgDurationMins ?? 0)}</p>
               <p className={styles.statLabel}>Avg Minutes</p>
             </div>
+          </section>
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>30-Day Muscle Volume</h2>
+            <BodyMap volumeByMuscle={muscleVol} />
           </section>
 
           <section className={styles.section}>

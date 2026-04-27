@@ -9,7 +9,7 @@ import { BodyMuscleIcon } from "@/components/ui/BodyMuscleIcon/BodyMuscleIcon";
 import {
   EXERCISES,
   MUSCLE_GROUPS,
-  getMeasurementType,
+  resolveMeasurementType,
   getGroupedExercises,
   EQUIPMENT_LABELS,
   type MeasurementType,
@@ -110,8 +110,11 @@ export default function EditRoutinePage() {
       const mapped: DraftExercise[] = res.map((re, i) => {
         const ex = (re.exercises as Record<string, unknown>) ?? {};
         const exName = (ex.name as string) ?? "";
-        const measurementType: MeasurementType =
-          (ex.measurement_type as MeasurementType) ?? getMeasurementType(exName);
+        // Coerce through the validated resolver so legacy DB rows with
+        // null / empty / typo'd `measurement_type` still resolve to a real
+        // type (typically `weight_reps`) instead of falling through to an
+        // empty SetRow with no inputs.
+        const measurementType: MeasurementType = resolveMeasurementType(ex.measurement_type, exName);
 
         let sets: DraftSet[];
         const setsConfig = re.sets_config as Array<Record<string, unknown>> | null;
@@ -180,9 +183,18 @@ export default function EditRoutinePage() {
       if (existing?.id) {
         exerciseId = existing.id as string;
       } else {
+        // RLS on `exercises`: insert requires `created_by_user_id = auth.uid()`.
+        // Also pin the measurement_type + is_custom flag here so future reads
+        // never have to fall back to a name lookup.
         const { data: ins, error: insErr } = await supabase
           .from("exercises")
-          .insert({ name: def.name, muscle_group: def.muscle })
+          .insert({
+            name: def.name,
+            muscle_group: def.muscle,
+            measurement_type: def.type,
+            is_custom: true,
+            created_by_user_id: user?.id ?? null,
+          })
           .select("id")
           .single();
         if (insErr || !ins) {

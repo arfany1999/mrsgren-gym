@@ -10,17 +10,19 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Honour iOS notch + dynamic island when running standalone */
+  padding-top: env(safe-area-inset-top, 0);
 }
 
 @media (min-width: 500px) {
   .shell {
-    box-shadow: 0 0 0 0.5px rgba(26,21,16,0.08), 0 20px 60px rgba(0,0,0,0.15);
+    box-shadow: 0 0 0 0.5px var(--border-color), 0 20px 60px rgba(0, 0, 0, 0.4);
   }
 }
 
 .main {
   flex: 1;
-  padding-bottom: var(--bottom-nav-height);
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0));
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
