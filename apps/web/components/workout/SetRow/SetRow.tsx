@@ -5,6 +5,7 @@ import { SetTypeSelector } from "@/components/workout/SetTypeSelector/SetTypeSel
 import type { ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import type { MeasurementType } from "@/lib/exercises-data";
+import { haptic } from "@/lib/haptics";
 import styles from "./SetRow.module.css";
 
 interface SetRowProps {
@@ -131,7 +132,7 @@ function SetRowImpl({ set, index, weId, prevSet, measurementType, onUpdateField,
       {/* Save / check button */}
       <button
         className={[styles.checkBtn, set.isSaved ? styles.checked : ""].join(" ")}
-        onClick={onSave}
+        onClick={() => { haptic(set.isSaved ? "light" : "success"); onSave(); }}
         disabled={!canSave}
         type="button"
         aria-label={set.isSaved ? "Set saved" : "Save set"}

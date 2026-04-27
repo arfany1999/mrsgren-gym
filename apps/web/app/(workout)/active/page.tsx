@@ -20,6 +20,7 @@ import {
   unlockAudio,
 } from "@/lib/restTimer";
 import { subscribeQueue } from "@/lib/offlineQueue";
+import { haptic } from "@/lib/haptics";
 import type { ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./page.module.css";
@@ -214,6 +215,7 @@ export default function ActiveWorkoutPage() {
   if (!activeWorkout && !report) return null;
 
   async function handleFinish() {
+    haptic("success");
     setFinishing(true);
     setRestTimer(null);
     try {
@@ -259,6 +261,7 @@ export default function ActiveWorkoutPage() {
   }
 
   async function handleDiscard() {
+    haptic("medium");
     setDiscarding(true);
     setRestTimer(null);
     try {

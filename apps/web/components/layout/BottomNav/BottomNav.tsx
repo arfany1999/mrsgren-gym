@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useWorkout } from "@/contexts/WorkoutContext";
+import { haptic } from "@/lib/haptics";
 import styles from "./BottomNav.module.css";
 
 function IconHome({ active }: { active: boolean }) {
@@ -60,6 +61,7 @@ export function BottomNav() {
   }
 
   async function onFabPress() {
+    haptic("medium");
     if (activeWorkout) {
       router.push("/active");
       return;
