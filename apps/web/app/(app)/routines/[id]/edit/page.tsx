@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
@@ -73,22 +73,41 @@ export default function EditRoutinePage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedMuscle, setSelectedMuscle] = useState("");
   const [query, setQuery]         = useState("");
+  // Tracks per-exercise-name "adding…" feedback so the picker stays
+  // responsive while the upsert round-trip resolves in the background.
+  const [pendingNames, setPendingNames] = useState<Set<string>>(() => new Set());
 
   // Scroll refs
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // Live mirror of `exercises` so handleSave can wait on the latest state
+  // without being trapped by a stale closure.
+  const exercisesRef = useRef<DraftExercise[]>([]);
 
   // ── Exercise lists ───────────────────────────────────────────
-  // Flat search results (used when query is active)
-  const searchResults = EXERCISES.filter(ex => {
-    const matchMuscle = !selectedMuscle || ex.muscle === selectedMuscle;
-    const matchQuery  = !query || ex.name.toLowerCase().includes(query.toLowerCase());
-    return matchMuscle && matchQuery;
-  });
+  // O(1) lookup for "is this exercise already in the routine?" so the
+  // sheet doesn't run `exercises.some()` per row × per render (174² scans
+  // on every keystroke before this).
+  const addedNames = useMemo(
+    () => new Set(exercises.map(e => e.name.toLowerCase())),
+    [exercises],
+  );
+
+  // Flat search results (used when a query is active). Memoised so typing
+  // in the search box doesn't refilter 174 exercises on every keystroke.
+  const searchResults = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return EXERCISES.filter(ex => {
+      if (selectedMuscle && ex.muscle !== selectedMuscle) return false;
+      if (q && !ex.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [query, selectedMuscle]);
 
   // Grouped by equipment (used when a muscle is selected with no search query)
-  const groupedExercises = selectedMuscle && !query
-    ? getGroupedExercises(selectedMuscle)
-    : null;
+  const groupedExercises = useMemo(
+    () => (selectedMuscle && !query ? getGroupedExercises(selectedMuscle) : null),
+    [selectedMuscle, query],
+  );
 
   // ── Load existing routine ────────────────────────────────────
   const load = useCallback(async () => {
@@ -158,72 +177,98 @@ export default function EditRoutinePage() {
   }, [id, supabase, router]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
 
   // ── Sheet helpers ────────────────────────────────────────────
   function openSheet() { setQuery(""); setSheetOpen(true); }
   function closeSheet() { setSheetOpen(false); }
 
-  // ── Add exercise from picker ─────────────────────────────────
-  async function handleAdd(def: typeof EXERCISES[number]) {
-    if (exercises.some(e => e.name.toLowerCase() === def.name.toLowerCase())) {
+  // ── Add exercise from picker (optimistic) ────────────────────
+  // Adds the row to local state synchronously, closes the sheet, and
+  // resolves the real `exerciseId` in the background. The user can edit
+  // sets / weights / reps immediately; if they hit Save before the
+  // round-trip finishes, handleSave waits via flushPendingExercises().
+  function handleAdd(def: typeof EXERCISES[number]) {
+    const lowerName = def.name.toLowerCase();
+    if (addedNames.has(lowerName)) {
       closeSheet();
       return;
     }
     setError("");
-    try {
-      let exerciseId = "";
-      // Upsert exercise into DB (with correct measurement_type)
-      const { data: existing } = await supabase
-        .from("exercises")
-        .select("id")
-        .ilike("name", def.name)
-        .limit(1)
-        .maybeSingle();
 
-      if (existing?.id) {
-        exerciseId = existing.id as string;
-      } else {
-        // RLS on `exercises`: insert requires `created_by_user_id = auth.uid()`.
-        // Also pin the measurement_type + is_custom flag here so future reads
-        // never have to fall back to a name lookup.
-        const { data: ins, error: insErr } = await supabase
+    const placeholder: DraftExercise = {
+      reId: null,
+      exerciseId: "",                 // filled in by the background lookup
+      name: def.name,
+      muscle: def.muscle,
+      measurementType: def.type,
+      sets: defaultSets(def.type),
+      orderIndex: exercises.length,
+    };
+
+    setExercises(prev => [...prev, placeholder]);
+    setPendingNames(prev => {
+      const next = new Set(prev);
+      next.add(lowerName);
+      return next;
+    });
+    closeSheet();
+
+    requestAnimationFrame(() => {
+      const last = exerciseRefs.current[exerciseRefs.current.length - 1];
+      last?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    // Background: resolve exerciseId, patch local state when ready.
+    void (async () => {
+      try {
+        let exerciseId = "";
+        const { data: existing } = await supabase
           .from("exercises")
-          .insert({
-            name: def.name,
-            muscle_group: def.muscle,
-            measurement_type: def.type,
-            is_custom: true,
-            created_by_user_id: user?.id ?? null,
-          })
           .select("id")
-          .single();
-        if (insErr || !ins) {
-          setError(insErr?.message ?? "Could not add exercise");
-          return;
+          .ilike("name", def.name)
+          .limit(1)
+          .maybeSingle();
+
+        if (existing?.id) {
+          exerciseId = existing.id as string;
+        } else {
+          const { data: ins, error: insErr } = await supabase
+            .from("exercises")
+            .insert({
+              name: def.name,
+              muscle_group: def.muscle,
+              measurement_type: def.type,
+              is_custom: true,
+              created_by_user_id: user?.id ?? null,
+            })
+            .select("id")
+            .single();
+          if (insErr || !ins) {
+            setError(insErr?.message ?? "Could not add exercise");
+            // Roll back the optimistic add
+            setExercises(prev => prev.filter(e => e.name.toLowerCase() !== lowerName));
+            return;
+          }
+          exerciseId = ins.id as string;
         }
-        exerciseId = ins.id as string;
+
+        setExercises(prev =>
+          prev.map(e =>
+            e.name.toLowerCase() === lowerName && !e.exerciseId
+              ? { ...e, exerciseId }
+              : e,
+          ),
+        );
+      } finally {
+        setPendingNames(prev => {
+          if (!prev.has(lowerName)) return prev;
+          const next = new Set(prev);
+          next.delete(lowerName);
+          return next;
+        });
       }
-
-      const newEx: DraftExercise = {
-        reId: null,
-        exerciseId,
-        name: def.name,
-        muscle: def.muscle,
-        measurementType: def.type,
-        sets: defaultSets(def.type),
-        orderIndex: exercises.length,
-      };
-
-      setExercises(prev => [...prev, newEx]);
-      closeSheet();
-
-      setTimeout(() => {
-        const last = exerciseRefs.current[exerciseRefs.current.length - 1];
-        last?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 120);
-    } catch {
-      setError("Failed to add exercise");
-    }
+    })();
   }
 
   // ── Exercise / set mutations ─────────────────────────────────
@@ -259,14 +304,30 @@ export default function EditRoutinePage() {
     setSaving(true);
     setError("");
     try {
+      // If a background upsert from a recent optimistic add is still in
+      // flight, wait for it. We don't want to save routine_exercises rows
+      // with an empty exercise_id. Polls the live ref so we see fresh
+      // state, not the stale closure value.
+      const start = Date.now();
+      while (
+        exercisesRef.current.some(e => !e.exerciseId) &&
+        Date.now() - start < 4000
+      ) {
+        await new Promise(r => setTimeout(r, 100));
+      }
+      if (exercisesRef.current.some(e => !e.exerciseId)) {
+        throw new Error("Adding an exercise is still in progress — try again in a moment.");
+      }
+      const latestExercises = exercisesRef.current;
+
       const { error: nameErr } = await supabase.from("routines").update({ name: title.trim() }).eq("id", id);
       if (nameErr) throw new Error(nameErr.message);
 
       const { error: delErr } = await supabase.from("routine_exercises").delete().eq("routine_id", id);
       if (delErr) throw new Error(delErr.message);
 
-      if (exercises.length > 0) {
-        const rows = exercises.map((ex, i) => {
+      if (latestExercises.length > 0) {
+        const rows = latestExercises.map((ex, i) => {
           const setsConfig = ex.sets.map(s => ({
             reps:     s.reps     ? (parseInt(s.reps)     || null) : null,
             weight:   s.weight   ? (parseFloat(s.weight) || null) : null,
@@ -548,7 +609,8 @@ export default function EditRoutinePage() {
                     <SheetItem
                       key={def.name}
                       def={def}
-                      alreadyAdded={exercises.some(e => e.name.toLowerCase() === def.name.toLowerCase())}
+                      alreadyAdded={addedNames.has(def.name.toLowerCase())}
+                      pending={pendingNames.has(def.name.toLowerCase())}
                       onAdd={() => handleAdd(def)}
                     />
                   ))}
@@ -564,7 +626,8 @@ export default function EditRoutinePage() {
                 <SheetItem
                   key={def.name}
                   def={def}
-                  alreadyAdded={exercises.some(e => e.name.toLowerCase() === def.name.toLowerCase())}
+                  alreadyAdded={addedNames.has(def.name.toLowerCase())}
+                  pending={pendingNames.has(def.name.toLowerCase())}
                   onAdd={() => handleAdd(def)}
                 />
               ))
@@ -577,13 +640,17 @@ export default function EditRoutinePage() {
 }
 
 // ── Reusable exercise row inside the sheet ────────────────────
-function SheetItem({
+// Wrapped in `memo` so a single keystroke in the search input doesn't
+// re-render every row in the list (174 exercises × BodyMuscleIcon SVGs).
+const SheetItem = memo(function SheetItem({
   def,
   alreadyAdded,
+  pending,
   onAdd,
 }: {
   def: ExerciseDef;
   alreadyAdded: boolean;
+  pending: boolean;
   onAdd: () => void;
 }) {
   return (
@@ -591,7 +658,7 @@ function SheetItem({
       type="button"
       className={[styles.sheetItem, alreadyAdded ? styles.sheetItemAdded : ""].join(" ")}
       onClick={() => !alreadyAdded && onAdd()}
-      disabled={alreadyAdded}
+      disabled={alreadyAdded || pending}
     >
       <div className={styles.sheetItemIcon}>
         <BodyMuscleIcon muscles={[def.muscle]} variant="thumb" />
@@ -612,6 +679,8 @@ function SheetItem({
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M5 13l4 4L19 7" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
+        ) : pending ? (
+          <Spinner size={16} />
         ) : (
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" fill="var(--accent)"/>
@@ -621,7 +690,7 @@ function SheetItem({
       </div>
     </button>
   );
-}
+});
 
 function typeLabel(t: MeasurementType): string {
   switch (t) {
