@@ -1,0 +1,53 @@
+.shell {
+  min-height: 100dvh;
+  background: #050508;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  position: static;
+}
+
+.cardWrap {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+.skeleton {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 9 / 16;
+  background: linear-gradient(135deg, #08080E, #14141A, #08080E);
+  background-size: 200% 200%;
+  animation: shimmer 1.6s ease infinite;
+  border-radius: 14px;
+}
+
+.notFound {
+  text-align: center;
+  color: #C8C8D4;
+  font-family: var(--font-display, Georgia, serif);
+}
+
+.notFound h1 {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  margin: 0 0 12px;
+}
+
+.notFound p {
+  font-size: 14px;
+  color: #707080;
+  max-width: 320px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
