@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { WorkoutCard } from "@/components/workout/WorkoutCard/WorkoutCard";
+import { HistoryCalendar } from "@/components/workout/HistoryCalendar/HistoryCalendar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/Button/Button";
 import type { Workout, SetType } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
+import { computeStreakStatsLocal } from "@/lib/streakStats";
 import styles from "./page.module.css";
 
 const LIMIT = 20;
@@ -46,6 +48,11 @@ export default function WorkoutsPage() {
   useEffect(() => { fetchPage(1); }, [fetchPage]);
 
   const hasMore = workouts.length < total;
+  const workoutDates = useMemo(
+    () => workouts.map((w) => w.startedAt).filter(Boolean) as string[],
+    [workouts],
+  );
+  const streak = useMemo(() => computeStreakStatsLocal(workoutDates), [workoutDates]);
 
   function loadMore() {
     const next = page + 1;
@@ -56,8 +63,18 @@ export default function WorkoutsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.pageTitle}>Home</h1>
+        <h1 className={styles.pageTitle}>History</h1>
+        {streak.currentStreak > 0 && (
+          <span className={styles.streakChip} aria-label={`${streak.currentStreak} day streak`}>
+            <span className={styles.streakNum}>{streak.currentStreak}</span>
+            <span className={styles.streakLbl}>DAY{streak.currentStreak === 1 ? "" : "S"}</span>
+          </span>
+        )}
       </header>
+
+      {!loading && workouts.length > 0 && (
+        <HistoryCalendar workoutDates={workoutDates} />
+      )}
 
       {loading ? (
         <div className={styles.loadingCenter}>

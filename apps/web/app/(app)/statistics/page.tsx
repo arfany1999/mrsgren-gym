@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { BodyMap } from "@/components/stats/BodyMap/BodyMap";
+import { MuscleSplitDonut } from "@/components/stats/MuscleSplitDonut/MuscleSplitDonut";
 import { fetchMuscleVolume, muscleVolumeMap } from "@/lib/muscleVolume";
 import styles from "./page.module.css";
 
@@ -193,6 +194,13 @@ export default function StatisticsPage() {
             <div className={styles.statCard}>
               <p className={styles.statValue}>{Math.round(stats?.avgDurationMins ?? 0)}</p>
               <p className={styles.statLabel}>Avg Minutes</p>
+            </div>
+          </section>
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Muscle Split — Last 30 Days</h2>
+            <div className={styles.donutCard}>
+              <MuscleSplitDonut volumeByMuscle={muscleVol} />
             </div>
           </section>
 
