@@ -16,7 +16,11 @@
 .page {
   padding-bottom: var(--sp-8);
   animation: pageIn 0.22s ease both;
-  background: #000;
+  background: var(--bg-primary);
+}
+
+.pageTitle {
+  font-family: var(--font-sans), -apple-system, sans-serif;
 }
 
 .loadingCenter {
