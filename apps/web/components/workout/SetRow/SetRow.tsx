@@ -45,7 +45,7 @@ function SetRowImpl({ set, index, weId, prevSet, measurementType, onUpdateField,
     isWeightReps ? (set.reps !== "" || set.weightKg !== "") :
     isRepsOnly   ? set.reps !== "" :
     isTimed      ? set.duration !== "" :
-    isCardio     ? (set.duration !== "" || set.distance !== "") :
+    isCardio     ? set.duration !== "" :
     false;
 
   const rowClasses = [
@@ -123,21 +123,7 @@ function SetRowImpl({ set, index, weId, prevSet, measurementType, onUpdateField,
         </div>
       )}
 
-      {/* ── Distance (km) — cardio only ── */}
-      {isCardio && (
-        <div className={styles.inputWrap}>
-          <input
-            ref={ref2}
-            className={styles.numInput}
-            type="tel"
-            inputMode="decimal"
-            placeholder="0"
-            value={set.distance}
-            onChange={(e) => onUpdateField("distance", e.target.value)}
-            onFocus={(e) => e.target.select()}
-          />
-        </div>
-      )}
+      {/* Cardio = time-only — distance field removed deliberately. */}
 
       {/* PR badge */}
       {set.isPr && <span className={styles.prBadge}>PR</span>}
