@@ -1,0 +1,136 @@
+.card {
+  position: relative;
+  width: 100%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+  animation: install-card-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.glow {
+  position: absolute;
+  top: -32px;
+  right: -32px;
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, var(--accent-dim), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  position: relative;
+}
+
+.iconWrap {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.copy {
+  margin-top: 4px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.installBtn {
+  margin-top: var(--sp-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.1px;
+  transition: transform var(--transition-fast), filter var(--transition-fast);
+}
+.installBtn:active { transform: scale(0.97); }
+.installBtn:hover { filter: brightness(1.05); }
+
+html[data-theme="dark"] .installBtn { color: #000; }
+
+.steps {
+  list-style: none;
+  margin: var(--sp-3) 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.steps li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.stepNum {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: var(--fw-medium);
+}
+
+@keyframes install-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+}

@@ -14,8 +14,12 @@ export const metadata: Metadata = {
     title: "GYM",
   },
   icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/icon-192.png",
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    shortcut: "/icons/icon-192.png",
   },
 };
 
@@ -24,23 +28,27 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#000000",
+  themeColor: "#f3ede1",
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
 };
 
-// Runs before hydration so the correct data-theme is on <html> from the first paint.
+// Runs before hydration so the correct data-theme is on <html> from the first
+// paint. Light mode is the default — only an explicit user override flips it
+// to dark, matching the in-app theme toggle behaviour.
 const themeInitScript = `
 (function(){try{
   var t = localStorage.getItem('gym_theme');
-  if (t !== 'light' && t !== 'dark') t = 'dark';
+  if (t !== 'light' && t !== 'dark') t = 'light';
   document.documentElement.setAttribute('data-theme', t);
-}catch(e){}})();
+}catch(e){
+  document.documentElement.setAttribute('data-theme', 'light');
+}})();
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <body>
         <Script id="theme-init" strategy="beforeInteractive">
           {themeInitScript}

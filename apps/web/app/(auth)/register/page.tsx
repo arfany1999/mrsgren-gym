@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
+import { InstallAppCard } from "@/components/ui/InstallAppCard/InstallAppCard";
+import { HALogo } from "@/components/branding/HALogo/HALogo";
 import styles from "./page.module.css";
 
 export default function RegisterPage() {
@@ -53,13 +55,12 @@ export default function RegisterPage() {
 
   return (
     <div className={styles.page}>
+      <span className={styles.glowA} aria-hidden />
+      <span className={styles.glowB} aria-hidden />
       <div className={styles.inner}>
         <div className={styles.header}>
           <div className={styles.logo}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <rect width="40" height="40" rx="10" fill="var(--accent)" />
-              <path d="M8 20h4v-6h4v6h8v-6h4v6h4" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <HALogo size={72} />
           </div>
           <h1 className={styles.title}>Create Account</h1>
           <p className={styles.subtitle}>Start tracking your workouts</p>
@@ -111,6 +112,8 @@ export default function RegisterPage() {
         <p className={styles.footer}>
           Already have an account? <Link href="/login">Log in</Link>
         </p>
+
+        <InstallAppCard />
       </div>
     </div>
   );

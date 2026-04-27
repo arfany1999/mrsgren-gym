@@ -134,8 +134,23 @@ function ProgressRing({ lastVolume, prevVolume }: { lastVolume: number; prevVolu
 
 export default function DashboardPage() {
   const { supabase, user, profile } = useAuth();
-  const { startWorkout } = useWorkout();
+  const { startWorkout, activeWorkout } = useWorkout();
   const router = useRouter();
+
+  // If a workout is in progress (page reloaded, app reopened from background,
+  // phone unlocked etc.), bounce straight back into it. The active page
+  // re-derives the elapsed timer from the DB-stored `started_at`, so the
+  // user sees the correct count immediately. Only fires once per mount so
+  // the user can still navigate to dashboard mid-workout (we honour their
+  // back button after the first redirect).
+  const resumedRef = useRef(false);
+  useEffect(() => {
+    if (resumedRef.current) return;
+    if (activeWorkout?.id) {
+      resumedRef.current = true;
+      router.replace("/active");
+    }
+  }, [activeWorkout?.id, router]);
 
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [workoutInfoMap, setWorkoutInfoMap] = useState<Map<string, WorkoutInfo>>(new Map());

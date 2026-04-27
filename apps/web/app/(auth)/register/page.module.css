@@ -1,18 +1,62 @@
 .page {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-primary);
   padding: var(--sp-6);
+  overflow: hidden;
+  background:
+    radial-gradient(900px 500px at 50% -10%, var(--accent-dim), transparent 60%),
+    radial-gradient(700px 500px at 100% 110%, rgba(74, 110, 245, 0.06), transparent 60%),
+    var(--bg-primary);
+}
+
+/* Mirror of the login page glows so the two screens feel like a pair. */
+.glowA, .glowB {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(70px);
+  pointer-events: none;
+  opacity: 0.55;
+}
+.glowA {
+  width: 360px;
+  height: 360px;
+  top: -90px;
+  right: -90px;
+  background: radial-gradient(closest-side, var(--accent-dim), transparent 70%);
+  animation: glow-drift 9s ease-in-out infinite alternate;
+}
+.glowB {
+  width: 280px;
+  height: 280px;
+  bottom: -60px;
+  left: -60px;
+  background: radial-gradient(closest-side, rgba(74, 110, 245, 0.18), transparent 70%);
+  animation: glow-drift 11s ease-in-out -3s infinite alternate;
+}
+@keyframes glow-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-18px, 14px, 0) scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glowA, .glowB { animation: none; }
 }
 
 .inner {
+  position: relative;
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
+  animation: page-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .header {
@@ -45,6 +89,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .errorMsg {

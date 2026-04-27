@@ -26,8 +26,9 @@ export function useTheme(): ThemeContextValue {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Hydrate from DOM (pre-hydration script has already set data-theme)
-  const [theme, setThemeState] = useState<Theme>("dark");
+  // Hydrate from DOM (pre-hydration script has already set data-theme).
+  // Default is "light" — users opt into dark via the in-app toggle.
+  const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {
     const fromDom = document.documentElement.getAttribute("data-theme") as Theme | null;
@@ -39,7 +40,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         ? fromDom
         : fromStorage === "dark" || fromStorage === "light"
           ? fromStorage
-          : "dark";
+          : "light";
     setThemeState(initial);
     applyTheme(initial);
   }, []);

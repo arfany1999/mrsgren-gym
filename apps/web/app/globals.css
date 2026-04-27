@@ -227,13 +227,29 @@ input, textarea, select {
   appearance: none;
 }
 
+input, textarea, select {
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+input:hover, textarea:hover { border-color: var(--text-tertiary); }
 input:focus, textarea:focus {
   border-color: var(--accent);
   background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 0 0 3px rgba(74, 110, 245, 0.12);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 input::placeholder, textarea::placeholder { color: var(--text-tertiary); }
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background: rgba(255, 255, 255, 0.04);
+}
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(252, 211, 77, 0.18);
+}
 
 /* Hide number spinners */
 input[type="number"]::-webkit-inner-spin-button,
@@ -331,5 +347,31 @@ ul, ol   { list-style: none; }
 button:not(:disabled):active,
 a:active {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Subtle press scale for primary buttons + cards across the app — improves
+   the perceived responsiveness on mobile without overriding component CSS. */
+button:not(:disabled) {
+  transition: transform var(--transition-fast), filter var(--transition-fast), box-shadow var(--transition-fast);
+}
+button:not(:disabled):active { transform: scale(0.97); }
+
+/* Universal focus ring — accessible without being noisy on touch devices.
+   `:focus-visible` only triggers on keyboard focus, not on click/tap. */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Respect users who request reduced motion — keep the page snappy but stop
+   any decorative loops (auth-page glows, shimmer skeletons, etc.). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
