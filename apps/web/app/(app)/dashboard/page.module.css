@@ -5,22 +5,23 @@
   animation: pageIn 0.2s ease both;
 }
 
-/* ── Greeting hero ───────────────────────────────────────────── */
+/* ── Greeting hero (GYM123 — flat dark with gold accent) ─────── */
 .greetHero {
   margin: 20px 20px 0;
   padding: 16px 18px 14px;
-  border-radius: 22px;
-  background: linear-gradient(135deg,
-              rgba(212, 168, 67, 0.12) 0%,
-              rgba(168, 85, 247, 0.08) 55%,
-              rgba(48, 209, 88, 0.10) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   position: relative;
   overflow: hidden;
   animation: heroIn 0.5s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+.greetHero::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+  pointer-events: none;
 }
 @keyframes heroIn {
   from { opacity: 0; transform: translateY(-8px); }
@@ -52,29 +53,30 @@
 }
 .streakChip {
   display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  padding: 7px 12px 7px 10px;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.18), rgba(234, 88, 12, 0.14));
-  border: 1px solid rgba(249, 115, 22, 0.38);
-  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.18);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-gold, rgba(212, 168, 67, 0.15));
   flex-shrink: 0;
 }
-.streakEmoji { font-size: 14px; line-height: 1; }
+.streakEmoji { display: none; }
 .streakNum {
-  font-size: 18px;
-  font-weight: 900;
-  color: rgba(180, 60, 10, 0.95);
-  letter-spacing: -0.3px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 .streakLbl {
-  font-size: 10px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
   font-weight: 700;
-  color: rgba(180, 60, 10, 0.75);
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1px;
 }
 
 /* ═══════════ DARK THEME — strict yellow/white/black ═══════════ */
@@ -86,12 +88,11 @@
 :global(html[data-theme="dark"]) .greetName { color: var(--text-primary); }
 
 :global(html[data-theme="dark"]) .streakChip {
-  background: rgba(212, 168, 67, 0.14);
-  border-color: rgba(212, 168, 67, 0.45);
-  box-shadow: 0 4px 14px rgba(212, 168, 67, 0.18);
+  background: var(--bg-elevated);
+  border-color: rgba(212, 168, 67, 0.18);
 }
-:global(html[data-theme="dark"]) .streakNum,
-:global(html[data-theme="dark"]) .streakLbl { color: var(--accent); }
+:global(html[data-theme="dark"]) .streakNum { color: var(--accent); }
+:global(html[data-theme="dark"]) .streakLbl { color: var(--text-tertiary); }
 
 :global(html[data-theme="dark"]) .medalRow {
   background: rgba(255, 255, 255, 0.05);
