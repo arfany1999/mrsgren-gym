@@ -88,5 +88,5 @@
 }
 :global(html[data-theme="dark"]) .offline .dot {
   background: var(--accent);
-  box-shadow: 0 0 6px rgba(252, 211, 77, 0.6);
+  box-shadow: 0 0 6px rgba(212, 168, 67, 0.6);
 }

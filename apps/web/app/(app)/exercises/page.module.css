@@ -155,7 +155,7 @@
 .subChipActive {
   background: var(--accent-dim);
   color: var(--accent);
-  border-color: rgba(74, 110, 245, 0.32);
+  border-color: rgba(212, 168, 67, 0.32);
 }
 
 /* ── Count ───────────────────────────────────────────────────── */

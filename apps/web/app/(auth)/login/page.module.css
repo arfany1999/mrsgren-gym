@@ -8,7 +8,7 @@
   overflow: hidden;
   background:
     radial-gradient(900px 500px at 50% -10%, var(--accent-dim), transparent 60%),
-    radial-gradient(700px 500px at 100% 110%, rgba(74, 110, 245, 0.06), transparent 60%),
+    radial-gradient(700px 500px at 100% 110%, rgba(212, 168, 67, 0.06), transparent 60%),
     var(--bg-primary);
 }
 
@@ -35,7 +35,7 @@
   height: 280px;
   bottom: -60px;
   right: -60px;
-  background: radial-gradient(closest-side, rgba(74, 110, 245, 0.18), transparent 70%);
+  background: radial-gradient(closest-side, rgba(212, 168, 67, 0.18), transparent 70%);
   animation: glow-drift 11s ease-in-out -3s infinite alternate;
 }
 @keyframes glow-drift {
