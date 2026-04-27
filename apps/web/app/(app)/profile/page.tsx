@@ -8,6 +8,8 @@ import Image from "next/image";
 import { formatDateFull } from "@/lib/formatters";
 import { getReports, type WorkoutReportEntry } from "@/lib/gymProfile";
 import { TROPHIES, getTrophyProgress, nextTierLabel } from "@/lib/trophies";
+import { fetchStreakStats } from "@/lib/streakStats";
+import { TierProgression } from "@/components/profile/TierProgression/TierProgression";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
 import { useTheme } from "@/contexts/ThemeContext";
 import styles from "./page.module.css";
@@ -233,10 +235,19 @@ export default function ProfilePage() {
     setTotalVolumeKg(volSum);
     setTotalDurationMin(durMin);
 
-    const stats = computeDayStats(rows.map(r => r.started_at));
-    setWorkoutDays(stats.days);
-    setCurrentStreak(stats.currentStreak);
-    setLongestStreak(stats.longestStreak);
+    // Prefer the SQL RPC (step 5) so the client doesn't have to dedupe in JS;
+    // fall back to local compute if the migration hasn't been applied yet.
+    const remote = await fetchStreakStats(supabase);
+    if (remote) {
+      setWorkoutDays(remote.workoutDays);
+      setCurrentStreak(remote.currentStreak);
+      setLongestStreak(remote.longestStreak);
+    } else {
+      const stats = computeDayStats(rows.map(r => r.started_at));
+      setWorkoutDays(stats.days);
+      setCurrentStreak(stats.currentStreak);
+      setLongestStreak(stats.longestStreak);
+    }
   }, [supabase]);
 
   useEffect(() => {
@@ -596,6 +607,9 @@ export default function ProfilePage() {
           History
         </button>
       </section>
+
+      {/* ── Tier progression hero card (prototype design) ── */}
+      <TierProgression currentDay={workoutDays} />
 
       {/* ── Today / Latest Training Report banner ── */}
       {(() => {

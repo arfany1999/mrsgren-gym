@@ -521,8 +521,8 @@
 }
 .hTrainingBadge {
   display: inline-block;
-  background: rgba(252, 211, 77, 0.12);
-  border: 1px solid rgba(252, 211, 77, 0.3);
+  background: rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(212, 168, 67, 0.3);
   border-radius: 10px; padding: 2px 8px;
   font-size: 11px; font-weight: 800;
   color: rgba(180, 130, 10, 0.95); letter-spacing: 0.3px;
@@ -969,7 +969,7 @@
 }
 .modalInput:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(74, 110, 245, 0.14);
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.14);
 }
 .modalError {
   font-size: 13px;
@@ -1000,10 +1000,10 @@
 }
 .modalCancel:hover:not(:disabled) { background: rgba(255, 255, 255, 0.6); }
 .modalSave {
-  background: rgba(74, 110, 245, 0.9);
-  border: 1px solid rgba(74, 110, 245, 0.5);
+  background: rgba(212, 168, 67, 0.9);
+  border: 1px solid rgba(212, 168, 67, 0.5);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(74, 110, 245, 0.28), inset 0 1px 0 rgba(255,255,255,0.22);
+  box-shadow: 0 4px 14px rgba(212, 168, 67, 0.28), inset 0 1px 0 rgba(255,255,255,0.22);
 }
 .modalSave:hover:not(:disabled) { opacity: 0.94; }
 .modalSave:disabled,
@@ -1041,7 +1041,7 @@
 }
 :global(html[data-theme="dark"]) .reportBanner::before {
   background: linear-gradient(135deg,
-              rgba(252, 211, 77, 0.08) 0%,
+              rgba(212, 168, 67, 0.08) 0%,
               rgba(255, 255, 255, 0.02) 100%) !important;
 }
 :global(html[data-theme="dark"]) .reportShareBtn {
@@ -1055,8 +1055,8 @@
 
 /* Medal strip inside banner: green-tinted background → yellow-tinted */
 :global(html[data-theme="dark"]) .medalStrip {
-  background: rgba(252, 211, 77, 0.08) !important;
-  border-color: rgba(252, 211, 77, 0.28) !important;
+  background: rgba(212, 168, 67, 0.08) !important;
+  border-color: rgba(212, 168, 67, 0.28) !important;
 }
 :global(html[data-theme="dark"]) .medalStripBarFill {
   background: var(--accent) !important;
@@ -1072,11 +1072,11 @@
 /* Dot grid pulse dot was light green */
 :global(html[data-theme="dark"]) .dotEdge {
   background: var(--accent) !important;
-  box-shadow: 0 0 6px rgba(252, 211, 77, 0.7) !important;
+  box-shadow: 0 0 6px rgba(212, 168, 67, 0.7) !important;
 }
 :global(html[data-theme="dark"]) .dotFilled {
   background: var(--accent) !important;
-  box-shadow: 0 0 4px rgba(252, 211, 77, 0.4) !important;
+  box-shadow: 0 0 4px rgba(212, 168, 67, 0.4) !important;
 }
 
 /* Chart bars default purple → white-tinted */
@@ -1095,23 +1095,23 @@
 /* Tier highlight (was green border for "next" trophy) */
 :global(html[data-theme="dark"]) .trophyNext {
   border-color: var(--accent) !important;
-  box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(252, 211, 77, 0.25) !important;
+  box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(212, 168, 67, 0.25) !important;
 }
 :global(html[data-theme="dark"]) .trophyRemaining {
   color: var(--accent);
-  background: rgba(252, 211, 77, 0.14);
-  border-color: rgba(252, 211, 77, 0.5);
+  background: rgba(212, 168, 67, 0.14);
+  border-color: rgba(212, 168, 67, 0.5);
 }
 
 /* History card tier chip (was green) */
 :global(html[data-theme="dark"]) .hTierChip {
-  background: rgba(252, 211, 77, 0.12);
-  border-color: rgba(252, 211, 77, 0.4);
+  background: rgba(212, 168, 67, 0.12);
+  border-color: rgba(212, 168, 67, 0.4);
   color: var(--accent);
 }
 :global(html[data-theme="dark"]) .hDayBadge {
-  background: rgba(252, 211, 77, 0.12);
-  border-color: rgba(252, 211, 77, 0.3);
+  background: rgba(212, 168, 67, 0.12);
+  border-color: rgba(212, 168, 67, 0.3);
   color: var(--accent);
 }
 :global(html[data-theme="dark"]) .hTrainingBadge {
@@ -1140,7 +1140,7 @@
   background: var(--accent) !important;
   color: #000 !important;
   border-color: var(--accent) !important;
-  box-shadow: 0 4px 14px rgba(252, 211, 77, 0.28), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  box-shadow: 0 4px 14px rgba(212, 168, 67, 0.28), inset 0 1px 0 rgba(255,255,255,0.15) !important;
 }
 
 /* Toast */
