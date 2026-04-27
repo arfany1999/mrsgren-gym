@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ActiveExercise } from "@/contexts/WorkoutContext";
 import { estimateCalories, saveReport, type WorkoutReportExercise } from "@/lib/gymProfile";
+import { getTrophyProgress } from "@/lib/trophies";
 import styles from "./WorkoutReport.module.css";
 
 interface WorkoutReportProps {
@@ -19,188 +20,138 @@ interface WorkoutReportProps {
   onDone: (id: string) => void;
 }
 
-function calcVolume(exercises: ActiveExercise[]): number {
-  return exercises.reduce((sum, e) =>
-    sum + e.sets.filter(s => s.isSaved).reduce((v, s) =>
-      v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0), 0);
+const GOLD = "#D4A843";
+const GOLD_LIGHT = "#E8C56D";
+const COPPER = "#CD7F32";
+
+function fmtHMS(totalSeconds: number): string {
+  const safe = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const s = safe % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
-// Custom artwork shown behind the report hero. One is picked at random per
-// report so the celebration screen feels fresh after every workout. Files
-// live under /public/banners — see public/banners/.
-//
-// Each banner has its own printed form ("NAME / DATE / CLASS / SUBJECT") and
-// the field positions differ per layout. We overlay our actual workout data
-// directly onto those blank lines via per-banner % coordinates so the report
-// reads as the printed certificate filled in.
-// The on-screen certificate is rendered as a 9:16 portrait card so it fills
-// the phone viewport like a story screen. Source artwork is landscape, so
-// we cover-crop it (object-fit: cover) and pin object-position-x per banner
-// to the column where that banner's printed form sits — that's the slice
-// of artwork that survives the crop.
-const TARGET_RATIO = 9 / 16; // 0.5625
+function calcVolume(exercises: ActiveExercise[]): number {
+  return exercises.reduce(
+    (sum, e) =>
+      sum +
+      e.sets
+        .filter((s) => s.isSaved)
+        .reduce((v, s) => v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0),
+    0,
+  );
+}
 
-type FieldRect = { top: number; left: number; width: number };
+function ParticlesCanvas({ color }: { color: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-type BannerSpec = {
-  src: string;
-  /** Width / height of the source image — used by the share canvas (still landscape). */
-  ratio: number;
-  /** Image x% to center horizontally inside the 9:16 frame (object-position-x). */
-  objectPosX: number;
-  /** Field positions in % of the source image dimensions. Container coords
-   *  are derived at render time via coverFieldStyle(). */
-  fields: {
-    name:    FieldRect;
-    date:    FieldRect;
-    class:   FieldRect;
-    subject: FieldRect;
-  };
-  /** Overlay font size is set by aspect-aware multiplier on container width. */
-  fontVw: number;
-};
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-const REPORT_BANNERS: BannerSpec[] = [
-  // banner-1 — landscape (1536x1024). Form clusters around x≈41.5% of image,
-  // so that's our crop center; the form mostly survives the 9:16 crop.
-  {
-    src: "/banners/report-1.jpg",
-    ratio: 1536 / 1024,
-    fontVw: 4.0,
-    objectPosX: 41.5,
-    fields: {
-      name:    { top: 39.6, left: 25.5, width: 32.0 },
-      date:    { top: 47.5, left: 25.5, width: 32.0 },
-      class:   { top: 55.2, left: 32.5, width: 25.0 },
-      subject: { top: 63.0, left: 28.5, width: 28.5 },
-    },
-  },
-  // banner-2 — ultrawide 2-col (1536x350). Centering on the left column
-  // (name+date) — class/subject's right column is unavoidably cropped.
-  {
-    src: "/banners/report-2.jpg",
-    ratio: 1536 / 350,
-    fontVw: 2.6,
-    objectPosX: 42.5,
-    fields: {
-      name:    { top: 47.0, left: 33.0, width: 19.0 },
-      date:    { top: 65.0, left: 33.0, width: 19.0 },
-      class:   { top: 47.0, left: 67.5, width: 21.0 },
-      subject: { top: 65.0, left: 60.0, width: 28.5 },
-    },
-  },
-  // banner-3 — ultrawide form-on-the-right (1536x305). Form spans 39.5–89.5%;
-  // crop centers on its midpoint so the whole form rides into view.
-  {
-    src: "/banners/report-3.jpg",
-    ratio: 1536 / 305,
-    fontVw: 2.6,
-    objectPosX: 64.5,
-    fields: {
-      name:    { top: 23.0, left: 39.5, width: 50.0 },
-      date:    { top: 38.5, left: 39.5, width: 50.0 },
-      class:   { top: 53.5, left: 49.5, width: 40.0 },
-      subject: { top: 68.5, left: 44.0, width: 45.5 },
-    },
-  },
-  // banner-4 — ultrawide 2-col with hand-drawn icons (1536x272). Same
-  // tradeoff as banner-2 — left column gets the crop.
-  {
-    src: "/banners/report-4.jpg",
-    ratio: 1536 / 272,
-    fontVw: 2.2,
-    objectPosX: 48,
-    fields: {
-      name:    { top: 47.0, left: 35.0, width: 26.0 },
-      date:    { top: 65.0, left: 33.0, width: 28.0 },
-      class:   { top: 47.0, left: 75.5, width: 17.0 },
-      subject: { top: 65.0, left: 67.0, width: 23.5 },
-    },
-  },
-];
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const setSize = () => {
+      canvas.width = canvas.offsetWidth * dpr;
+      canvas.height = canvas.offsetHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    setSize();
 
-/** Maps a field's image-relative %-coordinates into 9:16 container
- *  coordinates after object-fit:cover with object-position-x = objectPosX%.
- *
- *  Cover into a portrait frame from a landscape image: the image scales to
- *  cover the container *height* (vertical fully visible → top% unchanged),
- *  and overflows horizontally. The horizontal scale factor is
- *  ratio_image / ratio_target. The image x = objectPosX% lands at container
- *  x = 50%; every other image x maps linearly from there.
- */
-function coverFieldStyle(banner: BannerSpec, key: keyof BannerSpec["fields"]): React.CSSProperties {
-  const f = banner.fields[key];
-  const horizScale = banner.ratio / TARGET_RATIO;
-  return {
-    top:   `${f.top}%`,
-    left:  `${50 + (f.left - banner.objectPosX) * horizScale}%`,
-    width: `${f.width * horizScale}%`,
-  };
+    const W = () => canvas.offsetWidth;
+    const H = () => canvas.offsetHeight;
+    const particles = Array.from({ length: 55 }, () => ({
+      x: Math.random() * W(),
+      y: Math.random() * H(),
+      s: 0.4 + Math.random() * 1.4,
+      vx: (Math.random() - 0.5) * 0.12,
+      vy: -0.08 - Math.random() * 0.25,
+      o: 0.04 + Math.random() * 0.14,
+      ph: Math.random() * Math.PI * 2,
+    }));
+
+    let frame = 0;
+    const draw = () => {
+      ctx.clearRect(0, 0, W(), H());
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.ph += 0.008;
+        if (p.y < -4) {
+          p.y = H() + 4;
+          p.x = Math.random() * W();
+        }
+        ctx.globalAlpha = p.o * (0.35 + 0.65 * Math.sin(p.ph));
+        ctx.fillStyle = color;
+        ctx.fillRect(p.x, p.y, p.s, p.s);
+      });
+      frame = requestAnimationFrame(draw);
+    };
+    frame = requestAnimationFrame(draw);
+
+    const onResize = () => setSize();
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [color]);
+
+  return <canvas ref={canvasRef} className={styles.particles} aria-hidden />;
 }
 
 export function WorkoutReport({
-  title, exercises, durationMins, dayNumber, workoutDays, weightKg, userEmail, userName, workoutId, onDone,
+  title,
+  exercises,
+  durationMins,
+  dayNumber,
+  workoutDays,
+  weightKg,
+  userEmail,
+  userName,
+  workoutId,
+  onDone,
 }: WorkoutReportProps) {
-  // Pick a random banner once per mount. `useState` initialiser runs only on
-  // the first render, so the chosen banner is stable across re-renders for
-  // a given workout — switching out only when the user finishes a new one.
-  const [banner] = useState<BannerSpec>(
-    () => REPORT_BANNERS[Math.floor(Math.random() * REPORT_BANNERS.length)] ?? REPORT_BANNERS[0]!,
-  );
-
-  // Values that get written onto the banner's printed form fields.
-  const fillValues = useMemo(() => {
-    const fallbackName = userEmail ? userEmail.split("@")[0] : "ATHLETE";
-    const today = new Date();
-    const dateStr = today.toLocaleDateString(undefined, {
-      year: "numeric", month: "short", day: "numeric",
-    });
-    const sectionStr = `Workout #${dayNumber} · Day ${workoutDays}`;
-    return {
-      name:    (userName?.trim() || fallbackName || "ATHLETE").toUpperCase(),
-      date:    dateStr,
-      section: sectionStr,
-      subject: title?.trim() || "Free Workout",
-    };
-  }, [userName, userEmail, dayNumber, workoutDays, title]);
   const totalSets = useMemo(
-    () => exercises.reduce((sum, e) => sum + e.sets.filter(s => s.isSaved).length, 0),
-    [exercises]
+    () => exercises.reduce((sum, e) => sum + e.sets.filter((s) => s.isSaved).length, 0),
+    [exercises],
   );
 
   const exerciseRows = useMemo(() => {
-    const withSets = exercises.filter(ex => ex.sets.some(s => s.isSaved));
+    const withSets = exercises.filter((ex) => ex.sets.some((s) => s.isSaved));
     if (withSets.length === 0) return [];
 
-    return withSets.map(ex => {
-      const savedSets = ex.sets.filter(s => s.isSaved);
+    return withSets.map((ex) => {
+      const savedSets = ex.sets.filter((s) => s.isSaved);
       const isCardio = ex.measurementType === "cardio";
-      const isTimed  = ex.measurementType === "timed";
+      const isTimed = ex.measurementType === "timed";
 
       let mins: number;
       if (isCardio) {
         const tracked = savedSets.reduce((sum, s) => sum + (parseFloat(s.duration) || 0), 0);
-        mins = tracked > 0 ? tracked : (durationMins / withSets.length);
+        mins = tracked > 0 ? tracked : durationMins / withSets.length;
       } else if (isTimed) {
         mins = savedSets.reduce((sum, s) => sum + (parseInt(s.duration) || 30), 0) / 60;
       } else {
-        mins = totalSets > 0
-          ? (savedSets.length / totalSets) * durationMins
-          : durationMins / withSets.length;
+        mins = totalSets > 0 ? (savedSets.length / totalSets) * durationMins : durationMins / withSets.length;
       }
 
       const calories = estimateCalories(weightKg, Math.max(mins, 1), ex.name, isCardio);
 
       let setSummary = "";
       if (ex.measurementType === "weight_reps") {
-        setSummary = savedSets.map(s => `${s.weightKg || "—"}kg × ${s.reps || "—"}`).join(" · ");
+        setSummary = savedSets.map((s) => `${s.weightKg || "—"}kg × ${s.reps || "—"}`).join(" · ");
       } else if (ex.measurementType === "bodyweight_reps" || ex.measurementType === "reps_only") {
-        setSummary = savedSets.map(s => `${s.reps || "—"} reps`).join(" · ");
+        setSummary = savedSets.map((s) => `${s.reps || "—"} reps`).join(" · ");
       } else if (isTimed) {
-        setSummary = savedSets.map(s => `${s.duration || "—"}s`).join(" · ");
+        setSummary = savedSets.map((s) => `${s.duration || "—"}s`).join(" · ");
       } else if (isCardio) {
-        setSummary = savedSets.map(s =>
-          `${s.duration || "—"} min${s.distance ? ` / ${s.distance} km` : ""}`).join("  •  ");
+        setSummary = savedSets
+          .map((s) => `${s.duration || "—"} min${s.distance ? ` / ${s.distance} km` : ""}`)
+          .join(" • ");
       }
 
       return { ex, savedSets, calories, setSummary };
@@ -209,100 +160,267 @@ export function WorkoutReport({
 
   const totalCalories = useMemo(
     () => exerciseRows.reduce((sum, r) => sum + r.calories, 0),
-    [exerciseRows]
+    [exerciseRows],
   );
-
-  // `volume` is still used by saveReport() below as the total-volume
-  // ledger entry. `volumeStr` and `totalExs` were used by the old hero
-  // chips — those got removed when the report became the certificate.
+  const cardioMins = useMemo(
+    () =>
+      Math.round(
+        exerciseRows
+          .filter((r) => r.ex.measurementType === "cardio")
+          .reduce((sum, r) => sum + r.savedSets.reduce((s, set) => s + (parseFloat(set.duration) || 0), 0), 0),
+      ),
+    [exerciseRows],
+  );
   const volume = calcVolume(exercises);
+
+  const trophy = useMemo(() => getTrophyProgress(workoutDays), [workoutDays]);
+  const tier = trophy.nextTier ?? trophy.currentTier;
+  const tierLabel = (tier?.label ?? "Bronze").toUpperCase();
+  const tierImage = tier?.image ?? "/trophies/bronze.svg";
+  const segCurrent = trophy.currentTier ? Math.max(0, workoutDays - trophy.currentTier.threshold) : workoutDays;
+  const segTotal = trophy.nextTier
+    ? trophy.nextTier.threshold - (trophy.currentTier?.threshold ?? 0)
+    : Math.max(60, workoutDays);
+  const ringPct = Math.min(1, segTotal > 0 ? segCurrent / segTotal : 1);
+
+  const today = new Date();
+  const dayName = today.toLocaleDateString(undefined, { weekday: "long" }).toUpperCase();
+  const dateStr = today
+    .toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })
+    .toUpperCase();
+  const fallbackName = userEmail ? userEmail.split("@")[0] : "ATHLETE";
+  const displayName = (userName?.trim() || fallbackName || "ATHLETE").toUpperCase();
 
   const [sharing, setSharing] = useState(false);
 
-  // ── Generate share card ───────────────────────────────────────
-  // Match what the user just saw on screen: a 9:16 portrait card,
-  // banner cover-cropped with the same per-banner object-position-x,
-  // and fields laid out via the same coverFieldStyle math.
   const handleShare = useCallback(async () => {
     setSharing(true);
     try {
-      // 9:16 share card. 1080x1920 is the IG-story standard.
       const W = 1080;
       const H = 1920;
       const canvas = document.createElement("canvas");
       canvas.width = W;
       canvas.height = H;
-      const ctxOrNull = canvas.getContext("2d");
-      if (!ctxOrNull) return;
-      const ctx: CanvasRenderingContext2D = ctxOrNull;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-      // Banner artwork — cover-fit into the 9:16 canvas with the same
-      // object-position-x we use on screen, so the share matches the UI.
-      const bannerImg = await new Promise<HTMLImageElement | null>((resolve) => {
+      // Background — deep ink
+      ctx.fillStyle = "#050508";
+      ctx.fillRect(0, 0, W, H);
+
+      // Subtle radial vignette
+      const vignette = ctx.createRadialGradient(W / 2, H * 0.32, H * 0.05, W / 2, H * 0.32, H * 0.7);
+      vignette.addColorStop(0, "rgba(212, 168, 67, 0.08)");
+      vignette.addColorStop(1, "rgba(8, 8, 14, 0)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, W, H);
+
+      // Top + bottom gold edge accents
+      const edgeGrad = (y: number) => {
+        const g = ctx.createLinearGradient(W * 0.12, y, W * 0.88, y);
+        g.addColorStop(0, "rgba(212, 168, 67, 0)");
+        g.addColorStop(0.3, "rgba(232, 197, 109, 0.5)");
+        g.addColorStop(0.5, "rgba(212, 168, 67, 0.85)");
+        g.addColorStop(0.7, "rgba(232, 197, 109, 0.5)");
+        g.addColorStop(1, "rgba(212, 168, 67, 0)");
+        return g;
+      };
+      ctx.fillStyle = edgeGrad(2);
+      ctx.fillRect(W * 0.12, 0, W * 0.76, 2);
+      ctx.fillStyle = edgeGrad(H - 2);
+      ctx.fillRect(W * 0.12, H - 2, W * 0.76, 2);
+
+      // Corner brackets
+      const cb = 36;
+      const cbo = 64;
+      ctx.strokeStyle = "rgba(212, 168, 67, 0.35)";
+      ctx.lineWidth = 2;
+      const drawCorner = (x: number, y: number, dx: number, dy: number) => {
+        ctx.beginPath();
+        ctx.moveTo(x + dx * cb, y);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x, y + dy * cb);
+        ctx.stroke();
+      };
+      drawCorner(cbo, cbo, 1, 1);
+      drawCorner(W - cbo, cbo, -1, 1);
+      drawCorner(cbo, H - cbo, 1, -1);
+      drawCorner(W - cbo, H - cbo, -1, -1);
+
+      // Header — site + date
+      ctx.font = "300 26px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#1A1A24";
+      ctx.textAlign = "left";
+      ctx.fillText("GYM.MRGREN.STORE", W * 0.075, H * 0.07);
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#1E1E28";
+      ctx.fillText(dayName, W * 0.925, H * 0.06);
+      ctx.fillStyle = "#14141A";
+      ctx.fillText(dateStr, W * 0.925, H * 0.087);
+
+      // "WORKOUT COMPLETE" kicker
+      ctx.font = "400 22px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#22222E";
+      ctx.textAlign = "center";
+      ctx.fillText("W O R K O U T   C O M P L E T E", W / 2, H * 0.18);
+
+      // Display name
+      ctx.font = "300 64px 'Cormorant Garamond', serif";
+      ctx.fillStyle = "#C8C8D0";
+      ctx.fillText(displayName, W / 2, H * 0.235);
+
+      // Hero divider line
+      const divY = H * 0.27;
+      const divGrad = ctx.createLinearGradient(W * 0.25, divY, W * 0.75, divY);
+      divGrad.addColorStop(0, "rgba(212,168,67,0)");
+      divGrad.addColorStop(0.5, "rgba(232,197,109,0.9)");
+      divGrad.addColorStop(1, "rgba(212,168,67,0)");
+      ctx.fillStyle = divGrad;
+      ctx.fillRect(W * 0.25, divY - 1, W * 0.5, 2);
+
+      // Big duration HH:MM:SS
+      const durationText = fmtHMS(Math.round(durationMins * 60));
+      ctx.font = "300 168px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#EAEAF0";
+      ctx.fillText(durationText, W / 2, H * 0.38);
+      ctx.font = "700 22px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#404050";
+      ctx.fillText("D U R A T I O N", W / 2, H * 0.42);
+
+      // Stats row
+      const stats = [
+        { label: "VOLUME", value: Math.round(volume).toLocaleString(), unit: "KG" },
+        { label: "EXERCISES", value: String(exerciseRows.length), unit: "" },
+        { label: "CARDIO", value: String(cardioMins), unit: cardioMins > 0 ? "MIN" : "" },
+      ];
+      const statsTop = H * 0.48;
+      const statsGap = W / 3;
+      ctx.strokeStyle = "rgba(255,255,255,0.04)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.075, statsTop);
+      ctx.lineTo(W * 0.925, statsTop);
+      ctx.moveTo(W * 0.075, statsTop + 170);
+      ctx.lineTo(W * 0.925, statsTop + 170);
+      ctx.stroke();
+      stats.forEach((s, i) => {
+        const cx = statsGap * i + statsGap / 2;
+        ctx.font = "400 18px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#404050";
+        ctx.fillText(s.label, cx, statsTop + 38);
+        ctx.font = "300 60px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#C8C8D4";
+        ctx.fillText(s.value, cx, statsTop + 110);
+        if (s.unit) {
+          ctx.font = "400 18px 'JetBrains Mono', monospace";
+          ctx.fillStyle = "#404050";
+          ctx.fillText(s.unit, cx, statsTop + 145);
+        }
+      });
+
+      // Session summary
+      const sumTop = H * 0.62;
+      ctx.font = "400 22px 'JetBrains Mono', monospace";
+      ctx.fillStyle = GOLD;
+      ctx.textAlign = "left";
+      ctx.fillText("SESSION SUMMARY", W * 0.075, sumTop);
+      ctx.strokeStyle = "rgba(212,168,67,0.18)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.075, sumTop + 22);
+      ctx.lineTo(W * 0.925, sumTop + 22);
+      ctx.moveTo(W * 0.075, sumTop + 232);
+      ctx.lineTo(W * 0.925, sumTop + 232);
+      ctx.stroke();
+      const sumStats = [
+        { value: String(exerciseRows.length), unit: "", label: "EXERCISES DONE" },
+        { value: Math.round(volume).toLocaleString(), unit: "KG", label: "TOTAL VOLUME" },
+        { value: totalCalories.toLocaleString(), unit: "KCAL", label: "CALORIES BURNED" },
+      ];
+      ctx.textAlign = "center";
+      sumStats.forEach((s, i) => {
+        const cx = statsGap * i + statsGap / 2;
+        ctx.font = "300 80px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#D0D0DC";
+        ctx.fillText(s.value, cx, sumTop + 130);
+        if (s.unit) {
+          ctx.font = "400 18px 'JetBrains Mono', monospace";
+          ctx.fillStyle = "#404050";
+          ctx.fillText(s.unit, cx, sumTop + 165);
+        }
+        ctx.font = "400 18px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#404050";
+        ctx.fillText(s.label, cx, sumTop + 210);
+      });
+
+      // Tier ring + label (bottom)
+      const tierTop = H * 0.84;
+      ctx.font = "300 100px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#D0D0DC";
+      ctx.textAlign = "center";
+      ctx.fillText(String(workoutDays), W * 0.18, tierTop + 30);
+      ctx.font = "400 18px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#303040";
+      ctx.fillText("TRAINING DAYS", W * 0.18, tierTop + 70);
+
+      // Center ring
+      const ringCx = W / 2;
+      const ringCy = tierTop + 30;
+      const ringR = 110;
+      ctx.beginPath();
+      ctx.arc(ringCx, ringCy, ringR, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,255,0.04)";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(ringCx, ringCy, ringR, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ringPct);
+      ctx.strokeStyle = GOLD;
+      ctx.lineWidth = 5;
+      ctx.lineCap = "butt";
+      ctx.stroke();
+
+      // Right tier info
+      ctx.font = "700 26px 'JetBrains Mono', monospace";
+      ctx.fillStyle = GOLD;
+      ctx.fillText(tierLabel, W * 0.82, tierTop + 10);
+      ctx.font = "400 18px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#4A4A5A";
+      ctx.fillText(`${segCurrent}/${segTotal}d`, W * 0.82, tierTop + 42);
+      if (trophy.nextTier && trophy.daysRemaining > 0) {
+        ctx.font = "700 18px 'JetBrains Mono', monospace";
+        ctx.fillStyle = GOLD_LIGHT;
+        ctx.fillText(`${trophy.daysRemaining}d → ${trophy.nextTier.label.toUpperCase()}`, W * 0.82, tierTop + 75);
+      }
+
+      // Trophy image overlay (load + draw, blocking — best effort)
+      await new Promise<void>((resolve) => {
         const img = new window.Image();
         img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = banner.src;
+        img.onload = () => {
+          const size = 132;
+          ctx.drawImage(img, ringCx - size / 2, ringCy - size / 2, size, size);
+          resolve();
+        };
+        img.onerror = () => resolve();
+        img.src = tierImage;
       });
-      if (bannerImg) {
-        const iw = bannerImg.naturalWidth;
-        const ih = bannerImg.naturalHeight;
-        // Cover scale = max(W/iw, H/ih). Source is landscape into portrait,
-        // so scale_y dominates → image fills H, overflows W.
-        const scale = Math.max(W / iw, H / ih);
-        const drawW = iw * scale;
-        const drawH = ih * scale;
-        // Anchor on object-position-x: source x = objectPosX% lands at canvas x = 50%.
-        const drawX = W / 2 - (banner.objectPosX / 100) * drawW;
-        const drawY = (H - drawH) / 2;
-        ctx.drawImage(bannerImg, drawX, drawY, drawW, drawH);
-      } else {
-        ctx.fillStyle = "#1a0a2e";
-        ctx.fillRect(0, 0, W, H);
-      }
 
-      // Paint each field at its container-relative position (same math as
-      // coverFieldStyle, but in pixels).
-      const horizScale = banner.ratio / TARGET_RATIO;
-      function paintField(value: string, top: number, left: number, width: number, sizePx: number) {
-        const containerLeftPct = 50 + (left - banner.objectPosX) * horizScale;
-        const containerWidthPct = width * horizScale;
-        const x = (containerLeftPct / 100) * W;
-        const y = (top / 100) * H;
-        const wMax = (containerWidthPct / 100) * W;
-        ctx.save();
-        ctx.font = `800 ${sizePx}px "Bebas Neue", "Anton", "Oswald", -apple-system, BlinkMacSystemFont, sans-serif`;
-        ctx.fillStyle = "#ffd98a";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "alphabetic";
-        ctx.shadowColor = "rgba(0,0,0,0.6)";
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetY = 1;
-        let txt = value.toUpperCase();
-        while (ctx.measureText(txt).width > wMax && txt.length > 3) txt = txt.slice(0, -2) + "…";
-        // Sit just above the underline (matches translateY(-100%) in CSS).
-        ctx.fillText(txt, x, y - sizePx * 0.12);
-        ctx.restore();
-      }
-
-      // 9:16 → ~5% of height per em looks balanced with the on-screen card.
-      const fieldFont = Math.round(H * 0.05);
-      paintField(fillValues.name,    banner.fields.name.top,    banner.fields.name.left,    banner.fields.name.width,    fieldFont);
-      paintField(fillValues.date,    banner.fields.date.top,    banner.fields.date.left,    banner.fields.date.width,    fieldFont);
-      paintField(fillValues.section, banner.fields.class.top,   banner.fields.class.left,   banner.fields.class.width,   Math.round(fieldFont * 0.85));
-      paintField(fillValues.subject, banner.fields.subject.top, banner.fields.subject.left, banner.fields.subject.width, fieldFont);
-
-      // ── Share or download ─────────────────────────────────────
       canvas.toBlob(async (blob) => {
         if (!blob) return;
         const file = new File([blob], "workout.png", { type: "image/png" });
-        if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `${fillValues.subject} · Workout #${dayNumber}`,
-            text: `${fillValues.subject} — ${totalSets} sets`,
-          });
+        if (
+          typeof navigator.canShare === "function" &&
+          navigator.canShare({ files: [file] })
+        ) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `${title} · Workout #${dayNumber}`,
+              text: `${title} — ${totalSets} sets · ${Math.round(volume).toLocaleString()} kg`,
+            });
+          } catch {
+            /* user cancelled */
+          }
         } else {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -317,28 +435,47 @@ export function WorkoutReport({
     } finally {
       setSharing(false);
     }
-  }, [banner, fillValues, dayNumber, totalSets]);
+  }, [
+    cardioMins,
+    dateStr,
+    dayName,
+    dayNumber,
+    displayName,
+    durationMins,
+    exerciseRows.length,
+    ringPct,
+    segCurrent,
+    segTotal,
+    tierImage,
+    tierLabel,
+    title,
+    totalCalories,
+    totalSets,
+    trophy.daysRemaining,
+    trophy.nextTier,
+    volume,
+    workoutDays,
+  ]);
 
-  // ── Save report & navigate ───────────────────────────────────
   function handleDone() {
     if (userEmail) {
-      const exerciseEntries: WorkoutReportExercise[] = exerciseRows.map(r => ({
-        name:       r.ex.name,
-        sets:       r.savedSets.length,
-        calories:   r.calories,
+      const exerciseEntries: WorkoutReportExercise[] = exerciseRows.map((r) => ({
+        name: r.ex.name,
+        sets: r.savedSets.length,
+        calories: r.calories,
         setSummary: r.setSummary,
       }));
       saveReport(userEmail, {
-        id:            workoutId,
-        date:          new Date().toISOString(),
+        id: workoutId,
+        date: new Date().toISOString(),
         title,
         durationMins,
         totalCalories,
         dayNumber,
-        trainingDay:   workoutDays,
+        trainingDay: workoutDays,
         totalSets,
-        totalVolume:   volume,
-        exercises:     exerciseEntries,
+        totalVolume: volume,
+        exercises: exerciseEntries,
       });
     }
     onDone(workoutId);
@@ -346,112 +483,229 @@ export function WorkoutReport({
 
   return (
     <div className={styles.overlay}>
+      <div className={styles.card}>
+        <ParticlesCanvas color={COPPER} />
 
-      {/* ═══════════════════ HERO ═══════════════════ */}
-      <div className={styles.hero}>
-        <div className={styles.orb1} />
-        <div className={styles.orb2} />
-        <div className={styles.orb3} />
-
-        {/* Full-bleed banner ("certificate") sits flush at the top of the
-            report so it reads as the workout's printed report card. Field
-            text is positioned over the banner's dotted lines via per-banner
-            % coords (BannerSpec.fields above). */}
-        <div
-          className={styles.certificate}
-          style={{
-            aspectRatio: `${TARGET_RATIO}`,
-            ["--cert-font-vw" as string]: `${banner.fontVw}vw`,
-            ["--cert-obj-pos-x" as string]: `${banner.objectPosX}%`,
-          }}
-        >
-          <Image
-            src={banner.src}
-            alt="Workout certificate"
-            fill
-            priority
-            sizes="100vw"
-            className={styles.certImg}
-          />
-          <span className={styles.certField} style={coverFieldStyle(banner, "name")}>
-            {fillValues.name}
-          </span>
-          <span className={styles.certField} style={coverFieldStyle(banner, "date")}>
-            {fillValues.date}
-          </span>
-          <span className={styles.certField} style={coverFieldStyle(banner, "class")}>
-            {fillValues.section}
-          </span>
-          <span className={styles.certField} style={coverFieldStyle(banner, "subject")}>
-            {fillValues.subject}
-          </span>
+        {/* Rotating ray field */}
+        <div className={styles.rays} aria-hidden>
+          {Array.from({ length: 24 }).map((_, i) => (
+            <div key={i} className={styles.ray} style={{ transform: `translateX(-50%) rotate(${i * 15}deg)` }} />
+          ))}
         </div>
 
+        {/* Top + bottom edge accents */}
+        <div className={`${styles.edge} ${styles.edgeTop}`} />
+        <div className={`${styles.edge} ${styles.edgeBottom}`} />
+
+        {/* Corner brackets */}
+        <div className={`${styles.corner} ${styles.cornerTL}`} />
+        <div className={`${styles.corner} ${styles.cornerTR}`} />
+        <div className={`${styles.corner} ${styles.cornerBL}`} />
+        <div className={`${styles.corner} ${styles.cornerBR}`} />
+
+        <div className={styles.cardContent}>
+          {/* Header */}
+          <div className={styles.headerRow}>
+            <p className={styles.headerKicker}>GYM.MRGREN.STORE</p>
+            <div className={styles.headerRight}>
+              <p className={styles.headerDay}>{dayName}</p>
+              <p className={styles.headerDate}>{dateStr}</p>
+            </div>
+          </div>
+
+          {/* Hero zone */}
+          <div className={styles.heroZone}>
+            <p className={styles.heroKicker}>WORKOUT COMPLETE</p>
+            <div className={styles.heroNameRow}>
+              <div className={styles.heroTrophyWrap}>
+                <Image
+                  src={tierImage}
+                  alt={tierLabel}
+                  width={44}
+                  height={44}
+                  className={styles.heroTrophy}
+                  unoptimized
+                />
+              </div>
+              <h1 className={styles.heroName}>{displayName}</h1>
+            </div>
+            <div className={styles.heroDivider}>
+              <span className={styles.dividerSide} />
+              <span className={styles.dividerCenter} />
+              <span className={styles.dividerSide} />
+            </div>
+            <div className={styles.duration}>{fmtHMS(Math.round(durationMins * 60))}</div>
+            <p className={styles.durationLabel}>D U R A T I O N</p>
+
+            <div className={styles.statsRow}>
+              <div className={styles.statCol}>
+                <p className={styles.statLabel}>VOLUME</p>
+                <p className={styles.statValue}>{Math.round(volume).toLocaleString()}</p>
+                <p className={styles.statUnit}>KG</p>
+              </div>
+              <div className={styles.statCol}>
+                <p className={styles.statLabel}>EXERCISES</p>
+                <p className={styles.statValue}>{exerciseRows.length}</p>
+                <p className={styles.statUnitGhost}>·</p>
+              </div>
+              <div className={styles.statCol}>
+                <p className={styles.statLabel}>CARDIO</p>
+                <p className={styles.statValue}>{cardioMins}</p>
+                {cardioMins > 0 ? (
+                  <p className={styles.statUnit}>MIN</p>
+                ) : (
+                  <p className={styles.statUnitGhost}>·</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Session summary */}
+          <div className={styles.session}>
+            <div className={styles.sessionHead}>
+              <span className={styles.sessionBar} />
+              <p className={styles.sessionTitle}>SESSION SUMMARY</p>
+            </div>
+            <div className={styles.sessionRow}>
+              <div className={styles.sessionCol}>
+                <p className={styles.sessionVal}>{exerciseRows.length}</p>
+                <p className={styles.sessionLbl}>EXERCISES DONE</p>
+              </div>
+              <div className={styles.sessionCol}>
+                <p className={styles.sessionVal}>{Math.round(volume).toLocaleString()}</p>
+                <p className={styles.sessionUnit}>KG</p>
+                <p className={styles.sessionLbl}>TOTAL VOLUME</p>
+              </div>
+              <div className={styles.sessionCol}>
+                <p className={styles.sessionVal}>{totalCalories.toLocaleString()}</p>
+                <p className={styles.sessionUnit}>KCAL</p>
+                <p className={styles.sessionLbl}>CALORIES BURNED</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tier + streak */}
+          <div className={styles.tierRow}>
+            <div className={styles.streakCol}>
+              <span className={styles.streakNum}>{workoutDays}</span>
+              <span className={styles.streakLbl}>
+                TRAINING
+                <br />
+                DAYS
+              </span>
+            </div>
+            <div className={styles.tierRing}>
+              <svg width="120" height="120" viewBox="0 0 120 120" className={styles.tierRingSvg} aria-hidden>
+                <circle cx="60" cy="60" r="51" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="2.5" />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="51"
+                  fill="none"
+                  stroke={GOLD}
+                  strokeWidth="2.5"
+                  strokeDasharray={`${2 * Math.PI * 51 * ringPct} ${2 * Math.PI * 51}`}
+                  strokeLinecap="butt"
+                  transform="rotate(-90 60 60)"
+                  style={{ filter: `drop-shadow(0 0 4px ${GOLD}80)` }}
+                />
+                <line x1="60" y1="9" x2="60" y2="15" stroke={GOLD} strokeWidth="1.5" opacity="0.5" />
+              </svg>
+              <Image
+                src={tierImage}
+                alt={tierLabel}
+                width={62}
+                height={62}
+                className={styles.tierRingTrophy}
+                unoptimized
+              />
+            </div>
+            <div className={styles.tierInfo}>
+              <span className={styles.tierName}>{tierLabel}</span>
+              <span className={styles.tierProgress}>
+                {segCurrent}/{segTotal}d
+              </span>
+              {trophy.nextTier && trophy.daysRemaining > 0 && (
+                <span className={styles.tierNext}>
+                  {trophy.daysRemaining}d → {trophy.nextTier.label.toUpperCase()}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* ═══════════════════ BREAKDOWN ═══════════════════ */}
+      {/* Calorie breakdown */}
       <div className={styles.breakdown}>
-        <div className={styles.bdRow}>
-          <h2 className={styles.bdTitle}>Calorie Breakdown</h2>
-          <span className={styles.bdNote}>est. ±20–30%</span>
+        <div className={styles.bdHead}>
+          <span className={styles.bdBar} />
+          <p className={styles.bdTitle}>CALORIE BREAKDOWN</p>
+          <span className={styles.bdNote}>EST. ±20–30%</span>
         </div>
-
-        <div className={styles.exList}>
+        <div className={styles.bdList}>
           {exerciseRows.map(({ ex, savedSets, calories, setSummary }) => {
-            const initials = ex.name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
+            const initials = ex.name
+              .split(" ")
+              .slice(0, 2)
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase();
             return (
-              <div key={ex.weId} className={styles.exCard}>
-                <div className={styles.exAvatar}>{initials}</div>
-                <div className={styles.exInfo}>
-                  <p className={styles.exName}>{ex.name}</p>
-                  <p className={styles.exMeta}>
+              <div key={ex.weId} className={styles.bdRow}>
+                <div className={styles.bdAvatar}>{initials}</div>
+                <div className={styles.bdInfo}>
+                  <p className={styles.bdName}>{ex.name}</p>
+                  <p className={styles.bdMeta}>
                     {savedSets.length} set{savedSets.length !== 1 ? "s" : ""}
-                    {setSummary && <span className={styles.exDetail}> · {setSummary}</span>}
+                    {setSummary && <span className={styles.bdMetaDetail}> · {setSummary}</span>}
                   </p>
                 </div>
-                <div className={styles.exCals}>
-                  <span className={styles.exCalNum}>{calories}</span>
-                  <span className={styles.exCalUnit}>kcal</span>
+                <div className={styles.bdCals}>
+                  <span className={styles.bdCalNum}>{calories}</span>
+                  <span className={styles.bdCalUnit}>KCAL</span>
                 </div>
               </div>
             );
           })}
         </div>
-
-        <div className={styles.totalRow}>
-          <span className={styles.totalLabel}>Total burned</span>
-          <div className={styles.totalRight}>
-            <span className={styles.totalNum}>{totalCalories.toLocaleString()}</span>
-            <span className={styles.totalUnit}>kcal</span>
+        <div className={styles.bdTotal}>
+          <span className={styles.bdTotalLbl}>TOTAL BURNED</span>
+          <div className={styles.bdTotalRight}>
+            <span className={styles.bdTotalNum}>{totalCalories.toLocaleString()}</span>
+            <span className={styles.bdTotalUnit}>KCAL</span>
           </div>
         </div>
+      </div>
 
-        <p className={styles.disclaimer}>
-          * Estimate only. Actual burn varies by body composition, heart rate, and intensity (±20–30%).
-        </p>
-
-        <button className={styles.shareBtn} type="button" onClick={handleShare} disabled={sharing}>
-          {sharing ? (
-            <>Generating…</>
-          ) : (
-            <>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="2"/>
-                <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-                <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="2"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Share Workout
-            </>
-          )}
-        </button>
-
-        <button className={styles.doneBtn} type="button" onClick={handleDone}>
-          Back to Home
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Actions */}
+      <div className={styles.actions}>
+        <button
+          className={styles.shareBtn}
+          type="button"
+          onClick={handleShare}
+          disabled={sharing}
+        >
+          <span className={styles.shareShimmer} aria-hidden />
+          <svg
+            className={styles.shareIcon}
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#05050A"
+            strokeWidth="2"
+            strokeLinecap="square"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7,10 12,15 17,10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
+          <span className={styles.shareText}>
+            {sharing ? "GENERATING…" : "SAVE TO CAMERA ROLL"}
+          </span>
+        </button>
+        <button className={styles.doneBtn} type="button" onClick={handleDone}>
+          BACK TO HOME
         </button>
       </div>
     </div>
