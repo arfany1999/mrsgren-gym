@@ -25,8 +25,8 @@
 .startEmpty {
   width: 100%;
   padding: 18px 16px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
@@ -44,7 +44,7 @@
   letter-spacing: -0.2px;
   -webkit-tap-highlight-color: transparent;
 }
-.startEmpty:hover  { background: rgba(255, 255, 255, 0.6); }
+.startEmpty:hover  { background: var(--bg-elevated); }
 .startEmpty:active { transform: scale(0.98); }
 
 .plus {
@@ -72,8 +72,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: var(--glass-shadow);
@@ -87,7 +87,7 @@
   transition: background var(--transition-fast);
   cursor: pointer;
 }
-.addBtn:hover { background: rgba(255, 255, 255, 0.65); }
+.addBtn:hover { background: var(--border-color); }
 
 /* ── Quick actions ───────────────────────────────────────────── */
 .quick {
@@ -99,8 +99,8 @@
 
 .quickCard {
   padding: 18px 16px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
@@ -118,7 +118,7 @@
   letter-spacing: -0.1px;
   -webkit-tap-highlight-color: transparent;
 }
-.quickCard:hover  { background: rgba(255, 255, 255, 0.6); }
+.quickCard:hover  { background: var(--bg-elevated); }
 .quickCard:active { transform: scale(0.97); }
 
 /* ── Mine head ───────────────────────────────────────────────── */
@@ -175,8 +175,8 @@
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
@@ -227,8 +227,8 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
@@ -240,7 +240,7 @@
 }
 .more:hover,
 .more:active {
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--border-color);
   color: var(--text-secondary);
 }
 
@@ -366,7 +366,7 @@
 .modalInput {
   width: 100%;
   background: rgba(255, 255, 255, 0.55);
-  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  border: 1.5px solid var(--border-color);
   border-radius: 14px;
   padding: 14px 14px;
   font-size: 15px;
@@ -390,8 +390,8 @@
   flex: 1;
   padding: 14px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: var(--glass-shadow);
@@ -401,7 +401,7 @@
   color: var(--text-primary);
   transition: background var(--transition-fast);
 }
-.modalCancel:hover { background: rgba(255, 255, 255, 0.6); }
+.modalCancel:hover { background: var(--bg-elevated); }
 
 .modalSave {
   flex: 1;
