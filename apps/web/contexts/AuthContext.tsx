@@ -29,8 +29,11 @@ interface AuthContextValue {
   status: AuthStatus;
   supabase: ReturnType<typeof createClient>;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  /** Re-fetch the user's profile row (used after avatar upload, etc.) */
+  refreshProfile: () => Promise<void>;
 }
 
 interface RegisterData {
@@ -135,6 +138,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [supabase]
   );
 
+  // OAuth — Google. Requires the Google provider to be enabled in the
+  // Supabase project's Auth → Providers settings. Redirects back to
+  // /dashboard on success; the auth state change listener picks up the
+  // new session + profile (which includes the Google avatar_url in
+  // user_metadata).
+  const loginWithGoogle = useCallback(async () => {
+    const redirectTo = typeof window !== "undefined"
+      ? `${window.location.origin}/dashboard`
+      : undefined;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: redirectTo ? { redirectTo } : undefined,
+    });
+    if (error) throw new Error(error.message);
+  }, [supabase]);
+
+  const refreshProfile = useCallback(async () => {
+    if (user) await fetchProfile(user);
+  }, [user, fetchProfile]);
+
   const register = useCallback(
     async (d: RegisterData) => {
       const { data, error } = await supabase.auth.signUp({
@@ -163,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, status, supabase, login, register, logout }}
+      value={{ user, profile, status, supabase, login, loginWithGoogle, register, logout, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>
