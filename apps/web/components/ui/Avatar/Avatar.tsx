@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { md5 } from "@/lib/md5";
 import styles from "./Avatar.module.css";
 
 interface AvatarProps {
@@ -16,14 +17,6 @@ type Stage = "src" | "gravatar" | "default";
 
 const DEFAULT_AVATAR = "/avatar-default.jpg";
 
-async function sha256Hex(text: string): Promise<string> {
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest("SHA-256", enc.encode(text));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 export function Avatar({
   name,
   email,
@@ -32,30 +25,24 @@ export function Avatar({
   rounded = true,
   className,
 }: AvatarProps) {
-  const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
-  const [stage, setStage] = useState<Stage>(src ? "src" : "gravatar");
+  // Synchronously compute the Gravatar URL from the user's email. MD5 is
+  // the well-established Gravatar hashing standard (SHA-256 is supported
+  // on the new endpoints but coverage at the CDN edge is still uneven).
+  // `d=identicon` falls back to a unique geometric pattern derived from
+  // the email if the user has no Gravatar profile — every authenticated
+  // user gets a personal avatar instead of the same bundled default.
+  const gravatarUrl = useMemo(() => {
+    if (!email) return null;
+    const hash = md5(email.trim().toLowerCase());
+    return `https://gravatar.com/avatar/${hash}?s=${size * 2}&d=identicon`;
+  }, [email, size]);
 
-  // Compute gravatar URL from email
-  useEffect(() => {
-    let cancelled = false;
-    if (!email) {
-      if (!src) setStage("default");
-      return;
-    }
-    sha256Hex(email.trim().toLowerCase()).then((hash) => {
-      if (cancelled) return;
-      // s = size*2 for retina; d=404 tells Gravatar to 404 if no avatar exists
-      setGravatarUrl(`https://gravatar.com/avatar/${hash}?s=${size * 2}&d=404`);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [email, size, src]);
+  const [stage, setStage] = useState<Stage>(src ? "src" : gravatarUrl ? "gravatar" : "default");
 
   // Reset stage when inputs change
   useEffect(() => {
-    setStage(src ? "src" : email ? "gravatar" : "default");
-  }, [src, email]);
+    setStage(src ? "src" : gravatarUrl ? "gravatar" : "default");
+  }, [src, gravatarUrl]);
 
   const label = name || email || "Profile";
   const boxStyle: React.CSSProperties = {
@@ -77,7 +64,7 @@ export function Avatar({
         className={containerClass}
         style={boxStyle}
         referrerPolicy="no-referrer"
-        onError={() => setStage("gravatar")}
+        onError={() => setStage(gravatarUrl ? "gravatar" : "default")}
       />
     );
   }
@@ -98,7 +85,7 @@ export function Avatar({
     );
   }
 
-  // Default bundled avatar illustration
+  // Last-resort bundled illustration
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
