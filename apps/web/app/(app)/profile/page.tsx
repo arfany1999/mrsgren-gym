@@ -11,7 +11,6 @@ import { TROPHIES, getTrophyProgress, nextTierLabel } from "@/lib/trophies";
 import { fetchStreakStats } from "@/lib/streakStats";
 import { TierProgression } from "@/components/profile/TierProgression/TierProgression";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
-import { AvatarUpload } from "@/components/profile/AvatarUpload/AvatarUpload";
 import { useTheme } from "@/contexts/ThemeContext";
 import styles from "./page.module.css";
 
@@ -579,7 +578,11 @@ export default function ProfilePage() {
       </header>
 
       <section className={styles.hero}>
-        <AvatarUpload size={68} />
+        <Avatar
+          name={displayName}
+          size={68}
+          className={styles.avatarImg}
+        />
         <div className={styles.heroMeta}>
           <h2 className={styles.name}>{displayName}</h2>
           <div className={styles.statsInline}>
