@@ -7,7 +7,7 @@
  *   - POST/PUT/PATCH/DELETE to Supabase pass through — the in-app offlineQueue handles retries.
  */
 
-const CACHE = "gym-tracker-v9";
+const CACHE = "gym-tracker-v10";
 const API_CACHE = "gym-supabase-v2";
 
 // Precache shell HTML for every primary route — lets the app boot fully offline on repeat launch.
@@ -42,16 +42,61 @@ const PRECACHE = [
   ...APP_SHELL_ROUTES,
 ];
 
+// Pull every <script src> and <link href .css> URL out of an HTML string so
+// we can precache the Next.js chunks the cached HTML actually references.
+// Without this the v8 → v9 bump nuked the old cache, leaving the new cache
+// with HTML that pointed at chunks that weren't cached anywhere — the page
+// would load offline but couldn't hydrate.
+function discoverAssetUrls(html) {
+  const urls = new Set();
+  const scriptRe = /<script[^>]+src="([^"]+)"/g;
+  const linkRe   = /<link[^>]+href="([^"]+\.(?:css|woff2?|ttf|otf))"/g;
+  const imgRe    = /<img[^>]+src="([^"]+\.(?:png|jpg|jpeg|svg|webp))"/g;
+  let m;
+  while ((m = scriptRe.exec(html))) urls.add(m[1]);
+  while ((m = linkRe.exec(html)))   urls.add(m[1]);
+  while ((m = imgRe.exec(html)))    urls.add(m[1]);
+  return Array.from(urls).filter((u) => u.startsWith("/") || u.startsWith(self.location.origin));
+}
+
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE).then(async (c) => {
-      // Add one-by-one so a single 404 doesn't abort the whole install.
+      // Phase 1 — fetch each app-shell route fresh and store both the
+      // response and the asset URLs it references.
+      const htmlByRoute = new Map();
       await Promise.all(
-        PRECACHE.map((url) =>
-          c.add(url).catch(() => {
-            /* noop — some routes may 404 on first deploy; they'll populate on visit */
-          })
+        APP_SHELL_ROUTES.map(async (route) => {
+          try {
+            const res = await fetch(route, { cache: "reload" });
+            if (!res || res.status !== 200) return;
+            // Clone twice: one for caching, one to read the body.
+            await c.put(route, res.clone());
+            const html = await res.text();
+            htmlByRoute.set(route, html);
+          } catch {
+            /* noop — populate on first visit */
+          }
+        })
+      );
+
+      // Phase 2 — every static asset (icons, trophies, manifest, fonts).
+      await Promise.all(
+        PRECACHE.filter((u) => !APP_SHELL_ROUTES.includes(u)).map((url) =>
+          c.add(url).catch(() => {})
         )
+      );
+
+      // Phase 3 — discover Next.js chunks + CSS bundles referenced by the
+      // cached HTML and precache those too. This is what makes the app
+      // hydrate offline. Without these the cached HTML loads but has no
+      // JS to run.
+      const assetUrls = new Set();
+      for (const html of htmlByRoute.values()) {
+        for (const u of discoverAssetUrls(html)) assetUrls.add(u);
+      }
+      await Promise.all(
+        Array.from(assetUrls).map((u) => c.add(u).catch(() => {}))
       );
     })
   );
