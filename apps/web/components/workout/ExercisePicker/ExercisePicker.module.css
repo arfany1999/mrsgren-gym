@@ -26,8 +26,8 @@
   padding: 0 36px;
   font-size: var(--text-sm);
   font-weight: 500;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-full);
   color: var(--text-primary);
   outline: none;
@@ -40,7 +40,7 @@
   right: calc(var(--sp-4) + 8px);
   top: 50%;
   transform: translateY(-60%);
-  background: rgba(26, 21, 16, 0.08);
+  background: var(--bg-elevated);
   border: none;
   cursor: pointer;
   display: flex;
@@ -69,8 +69,8 @@
   height: 32px;
   padding: 0 14px;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(26, 21, 16, 0.12);
-  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid var(--border-color);
+  background: var(--bg-elevated);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
@@ -118,7 +118,7 @@
 }
 
 .item:active {
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--bg-overlay);
   border-radius: var(--radius-sm);
   transform: scale(0.97);
 }
