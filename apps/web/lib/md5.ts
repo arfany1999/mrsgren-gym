@@ -28,7 +28,10 @@ const ii = (a: number, b: number, c: number, d: number, x: number, s: number, t:
   cmn(c ^ (b | ~d), a, b, x, s, t);
 
 function md5cycle(state: number[], block: number[]) {
-  let [a, b, c, d] = state;
+  let a = state[0]!;
+  let b = state[1]!;
+  let c = state[2]!;
+  let d = state[3]!;
   a = ff(a, b, c, d, block[0]!, 7, -680876936);
   d = ff(d, a, b, c, block[1]!, 12, -389564586);
   c = ff(c, d, a, b, block[2]!, 17, 606105819);
