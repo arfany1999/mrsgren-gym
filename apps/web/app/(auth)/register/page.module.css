@@ -1,3 +1,46 @@
+/* ── Google OAuth divider + button ──── */
+.dividerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 14px;
+}
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+.dividerLabel {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-tertiary);
+}
+
+.googleBtn {
+  width: 100%;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.googleBtn:hover {
+  background: var(--bg-overlay);
+  border-color: rgba(212, 168, 67, 0.35);
+}
+.googleBtn:active { transform: scale(0.98); }
+.googleBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
 .page {
   position: relative;
   min-height: 100dvh;
