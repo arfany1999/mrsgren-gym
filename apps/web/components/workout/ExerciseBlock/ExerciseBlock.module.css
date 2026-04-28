@@ -1,13 +1,19 @@
 .block {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-shadow);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   margin: 0 var(--sp-4) var(--sp-3);
   overflow: visible;
+  position: relative;
+  box-shadow: var(--card-shadow);
   animation: blockIn 0.32s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+.block::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 14%; right: 14%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.30), transparent);
+  pointer-events: none;
 }
 
 @keyframes blockIn {
@@ -73,8 +79,8 @@
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(26, 21, 16, 0.06);
-  border: 0.5px solid rgba(26, 21, 16, 0.1);
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--border-color);
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 700;
@@ -103,8 +109,8 @@
 .menuWrapper { position: relative; }
 
 .menuBtn {
-  background: rgba(255,255,255,0.45);
-  border: 1px solid rgba(255,255,255,0.65);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   padding: var(--sp-1);
   display: flex;
@@ -115,7 +121,7 @@
   width: 30px;
   height: 30px;
 }
-.menuBtn:active { background: rgba(255,255,255,0.7); }
+.menuBtn:active { background: var(--bg-overlay); }
 
 .menu {
   position: absolute;
@@ -124,7 +130,7 @@
   background: rgba(243, 237, 225, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
   z-index: 30;
@@ -147,7 +153,7 @@
   cursor: pointer;
   text-align: left;
 }
-.menuItem:active { background: rgba(26, 21, 16, 0.04); }
+.menuItem:active { background: var(--bg-overlay); }
 
 /* ── Note field ──────────────────────────────────────────── */
 .noteWrap { padding: 0 var(--sp-4) 6px; }
@@ -199,9 +205,9 @@
   font-size: var(--text-sm);
   font-weight: 800;
   color: var(--accent);
-  background: rgba(255,255,255,0.3);
+  background: var(--bg-elevated);
   border: none;
-  border-top: 0.5px solid rgba(26,21,16,0.07);
+  border-top: 0.5px solid var(--border-color);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   cursor: pointer;
   transition: background var(--transition-fast);

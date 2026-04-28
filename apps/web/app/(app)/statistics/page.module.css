@@ -11,8 +11,8 @@
   grid-column: 1 / -1;
 }
 .statCard {
-  background: rgba(255,255,255,0.42);
-  border: 1px solid rgba(255,255,255,0.72);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
   border-radius: 18px; padding: 18px 16px 14px;
@@ -36,8 +36,8 @@
 /* PR cards */
 .prList { display: flex; flex-direction: column; gap: 10px; }
 .prCard {
-  background: rgba(255,255,255,0.42);
-  border: 1px solid rgba(255,255,255,0.72);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
   border-radius: 18px; padding: 14px 16px;
@@ -60,8 +60,8 @@
 
 /* ── Donut card wrapper ────────────────────────────────────── */
 .donutCard {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
   border-radius: 18px;

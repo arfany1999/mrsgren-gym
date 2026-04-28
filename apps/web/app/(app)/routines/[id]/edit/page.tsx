@@ -315,6 +315,13 @@ export default function EditRoutinePage() {
   async function handleSave() {
     haptic("medium");
     if (!title.trim()) { setError("Routine name is required"); return; }
+    // The routine save flow is multi-statement (update + delete +
+    // insert) and isn't currently in the offline queue, so refuse
+    // up-front rather than failing mid-write with a confusing error.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setError("You're offline — reconnect to save changes to this routine.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {

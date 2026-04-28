@@ -66,6 +66,21 @@ export function BottomNav() {
       router.push("/active");
       return;
     }
+    // Starting a workout writes a `workouts` row up-front; that insert
+    // isn't in the offline queue, so guard the FAB until we reconnect
+    // rather than silent-failing.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      try {
+        // The OfflineBanner already shows offline status; just nudge with
+        // a soft alert so the FAB tap isn't silent.
+        if (typeof window !== "undefined") {
+          window.alert("You're offline. Reconnect to start a new workout.");
+        }
+      } catch {
+        /* noop */
+      }
+      return;
+    }
     try {
       await startWorkout();
       router.push("/active");
