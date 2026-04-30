@@ -43,6 +43,95 @@ export function estimate1RM(weight: number, reps: number): number {
   return Math.round(weight * (1 + reps / 30) * 10) / 10;
 }
 
+// ── Per-exercise lifetime bests ──────────────────────────────────────────
+// What we need for real-time PR detection during a workout: for each
+// exercise the user has on the current screen, the heaviest single rep
+// ever, the highest rep count ever (at any weight > 0), the heaviest
+// single-set volume (weight × reps), and the highest estimated 1RM. Each
+// keystroke compares the current input against this snapshot and lights
+// the gold trophy if any category would be beaten.
+export interface ExerciseBest {
+  bestWeight: number;
+  bestReps: number;
+  bestVolume: number;
+  bestE1RM: number;
+}
+
+export const EMPTY_BEST: ExerciseBest = {
+  bestWeight: 0,
+  bestReps: 0,
+  bestVolume: 0,
+  bestE1RM: 0,
+};
+
+/**
+ * Fetch lifetime best weight / reps / volume / e1RM for a set of exercises
+ * in one query, scoped to the current user via RLS. Excludes sets from the
+ * `excludeWorkoutId` (the active workout — we don't want to compare a set
+ * against itself or against later sets in the same session).
+ */
+export async function fetchPreviousBests(
+  supabase: SupabaseClient,
+  exerciseIds: string[],
+  excludeWorkoutId?: string | null,
+): Promise<Map<string, ExerciseBest>> {
+  const map = new Map<string, ExerciseBest>();
+  if (exerciseIds.length === 0) return map;
+  try {
+    let query = supabase
+      .from("workout_sets")
+      .select("weight, reps, workout_exercises!inner(exercise_id, workout_id)")
+      .in("workout_exercises.exercise_id", exerciseIds)
+      .gt("weight", 0)
+      .gt("reps", 0);
+    if (excludeWorkoutId) {
+      query = query.neq("workout_exercises.workout_id", excludeWorkoutId);
+    }
+    const { data } = await query;
+    (data ?? []).forEach((row: Record<string, unknown>) => {
+      const we = row.workout_exercises as Record<string, unknown> | null;
+      if (!we) return;
+      const exId = we.exercise_id as string;
+      const w = (row.weight as number) ?? 0;
+      const r = (row.reps as number) ?? 0;
+      if (w <= 0 || r <= 0) return;
+      const volume = w * r;
+      const e1rm = w * (1 + r / 30);
+      const cur = map.get(exId) ?? { ...EMPTY_BEST };
+      if (w > cur.bestWeight) cur.bestWeight = w;
+      if (r > cur.bestReps) cur.bestReps = r;
+      if (volume > cur.bestVolume) cur.bestVolume = volume;
+      if (e1rm > cur.bestE1RM) cur.bestE1RM = e1rm;
+      map.set(exId, cur);
+    });
+  } catch {
+    /* ignore — best becomes EMPTY_BEST and nothing lights up */
+  }
+  return map;
+}
+
+/**
+ * Pure helper: given a single set's current weight + reps and the
+ * exercise's lifetime best snapshot, return which categories (if any)
+ * the set would beat. Used by SetRow to decide whether to render the
+ * trophy in real-time as the user types.
+ */
+export function detectLivePR(
+  weightKg: number,
+  reps: number,
+  best: ExerciseBest | undefined,
+): { isPR: boolean; categories: Array<"weight" | "reps" | "volume" | "e1rm"> } {
+  if (!best || weightKg <= 0 || reps <= 0) {
+    return { isPR: false, categories: [] };
+  }
+  const cats: Array<"weight" | "reps" | "volume" | "e1rm"> = [];
+  if (weightKg > best.bestWeight) cats.push("weight");
+  if (reps > best.bestReps) cats.push("reps");
+  if (weightKg * reps > best.bestVolume) cats.push("volume");
+  if (weightKg * (1 + reps / 30) > best.bestE1RM) cats.push("e1rm");
+  return { isPR: cats.length > 0, categories: cats };
+}
+
 /** Progressive-overload suggestion. */
 export function progressiveOverloadHint(
   lastWeightKg: number,

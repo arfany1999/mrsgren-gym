@@ -168,6 +168,7 @@ export function ExerciseBlock({
           weId={exercise.weId}
           prevSet={exercise.previousSets[idx]}
           measurementType={exercise.measurementType}
+          previousBest={exercise.previousBest}
           onUpdateField={(field, value) => onUpdateField(idx, field, value)}
           onSave={() => onSaveSet(idx)}
           onDelete={onDeleteSet}

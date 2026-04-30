@@ -19,7 +19,7 @@ import {
 import type { SetType, Exercise } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
 import { getMeasurementType, resolveMeasurementType, type MeasurementType } from "@/lib/exercises-data";
-import { fetchPRsForExercises } from "@/lib/exerciseHistory";
+import { fetchPRsForExercises, fetchPreviousBests, type ExerciseBest } from "@/lib/exerciseHistory";
 import { enqueue as queueMutation, startOnlineAutoFlush } from "@/lib/offlineQueue";
 
 // ── Types ─────────────────────────────────────────────────────
@@ -44,6 +44,12 @@ export interface ActiveExercise {
   sets: ActiveSet[];
   previousSets: Array<{ reps: string; weightKg: string }>;
   personalRecord?: { weight: number; reps: number; estimated1rm: number };
+  /**
+   * Lifetime bests for this exercise across the user's prior workouts.
+   * Used for real-time PR trophy detection on each set as the user types
+   * weight + reps. Excludes sets from the active workout itself.
+   */
+  previousBest?: ExerciseBest;
 }
 
 export interface ActiveWorkout {
@@ -262,11 +268,13 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    // Fetch previous performance + PRs for all exercises (batched)
+    // Fetch previous performance + PRs + lifetime bests for all exercises
+    // in parallel. The bests power the real-time PR trophy in SetRow.
     const exIds = baseExercises.map((ex) => ex.exerciseId);
-    const [prevMap, prMap] = await Promise.all([
+    const [prevMap, prMap, bestMap] = await Promise.all([
       fetchAllPreviousPerformance(exIds, workoutId),
       fetchPRsForExercises(supabase, exIds),
+      fetchPreviousBests(supabase, exIds, workoutId),
     ]);
     return baseExercises.map((ex) => {
       const pr = prMap.get(ex.exerciseId);
@@ -274,6 +282,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         ...ex,
         previousSets: prevMap.get(ex.exerciseId) ?? [],
         personalRecord: pr ? { weight: pr.weight, reps: pr.reps, estimated1rm: pr.estimated1rm } : undefined,
+        previousBest: bestMap.get(ex.exerciseId),
       };
     });
   }
@@ -577,9 +586,10 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error || !we) return;
-      const [prevSets, prMap] = await Promise.all([
+      const [prevSets, prMap, bestMap] = await Promise.all([
         fetchPreviousPerformance(exerciseUuid, activeWorkout.id),
         fetchPRsForExercises(supabase, [exerciseUuid]),
+        fetchPreviousBests(supabase, [exerciseUuid], activeWorkout.id),
       ]);
       const pr = prMap.get(exerciseUuid);
       const mType = resolveMeasurementType(
@@ -597,6 +607,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           sets: [],
           previousSets: prevSets,
           personalRecord: pr ? { weight: pr.weight, reps: pr.reps, estimated1rm: pr.estimated1rm } : undefined,
+          previousBest: bestMap.get(exerciseUuid),
         },
       ]);
     },
@@ -739,23 +750,23 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           // PR detection only matters for weight×reps lifts
           if (!reps || !weightKg || weightKg <= 0) return;
 
-          const { data: prevSets } = await supabase
-            .from("workout_sets")
-            .select("weight, reps, workout_exercises!inner(exercise_id)")
-            .eq("workout_exercises.exercise_id", exercise.exerciseId)
-            .not("id", "eq", savedSetId);
-          if (!prevSets || prevSets.length === 0) return;
-
-          const prevMax = Math.max(
-            0,
-            ...prevSets.map(
-              (s: Record<string, unknown>) =>
-                ((s.weight as number) ?? 0) *
-                (1 + ((s.reps as number) ?? 0) / 30)
-            )
-          );
-          const current1RM = weightKg * (1 + reps / 30);
-          if (current1RM <= prevMax) return;
+          // Compare against the cached lifetime best we loaded with the
+          // workout (kept fresh in setExercises after every prior PR
+          // this session). Beats any of the four categories — weight,
+          // reps, volume, or estimated 1RM — and we count it as a PR.
+          // Matches the live trophy logic in SetRow exactly.
+          const best = exercise.previousBest;
+          const newWeight = weightKg;
+          const newReps   = reps;
+          const newVolume = weightKg * reps;
+          const newE1RM   = weightKg * (1 + reps / 30);
+          const isPR =
+            !best ||
+            newWeight > best.bestWeight ||
+            newReps > best.bestReps ||
+            newVolume > best.bestVolume ||
+            newE1RM > best.bestE1RM;
+          if (!isPR) return;
 
           // PR! Persist + flip UI badge.
           await supabase.from("workout_sets").update({ is_pr: true }).eq("id", savedSetId);
@@ -779,7 +790,20 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
               const setIdx = sets.findIndex((s) => s.id === savedSetId);
               if (setIdx < 0) return e;
               sets[setIdx] = { ...sets[setIdx]!, isPr: true };
-              return { ...e, sets };
+              // Raise the live "previous best" ceiling so the next set in
+              // the same exercise compares against this new PR — without
+              // this, every subsequent rep would also light the trophy
+              // even if it didn't beat the rep we just saved.
+              const newVolume = weightKg * reps;
+              const newE1RM   = weightKg * (1 + reps / 30);
+              const prev = e.previousBest ?? { bestWeight: 0, bestReps: 0, bestVolume: 0, bestE1RM: 0 };
+              const previousBest = {
+                bestWeight: Math.max(prev.bestWeight, weightKg),
+                bestReps:   Math.max(prev.bestReps,   reps),
+                bestVolume: Math.max(prev.bestVolume, newVolume),
+                bestE1RM:   Math.max(prev.bestE1RM,   newE1RM),
+              };
+              return { ...e, sets, previousBest };
             })
           );
           setPrExerciseName(exercise.name);

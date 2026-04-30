@@ -1,10 +1,11 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 import { SetTypeSelector } from "@/components/workout/SetTypeSelector/SetTypeSelector";
 import type { ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import type { MeasurementType } from "@/lib/exercises-data";
+import { detectLivePR, type ExerciseBest } from "@/lib/exerciseHistory";
 import { haptic } from "@/lib/haptics";
 import styles from "./SetRow.module.css";
 
@@ -14,6 +15,7 @@ interface SetRowProps {
   weId: string;
   prevSet?: { reps: string; weightKg: string };
   measurementType: MeasurementType;
+  previousBest?: ExerciseBest;
   onUpdateField: (field: keyof ActiveSet, value: string | SetType | boolean | number) => void;
   onSave: () => void;
   onDelete: (setId: string) => void;
@@ -30,7 +32,7 @@ function prevLabel(prevSet: { reps: string; weightKg: string } | undefined, type
   return "—";
 }
 
-function SetRowImpl({ set, index, weId, prevSet, measurementType, onUpdateField, onSave, onDelete }: SetRowProps) {
+function SetRowImpl({ set, index, weId, prevSet, measurementType, previousBest, onUpdateField, onSave, onDelete }: SetRowProps) {
   const ref1 = useRef<HTMLInputElement>(null);
   const ref2 = useRef<HTMLInputElement>(null);
 
@@ -49,10 +51,29 @@ function SetRowImpl({ set, index, weId, prevSet, measurementType, onUpdateField,
     isCardio     ? set.duration !== "" :
     false;
 
+  // ── Real-time PR detection ───────────────────────────────────
+  // Compute live whether the current values would beat the user's
+  // lifetime best. Lights the gold trophy on every keystroke for
+  // weight_reps lifts so the moment the user types something that
+  // would set a new record, they see it before they save.
+  const livePR = useMemo(() => {
+    if (!isWeightReps) return { isPR: false, categories: [] as Array<"weight" | "reps" | "volume" | "e1rm"> };
+    const w = parseFloat(set.weightKg) || 0;
+    const r = parseInt(set.reps) || 0;
+    return detectLivePR(w, r, previousBest);
+  }, [isWeightReps, set.weightKg, set.reps, previousBest]);
+
+  const showTrophy = set.isPr || livePR.isPR;
+  const trophyTitle = set.isPr
+    ? "Personal Record!"
+    : livePR.categories.length
+      ? `New ${livePR.categories.map(c => c === "e1rm" ? "1RM" : c).join(" + ")} PR if you save this`
+      : "";
+
   const rowClasses = [
     styles.row,
     set.isSaved ? styles.saved : "",
-    set.isPr    ? styles.pr    : "",
+    showTrophy  ? styles.pr    : "",
   ].filter(Boolean).join(" ");
 
   return (
@@ -126,8 +147,44 @@ function SetRowImpl({ set, index, weId, prevSet, measurementType, onUpdateField,
 
       {/* Cardio = time-only — distance field removed deliberately. */}
 
-      {/* PR badge */}
-      {set.isPr && <span className={styles.prBadge}>PR</span>}
+      {/* Gold trophy badge — lights up the instant the live values
+          beat any of the user's lifetime bests (weight, reps, volume,
+          or estimated 1RM), and stays lit once the set is saved. */}
+      {showTrophy && (
+        <span
+          className={[
+            styles.prBadge,
+            set.isPr ? styles.prSaved : styles.prLive,
+          ].join(" ")}
+          title={trophyTitle}
+          aria-label={trophyTitle}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path
+              d="M7 4h10v3a5 5 0 0 1-10 0V4Z"
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="0.5"
+            />
+            <path
+              d="M5 5H3v2a3 3 0 0 0 3 3M19 5h2v2a3 3 0 0 1-3 3"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              fill="none"
+            />
+            <path
+              d="M9 14h6v2H9zM10 16h4v3h-4zM8 19h8"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+          <span className={styles.prBadgeLabel}>PR</span>
+        </span>
+      )}
 
       {/* Save / check button */}
       <button
@@ -170,5 +227,17 @@ export const SetRow = memo(SetRowImpl, (a, b) => {
   const pa = a.prevSet, pb = b.prevSet;
   if (!pa !== !pb) return false;
   if (pa && pb && (pa.reps !== pb.reps || pa.weightKg !== pb.weightKg)) return false;
+  // Re-render if the lifetime-best snapshot for this exercise changes
+  // (it does after a set save, when the workout's own PR raises the
+  // bar and subsequent sets on the same exercise should compare
+  // against the new ceiling).
+  const ba = a.previousBest, bb = b.previousBest;
+  if (!ba !== !bb) return false;
+  if (ba && bb && (
+    ba.bestWeight !== bb.bestWeight ||
+    ba.bestReps !== bb.bestReps ||
+    ba.bestVolume !== bb.bestVolume ||
+    ba.bestE1RM !== bb.bestE1RM
+  )) return false;
   return true;
 });
