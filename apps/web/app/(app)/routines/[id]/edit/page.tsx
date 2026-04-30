@@ -233,7 +233,7 @@ export default function EditRoutinePage() {
     const promise = (async () => {
       try {
         let exerciseId = "";
-        const { data: existing } = await supabase
+        const { data: existing, error: lookupErr } = await supabase
           .from("exercises")
           .select("id")
           .ilike("name", def.name)
@@ -243,6 +243,11 @@ export default function EditRoutinePage() {
         if (existing?.id) {
           exerciseId = existing.id as string;
         } else {
+          // Insert as a custom exercise owned by this user. Most callers
+          // will hit the existing-row branch above because the canonical
+          // library is seeded into the DB (supabase/migrations/
+          // 20260428_seed_exercises.sql); this branch is a safety net
+          // for true custom names.
           const { data: ins, error: insErr } = await supabase
             .from("exercises")
             .insert({
@@ -255,12 +260,30 @@ export default function EditRoutinePage() {
             .select("id")
             .single();
           if (insErr || !ins) {
-            setError(insErr?.message ?? "Could not add exercise");
-            // Roll back the optimistic add
-            setExercises(prev => prev.filter(e => e.name.toLowerCase() !== lowerName));
-            return;
+            // Race: another tab/session may have seeded the row between
+            // our SELECT and our INSERT. Try one more lookup before we
+            // surface an error so the user isn't blocked on a benign
+            // collision.
+            const { data: retry } = await supabase
+              .from("exercises")
+              .select("id")
+              .ilike("name", def.name)
+              .limit(1)
+              .maybeSingle();
+            if (retry?.id) {
+              exerciseId = retry.id as string;
+            } else {
+              const friendly =
+                insErr?.message?.includes("row-level security")
+                  ? "Couldn't add this exercise — try signing out and back in."
+                  : insErr?.message ?? lookupErr?.message ?? "Could not add exercise";
+              setError(friendly);
+              setExercises(prev => prev.filter(e => e.name.toLowerCase() !== lowerName));
+              return;
+            }
+          } else {
+            exerciseId = ins.id as string;
           }
-          exerciseId = ins.id as string;
         }
 
         setExercises(prev =>
