@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { useWorkout } from "@/contexts/WorkoutContext";
-import { haptic } from "@/lib/haptics";
+import { usePathname } from "next/navigation";
 import styles from "./BottomNav.module.css";
 
 function IconHome({ active }: { active: boolean }) {
@@ -53,73 +51,14 @@ const TABS = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { activeWorkout, startWorkout } = useWorkout();
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + "/");
   }
 
-  async function onFabPress() {
-    haptic("medium");
-    if (activeWorkout) {
-      router.push("/active");
-      return;
-    }
-    // Starting a workout writes a `workouts` row up-front; that insert
-    // isn't in the offline queue, so guard the FAB until we reconnect
-    // rather than silent-failing.
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-      try {
-        // The OfflineBanner already shows offline status; just nudge with
-        // a soft alert so the FAB tap isn't silent.
-        if (typeof window !== "undefined") {
-          window.alert("You're offline. Reconnect to start a new workout.");
-        }
-      } catch {
-        /* noop */
-      }
-      return;
-    }
-    try {
-      await startWorkout();
-      router.push("/active");
-    } catch {
-      router.push("/active");
-    }
-  }
-
   return (
     <nav className={styles.nav} role="navigation" aria-label="Main navigation">
-      {TABS.slice(0, 2).map(({ href, label, Icon }) => {
-        const active = isActive(href);
-        return (
-          <Link key={href} href={href} className={[styles.tab, active ? styles.activeTab : ""].join(" ")}>
-            {active && <span className={styles.activeIndicator} />}
-            <span className={styles.tabIcon}>
-              <Icon active={active} />
-            </span>
-            <span className={[styles.label, active ? styles.activeLabel : ""].join(" ")}>{label}</span>
-          </Link>
-        );
-      })}
-
-      <button
-        type="button"
-        className={styles.fab}
-        onClick={onFabPress}
-        aria-label={activeWorkout ? "Resume workout" : "Start workout"}
-      >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-          {activeWorkout ? (
-            <path d="M5 4l14 8-14 8V4z" fill="var(--bg-primary)" />
-          ) : (
-            <path d="M12 5V19M5 12H19" stroke="var(--bg-primary)" strokeWidth="3" strokeLinecap="round" />
-          )}
-        </svg>
-      </button>
-
-      {TABS.slice(2).map(({ href, label, Icon }) => {
+      {TABS.map(({ href, label, Icon }) => {
         const active = isActive(href);
         return (
           <Link key={href} href={href} className={[styles.tab, active ? styles.activeTab : ""].join(" ")}>
