@@ -9,6 +9,7 @@ import {
 } from "react";
 import { TROPHIES, type TrophyDef } from "@/lib/trophies";
 import { TIER_META, type TierMeta } from "@/lib/tierMeta";
+import Image from "next/image";
 import styles from "./TierProgression.module.css";
 
 interface Particle {
@@ -252,15 +253,13 @@ export function TierProgression({ currentDay }: Props) {
                       : "none",
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={tier.image}
                   alt={tier.label}
                   width={28}
                   height={28}
+                  unoptimized
                   style={{
-                    width: 28,
-                    height: 28,
                     objectFit: "contain",
                     opacity: u ? 1 : cur ? 0.9 : 0.6,
                     transition: "opacity 0.4s",
@@ -342,12 +341,12 @@ export function TierProgression({ currentDay }: Props) {
               }}
             />
           )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={t.image}
             alt={t.label}
             width={96}
             height={96}
+            unoptimized
             className={styles.badgeImg}
             style={{
               opacity: unlocked ? 1 : isCurrent ? 0.85 : 0.65,

@@ -1,5 +1,6 @@
 import { TROPHIES, getTrophyProgress, type TrophyTier } from "@/lib/trophies";
 import { TIER_META } from "@/lib/tierMeta";
+import Image from "next/image";
 import styles from "./ShareCard.module.css";
 
 export interface ShareCardData {
@@ -114,10 +115,12 @@ export function ShareCard({ data }: Props) {
                   background: `radial-gradient(circle, ${G[0]}33, transparent 70%)`,
                 }}
               />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={tierDef.image}
                 alt={tierDef.label}
+                width={44}
+                height={44}
+                unoptimized
                 className={styles.tierBadgeImg}
                 style={{ filter: `drop-shadow(0 0 8px ${G[0]}cc)` }}
               />
@@ -240,10 +243,12 @@ export function ShareCard({ data }: Props) {
                 background: `radial-gradient(circle, ${G[0]}1F, transparent 70%)`,
               }}
             />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={tierDef.image}
               alt={tierDef.label}
+              width={62}
+              height={62}
+              unoptimized
               className={styles.ringTrophy}
               style={{ filter: `drop-shadow(0 0 6px ${G[0]}99)` }}
             />

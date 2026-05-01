@@ -145,7 +145,21 @@ function SetRowImpl({ set, index, weId, prevSet, measurementType, previousBest, 
         </div>
       )}
 
-      {/* Cardio = time-only — distance field removed deliberately. */}
+      {/* ── Distance (km) — cardio only ── */}
+      {isCardio && (
+        <div className={styles.inputWrap}>
+          <input
+            ref={ref2}
+            className={styles.numInput}
+            type="tel"
+            inputMode="decimal"
+            placeholder="0"
+            value={set.distance}
+            onChange={(e) => onUpdateField("distance", e.target.value)}
+            onFocus={(e) => e.target.select()}
+          />
+        </div>
+      )}
 
       {/* Gold trophy badge — lights up the instant the live values
           beat any of the user's lifetime bests (weight, reps, volume,

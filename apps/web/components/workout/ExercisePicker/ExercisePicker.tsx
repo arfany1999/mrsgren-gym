@@ -6,6 +6,7 @@ import { BodyMuscleIcon } from "@/components/ui/BodyMuscleIcon/BodyMuscleIcon";
 import { browseExercises, searchFreeExercises } from "@/lib/freeExerciseDb";
 import type { FreeExercise } from "@/lib/freeExerciseDb";
 import type { Exercise } from "@/types/api";
+import { getMeasurementType, type MeasurementType } from "@/lib/exercises-data";
 import styles from "./ExercisePicker.module.css";
 
 interface ExercisePickerProps {
@@ -65,6 +66,19 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
   }, [query, muscle, open, load]);
 
   function handleSelect(freeEx: FreeExercise) {
+    // Detect measurement type: first try our curated list, then infer from
+    // the free-exercise-db category so cardio/stretching/plyometric exercises
+    // from the 800+ DB always get the right input columns.
+    let mType: MeasurementType = getMeasurementType(freeEx.name);
+    if (mType === "weight_reps") {
+      const cat = freeEx.category?.toLowerCase() ?? "";
+      if (cat === "cardio") mType = "cardio";
+      else if (cat === "stretching") mType = "timed";
+      else if (cat === "plyometrics") mType = "reps_only";
+      else if (cat === "strength" && (freeEx.equipment === "body only" || freeEx.equipment === "other"))
+        mType = "bodyweight_reps";
+    }
+
     const exercise: Exercise = {
       id: freeEx.id,
       name: freeEx.name,
@@ -74,6 +88,7 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
       videoUrl: null,
       isCustom: false,
       createdByUserId: null,
+      measurementType: mType,
     };
     onSelect(exercise);
     onClose();

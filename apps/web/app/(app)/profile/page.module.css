@@ -1011,6 +1011,63 @@
 .modalSave:active:not(:disabled),
 .modalCancel:active:not(:disabled) { transform: scale(0.97); }
 
+/* ── Body stats hint ────────────────────────────────────────── */
+.bodyStatsHint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding: 6px 4px 0;
+  letter-spacing: 0.01em;
+}
+
+/* ── Activity level grid (body stats modal) ─────────────────── */
+.activityGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.activityBtn {
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.activityBtn:active { transform: scale(0.97); }
+.activityActive {
+  background: rgba(212, 168, 67, 0.12);
+  border-color: rgba(212, 168, 67, 0.5);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ── Reset history modal ────────────────────────────────────── */
+.resetWarning {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding: 0 20px 16px;
+  text-align: center;
+}
+.resetConfirmBtn {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: var(--accent-red);
+  color: #fff;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.resetConfirmBtn:active:not(:disabled) { transform: scale(0.97); }
+.resetConfirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ── Share toast ─────────────────────────────────────────────── */
 .toast {
   position: fixed;

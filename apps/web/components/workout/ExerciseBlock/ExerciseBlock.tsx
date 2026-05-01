@@ -153,7 +153,7 @@ export function ExerciseBlock({
             {isWeightReps && <><span>KG</span><span>REPS</span></>}
             {isRepsOnly  && <span>REPS</span>}
             {isTimed     && <span>SEC</span>}
-            {isCardio    && <span>MIN</span>}
+            {isCardio    && <><span>MIN</span><span>KM</span></>}
             <span />
           </div>
         );
@@ -180,7 +180,7 @@ export function ExerciseBlock({
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" />
         </svg>
-        Add Set
+        {exercise.measurementType === "cardio" ? "Add Session" : "Add Set"}
       </button>
     </div>
   );

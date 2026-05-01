@@ -411,23 +411,32 @@ export function WorkoutReport({
       ctx.textAlign = "right";
       ctx.fillText(fullDateStr, W - 100, 160);
 
-      // Day badge pill
+      // Day badge pill — measure text to avoid overlap
+      ctx.font = "800 26px 'JetBrains Mono', monospace";
+      const dayLabelW = ctx.measureText("DAY").width;
+      ctx.font = "900 72px 'JetBrains Mono', monospace";
+      const dayNumW = ctx.measureText(String(dayNumber)).width;
+      const dayGap = 16;
+      const dayContentW = dayLabelW + dayGap + dayNumW;
+      const dayPillW = Math.max(240, dayContentW + 80);
+      const dayPillH = 100;
+      const dayPillX = W / 2 - dayPillW / 2;
       ctx.fillStyle = "rgba(212,168,67,0.15)";
       ctx.beginPath();
-      ctx.roundRect(W / 2 - 120, 200, 240, 100, 20);
+      ctx.roundRect(dayPillX, 200, dayPillW, dayPillH, 20);
       ctx.fill();
       ctx.strokeStyle = "rgba(212,168,67,0.4)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(W / 2 - 120, 200, 240, 100, 20);
+      ctx.roundRect(dayPillX, 200, dayPillW, dayPillH, 20);
       ctx.stroke();
+      const dayGroupX = W / 2 - dayContentW / 2;
       ctx.font = "800 26px 'JetBrains Mono', monospace";
       ctx.fillStyle = "#D4A843";
-      ctx.textAlign = "center";
-      ctx.fillText("DAY", W / 2 - 30, 258);
+      ctx.textAlign = "left";
+      ctx.fillText("DAY", dayGroupX, 262);
       ctx.font = "900 72px 'JetBrains Mono', monospace";
-      ctx.fillStyle = "#D4A843";
-      ctx.fillText(String(dayNumber), W / 2 + 30, 265);
+      ctx.fillText(String(dayNumber), dayGroupX + dayLabelW + dayGap, 270);
 
       // Kicker
       ctx.font = "800 24px 'JetBrains Mono', monospace";
@@ -435,18 +444,33 @@ export function WorkoutReport({
       ctx.textAlign = "center";
       ctx.fillText("✦  WORKOUT COMPLETE  ✦", W / 2, 350);
 
-      // Workout name (large)
-      ctx.font = "900 88px 'Plus Jakarta Sans', sans-serif";
+      // Workout name (large) — scale down if too wide
+      ctx.textAlign = "center";
+      const titleUpper = title.toUpperCase();
+      let titleSize = 88;
+      ctx.font = `900 ${titleSize}px 'Plus Jakarta Sans', sans-serif`;
+      while (ctx.measureText(titleUpper).width > W - 160 && titleSize > 40) {
+        titleSize -= 4;
+        ctx.font = `900 ${titleSize}px 'Plus Jakarta Sans', sans-serif`;
+      }
       ctx.fillStyle = "#F0F0F8";
-      ctx.fillText(title.toUpperCase(), W / 2, 470);
+      ctx.fillText(titleUpper, W / 2, 470);
 
-      // Username (smaller)
-      ctx.font = "400 32px 'JetBrains Mono', monospace";
+      // Username (smaller) — scale down if too wide
+      let nameSize = 32;
+      ctx.font = `400 ${nameSize}px 'JetBrains Mono', monospace`;
+      while (ctx.measureText(displayName).width > W - 160 && nameSize > 18) {
+        nameSize -= 2;
+        ctx.font = `400 ${nameSize}px 'JetBrains Mono', monospace`;
+      }
       ctx.fillStyle = "rgba(255,255,255,0.3)";
       ctx.fillText(displayName, W / 2, 520);
 
       // Big duration
-      const durationText = fmtHMS(Math.round(durationMins * 60));
+      const durationTotalSecs = Math.max(0, Math.round(durationMins * 60));
+      const dH = Math.floor(durationTotalSecs / 3600);
+      const dM = Math.floor((durationTotalSecs % 3600) / 60);
+      const durationText = `${String(dH).padStart(2, "0")}:${String(dM).padStart(2, "0")}`;
       ctx.font = "300 190px 'JetBrains Mono', monospace";
       ctx.fillStyle = "#EAEAF0";
       ctx.fillText(durationText, W / 2, 740);

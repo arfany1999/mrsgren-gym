@@ -263,9 +263,9 @@
 .setsTableHead[data-type="timed"] {
   grid-template-columns: 30px 1fr 30px;
 }
-/* cardio: time-only — no SET badge, single MIN field + remove */
+/* cardio: MIN | KM | remove */
 .setsTableHead[data-type="cardio"] {
-  grid-template-columns: 1fr 30px;
+  grid-template-columns: 1fr 1fr 30px;
 }
 
 .setNumCol {
@@ -302,7 +302,7 @@
   grid-template-columns: 30px 1fr 30px;
 }
 .setRow[data-type="cardio"] {
-  grid-template-columns: 1fr 30px;
+  grid-template-columns: 1fr 1fr 30px;
 }
 .setRow:last-of-type { padding-bottom: 4px; }
 

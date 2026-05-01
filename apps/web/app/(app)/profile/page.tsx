@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import Image from "next/image";
 import { formatDateFull } from "@/lib/formatters";
-import { getReports, type WorkoutReportEntry } from "@/lib/gymProfile";
+import { getProfile, saveProfile, getReports, clearReports, type WorkoutReportEntry } from "@/lib/gymProfile";
+import type { GymProfile } from "@/lib/gymProfile";
 import { TROPHIES, getTrophyProgress, nextTierLabel } from "@/lib/trophies";
 import { fetchStreakStats } from "@/lib/streakStats";
 import { TierProgression } from "@/components/profile/TierProgression/TierProgression";
@@ -161,6 +162,83 @@ export default function ProfilePage() {
   const [editUsername,  setEditUsername]  = useState("");
   const [editSaving,    setEditSaving]    = useState(false);
   const [editError,     setEditError]     = useState<string | null>(null);
+
+  // Body stats modal
+  const [bodyOpen, setBodyOpen] = useState(false);
+  const [bodyWeight, setBodyWeight] = useState("");
+  const [bodyHeight, setBodyHeight] = useState("");
+  const [bodyAge, setBodyAge] = useState("");
+  const [bodySex, setBodySex] = useState<"male" | "female">("male");
+  const [bodyActivity, setBodyActivity] = useState<GymProfile["activity_level"]>("moderate");
+  const [bodySaving, setBodySaving] = useState(false);
+  const [gymProfile, setGymProfile] = useState<GymProfile | null>(null);
+
+  // Load gym profile from localStorage
+  useEffect(() => {
+    if (user?.email) {
+      setGymProfile(getProfile(user.email));
+    }
+  }, [user?.email]);
+
+  function openBodyStats() {
+    const p = user?.email ? getProfile(user.email) : null;
+    setBodyWeight(p?.weight_kg ? String(p.weight_kg) : "");
+    setBodyHeight(p?.height_cm ? String(p.height_cm) : "");
+    setBodyAge(p?.age ? String(p.age) : "");
+    setBodySex(p?.sex ?? "male");
+    setBodyActivity(p?.activity_level ?? "moderate");
+    setBodyOpen(true);
+  }
+
+  function saveBodyStats() {
+    if (!user?.email) return;
+    const w = parseFloat(bodyWeight);
+    const h = parseFloat(bodyHeight);
+    const a = parseInt(bodyAge);
+    if (!w || w < 20 || w > 300) return;
+    if (!h || h < 100 || h > 250) return;
+    if (!a || a < 10 || a > 100) return;
+    setBodySaving(true);
+    const profile: GymProfile = {
+      sex: bodySex,
+      age: a,
+      weight_kg: Math.round(w * 10) / 10,
+      height_cm: Math.round(h),
+      activity_level: bodyActivity,
+      onboarding_done: true,
+    };
+    saveProfile(user.email, profile);
+    setGymProfile(profile);
+    setBodyOpen(false);
+    setBodySaving(false);
+  }
+
+  // Reset history
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  async function handleResetHistory() {
+    setResetting(true);
+    try {
+      // Delete all workouts from Supabase (cascade deletes exercises + sets)
+      await supabase.from("workouts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      // Clear local reports
+      if (user?.email) clearReports(user.email);
+      // Reset UI state
+      setTotalWorkouts(0);
+      setWorkoutDays(0);
+      setCurrentStreak(0);
+      setLongestStreak(0);
+      setTotalVolumeKg(0);
+      setTotalDurationMin(0);
+      setReports([]);
+      setChartValues([0, 0, 0, 0]);
+      setChartLabel("0 hours this week");
+      setResetOpen(false);
+    } finally {
+      setResetting(false);
+    }
+  }
 
   // Share toast
   const [shareToast, setShareToast] = useState<string | null>(null);
@@ -422,6 +500,98 @@ export default function ProfilePage() {
               >
                 {editSaving ? "Saving..." : "Save"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Body stats modal ── */}
+      {bodyOpen && (
+        <div className={styles.modalOverlay} onClick={() => !bodySaving && setBodyOpen(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h2 className={styles.modalTitle}>Body Stats</h2>
+
+            <label className={styles.modalLabel}>Weight (kg)</label>
+            <input
+              type="number"
+              className={styles.modalInput}
+              value={bodyWeight}
+              onChange={e => setBodyWeight(e.target.value)}
+              placeholder="75"
+              min={20}
+              max={300}
+              step={0.1}
+              inputMode="decimal"
+            />
+
+            <label className={styles.modalLabel}>Height (cm)</label>
+            <input
+              type="number"
+              className={styles.modalInput}
+              value={bodyHeight}
+              onChange={e => setBodyHeight(e.target.value)}
+              placeholder="175"
+              min={100}
+              max={250}
+              inputMode="numeric"
+            />
+
+            <label className={styles.modalLabel}>Age</label>
+            <input
+              type="number"
+              className={styles.modalInput}
+              value={bodyAge}
+              onChange={e => setBodyAge(e.target.value)}
+              placeholder="25"
+              min={10}
+              max={100}
+              inputMode="numeric"
+            />
+
+            <label className={styles.modalLabel}>Sex</label>
+            <div className={styles.segmented}>
+              <button
+                type="button"
+                className={[styles.segBtn, bodySex === "male" ? styles.segActive : ""].join(" ")}
+                onClick={() => setBodySex("male")}
+              >Male</button>
+              <button
+                type="button"
+                className={[styles.segBtn, bodySex === "female" ? styles.segActive : ""].join(" ")}
+                onClick={() => setBodySex("female")}
+              >Female</button>
+            </div>
+
+            <label className={styles.modalLabel}>Activity Level</label>
+            <div className={styles.activityGrid}>
+              {([
+                ["sedentary", "Sedentary"],
+                ["light", "Light"],
+                ["moderate", "Moderate"],
+                ["very_active", "Very Active"],
+              ] as const).map(([val, label]) => (
+                <button
+                  key={val}
+                  type="button"
+                  className={[styles.activityBtn, bodyActivity === val ? styles.activityActive : ""].join(" ")}
+                  onClick={() => setBodyActivity(val)}
+                >{label}</button>
+              ))}
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.modalCancel}
+                onClick={() => setBodyOpen(false)}
+                disabled={bodySaving}
+              >Cancel</button>
+              <button
+                type="button"
+                className={styles.modalSave}
+                onClick={saveBodyStats}
+                disabled={bodySaving}
+              >{bodySaving ? "Saving..." : "Save"}</button>
             </div>
           </div>
         </div>
@@ -956,6 +1126,41 @@ export default function ProfilePage() {
       </section>
 
       <section className={styles.section}>
+        <div className={styles.sectionLabel}>Body Stats</div>
+        <div className={styles.card}>
+          <button type="button" className={styles.rowBtn} onClick={openBodyStats}>
+            <span className={styles.rowLabel}>Weight</span>
+            <span className={styles.rowValue}>{gymProfile?.weight_kg ? `${gymProfile.weight_kg} kg` : "Not set"}</span>
+          </button>
+          <div className={styles.separator} />
+          <button type="button" className={styles.rowBtn} onClick={openBodyStats}>
+            <span className={styles.rowLabel}>Height</span>
+            <span className={styles.rowValue}>{gymProfile?.height_cm ? `${gymProfile.height_cm} cm` : "Not set"}</span>
+          </button>
+          <div className={styles.separator} />
+          <button type="button" className={styles.rowBtn} onClick={openBodyStats}>
+            <span className={styles.rowLabel}>Age</span>
+            <span className={styles.rowValue}>{gymProfile?.age ?? "Not set"}</span>
+          </button>
+          <div className={styles.separator} />
+          <button type="button" className={styles.rowBtn} onClick={openBodyStats}>
+            <span className={styles.rowLabel}>Sex</span>
+            <span className={styles.rowValue}>{gymProfile?.sex ? gymProfile.sex.charAt(0).toUpperCase() + gymProfile.sex.slice(1) : "Not set"}</span>
+          </button>
+          <div className={styles.separator} />
+          <button type="button" className={styles.rowBtn} onClick={openBodyStats}>
+            <span className={styles.rowLabel}>Activity Level</span>
+            <span className={styles.rowValue}>
+              {gymProfile?.activity_level
+                ? gymProfile.activity_level.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())
+                : "Not set"}
+            </span>
+          </button>
+        </div>
+        <p className={styles.bodyStatsHint}>Used for calorie estimation in workout reports</p>
+      </section>
+
+      <section className={styles.section}>
         <div className={styles.sectionLabel}>Appearance</div>
         <div className={styles.card}>
           <div className={styles.row}>
@@ -1015,6 +1220,44 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>
+
+      <section className={styles.section}>
+        <div className={styles.sectionLabel}>Danger Zone</div>
+        <div className={styles.card}>
+          <button type="button" className={styles.rowBtn} onClick={() => setResetOpen(true)}>
+            <span className={styles.rowLabel} style={{ color: "var(--accent-red)" }}>Reset All History</span>
+            <span className={styles.rowValue}>Day counter back to 1</span>
+          </button>
+        </div>
+        <p className={styles.bodyStatsHint}>Deletes all workouts, sets, and reports. This cannot be undone.</p>
+      </section>
+
+      {/* ── Reset history confirmation modal ── */}
+      {resetOpen && (
+        <div className={styles.modalOverlay} onClick={() => !resetting && setResetOpen(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h2 className={styles.modalTitle}>Reset All History?</h2>
+            <p className={styles.resetWarning}>
+              This will permanently delete all your workouts, exercises, sets, and reports.
+              Your day counter will reset to Day 1. This cannot be undone.
+            </p>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.modalCancel}
+                onClick={() => setResetOpen(false)}
+                disabled={resetting}
+              >Cancel</button>
+              <button
+                type="button"
+                className={styles.resetConfirmBtn}
+                onClick={handleResetHistory}
+                disabled={resetting}
+              >{resetting ? "Deleting..." : "Delete Everything"}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading && <div className={styles.loadingCenter}><Spinner size={24} /></div>}
 

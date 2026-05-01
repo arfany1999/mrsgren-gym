@@ -121,3 +121,8 @@ export function saveReport(email: string, report: WorkoutReportEntry): void {
   localStorage.setItem(reportKey(email), JSON.stringify(deduped.slice(0, 200)));
 }
 
+export function clearReports(email: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(reportKey(email));
+}
+

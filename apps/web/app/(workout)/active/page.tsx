@@ -2,15 +2,26 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { ExerciseBlock } from "@/components/workout/ExerciseBlock/ExerciseBlock";
-import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
 import { CircularTimer } from "@/components/workout/CircularTimer/CircularTimer";
-import { RestOverlay } from "@/components/workout/RestOverlay/RestOverlay";
 import { PRBanner } from "@/components/workout/PRBanner/PRBanner";
-import { WorkoutReport } from "@/components/workout/WorkoutReport/WorkoutReport";
 import { Modal } from "@/components/ui/Modal/Modal";
+
+const ExercisePicker = dynamic(
+  () => import("@/components/workout/ExercisePicker/ExercisePicker").then((m) => m.ExercisePicker),
+  { ssr: false },
+);
+const RestOverlay = dynamic(
+  () => import("@/components/workout/RestOverlay/RestOverlay").then((m) => m.RestOverlay),
+  { ssr: false },
+);
+const WorkoutReport = dynamic(
+  () => import("@/components/workout/WorkoutReport/WorkoutReport").then((m) => m.WorkoutReport),
+  { ssr: false },
+);
 import { Button } from "@/components/ui/Button/Button";
 import { getActiveWorkoutId, getRestTimer, setRestTimer } from "@/lib/storage";
 import { getProfile } from "@/lib/gymProfile";
@@ -56,6 +67,7 @@ export default function ActiveWorkoutPage() {
   const [restExerciseName, setRestExerciseName] = useState<string | undefined>(undefined);
   const restFiredRef  = useRef(false);
   const [restOverlayOpen, setRestOverlayOpen] = useState(false);
+  const [elapsed,     setElapsed]     = useState(0);
   const [pendingSync, setPendingSync] = useState(0);
   const [isOnline,    setIsOnline]    = useState(true);
 
@@ -88,6 +100,23 @@ export default function ActiveWorkoutPage() {
       window.removeEventListener("offline", update);
     };
   }, []);
+
+  // Elapsed workout time
+  useEffect(() => {
+    if (!activeWorkout?.startedAt) { setElapsed(0); return; }
+    const startedAtMs = new Date(activeWorkout.startedAt).getTime();
+    const recompute = () => setElapsed(Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000)));
+    recompute();
+    const id = window.setInterval(recompute, 1000);
+    const onVis = () => { if (!document.hidden) recompute(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", recompute);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", recompute);
+    };
+  }, [activeWorkout?.startedAt]);
 
   // Report state
   const [report, setReport] = useState<{ workoutId: string; durationMins: number; dayNumber: number; workoutDays: number } | null>(null);
@@ -203,6 +232,14 @@ export default function ActiveWorkoutPage() {
     restFiredRef.current = false;
     setRestTimer(null);
   }, []);
+
+  const fmtElapsed = (t: number) => {
+    const h = Math.floor(t / 3600);
+    const m = Math.floor((t % 3600) / 60);
+    const s = t % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
 
   const formatRest = (s: number) => {
     if (s <= 0) return "0:00";
@@ -326,6 +363,7 @@ export default function ActiveWorkoutPage() {
         </button>
         <div className={styles.titleWrapper}>
           <span className={styles.workoutName}>{activeWorkout?.title}</span>
+          <span className={styles.elapsedTime}>{fmtElapsed(elapsed)}</span>
         </div>
         <Button variant="primary" size="sm" onClick={handleFinish} loading={finishing}>
           Finish
@@ -364,16 +402,20 @@ export default function ActiveWorkoutPage() {
         </div>
       </div>
 
-      {/* Circular timer + quick rest presets */}
-      <div className={styles.timerSection}>
-        <CircularTimer
-          restSecs={restSecs > 0 ? restSecs : 0}
-          restTotal={restTotal}
-          restExerciseName={restExerciseName}
-          onAdjust={adjustRest}
-          onSkip={skipRest}
-        />
-        {restSecs <= 0 && (
+      {/* Exercises */}
+      <div className={styles.content}>
+        {/* Rest circle timer (only when resting) + presets (when idle) */}
+        {restSecs > 0 ? (
+          <div className={styles.timerSection}>
+            <CircularTimer
+              restSecs={restSecs}
+              restTotal={restTotal}
+              restExerciseName={restExerciseName}
+              onAdjust={adjustRest}
+              onSkip={skipRest}
+            />
+          </div>
+        ) : (
           <div className={styles.restPresets}>
             {[60, 90, 120, 180].map((s) => (
               <button
@@ -387,10 +429,6 @@ export default function ActiveWorkoutPage() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Exercises */}
-      <div className={styles.content}>
         {exercises.length === 0 ? (
           <div className={styles.empty}>
             <p className={styles.emptyIcon}>🏋️</p>

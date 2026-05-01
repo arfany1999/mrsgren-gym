@@ -47,9 +47,6 @@ interface DraftExercise {
 function emptySet(type: MeasurementType): DraftSet {
   switch (type) {
     case "timed":   return { reps: "", weight: "", duration: "30", distance: "" };
-    // Cardio is time-only now — distance is no longer tracked. We still
-    // store the field as "" so the persisted shape stays compatible with
-    // any older routine_exercises rows that have a distance set.
     case "cardio":  return { reps: "", weight: "", duration: "20", distance: "" };
     default:        return { reps: "12", weight: "", duration: "", distance: "" };
   }
@@ -66,7 +63,7 @@ const COL_LABELS: Record<MeasurementType, string[]> = {
   bodyweight_reps: ["SET", "REPS"],
   reps_only:       ["SET", "REPS"],
   timed:           ["SET", "SEC"],
-  cardio:          ["MIN"],
+  cardio:          ["MIN", "KM"],
 };
 
 export default function EditRoutinePage() {
@@ -472,6 +469,7 @@ export default function EditRoutinePage() {
             const isRepsOnly    = ex.measurementType !== "cardio" && ex.measurementType !== "timed";
             const muscleColor   = mc(ex.muscle);
             const exTotalReps   = ex.sets.reduce((s, set) => s + (parseInt(set.reps) || 0), 0);
+            const exTotalMins   = ex.sets.reduce((s, set) => s + (parseInt(set.duration) || 0), 0);
 
             return (
               <div
@@ -503,7 +501,11 @@ export default function EditRoutinePage() {
                         {ex.muscle}
                       </span>
                       <span className={styles.exSetCount}>
-                        {ex.sets.length} sets · {exTotalReps} reps
+                        {isCardio
+                          ? `${ex.sets.length} session${ex.sets.length !== 1 ? "s" : ""} · ${exTotalMins} min`
+                          : isTimed
+                            ? `${ex.sets.length} sets · ${exTotalReps}s`
+                            : `${ex.sets.length} sets · ${exTotalReps} reps`}
                       </span>
                     </div>
                   </div>
@@ -569,15 +571,24 @@ export default function EditRoutinePage() {
                       />
                     )}
 
-                    {/* DURATION (minutes) — cardio (time-only) */}
+                    {/* DURATION (minutes) + DISTANCE (km) — cardio */}
                     {isCardio && (
-                      <input
-                        className={styles.setInput}
-                        type="number" inputMode="numeric" min="1"
-                        value={s.duration}
-                        onChange={e => updateSet(exIdx, setIdx, "duration", e.target.value)}
-                        placeholder="20"
-                      />
+                      <>
+                        <input
+                          className={styles.setInput}
+                          type="number" inputMode="numeric" min="1"
+                          value={s.duration}
+                          onChange={e => updateSet(exIdx, setIdx, "duration", e.target.value)}
+                          placeholder="20"
+                        />
+                        <input
+                          className={styles.setInput}
+                          type="number" inputMode="decimal" min="0" step="0.1"
+                          value={s.distance}
+                          onChange={e => updateSet(exIdx, setIdx, "distance", e.target.value)}
+                          placeholder="—"
+                        />
+                      </>
                     )}
 
                     {/* Remove set */}

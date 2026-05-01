@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import styles from "./Avatar.module.css";
 
 // Single brand avatar across the whole app — we deliberately don't pull
@@ -34,12 +35,12 @@ export function Avatar({
   const containerClass = [styles.avatar, className].filter(Boolean).join(" ");
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={BRAND_AVATAR}
       alt={label}
       width={size}
       height={size}
+      unoptimized
       className={containerClass}
       style={boxStyle}
     />
