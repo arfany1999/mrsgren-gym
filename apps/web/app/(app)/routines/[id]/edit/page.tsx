@@ -627,12 +627,11 @@ export default function EditRoutinePage() {
         <div className={styles.sheetHandle} />
 
         <div className={styles.sheetHeader}>
-          <span className={styles.sheetTitle}>Add Exercise</span>
-          <button type="button" className={styles.sheetClose} onClick={closeSheet} aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6l12 12" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
+          <div className={styles.sheetTitleWrap}>
+            <span className={styles.sheetTitle}>Add Exercise</span>
+            <span className={styles.sheetSubtitle}>{searchResults.length} available</span>
+          </div>
+          <button type="button" className={styles.sheetClose} onClick={closeSheet} aria-label="Close">×</button>
         </div>
 
         {/* Search */}
@@ -667,17 +666,26 @@ export default function EditRoutinePage() {
             <span className={styles.chipEmoji}>💪</span>
             <span className={styles.chipLabel}>All</span>
           </button>
-          {MUSCLE_GROUPS.map(mg => (
-            <button
-              key={mg.id}
-              type="button"
-              className={[styles.chip, selectedMuscle === mg.id ? styles.chipActive : ""].join(" ")}
-              onClick={() => { setSelectedMuscle(mg.id); setQuery(""); }}
-            >
-              <span className={styles.chipEmoji}>{mg.emoji}</span>
-              <span className={styles.chipLabel}>{mg.label}</span>
-            </button>
-          ))}
+          {MUSCLE_GROUPS.map(mg => {
+            const active = selectedMuscle === mg.id;
+            const color = mc(mg.id);
+            return (
+              <button
+                key={mg.id}
+                type="button"
+                className={[styles.chip, active ? styles.chipActive : ""].join(" ")}
+                style={active ? {
+                  background: `${color}20`,
+                  borderColor: `${color}55`,
+                  color,
+                } : undefined}
+                onClick={() => { setSelectedMuscle(mg.id); setQuery(""); }}
+              >
+                <span className={styles.chipEmoji}>{mg.emoji}</span>
+                <span className={styles.chipLabel}>{mg.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Exercise list */}
@@ -742,6 +750,7 @@ const SheetItem = memo(function SheetItem({
   pending: boolean;
   onAdd: () => void;
 }) {
+  const color = mc(def.muscle);
   return (
     <button
       type="button"
@@ -749,13 +758,19 @@ const SheetItem = memo(function SheetItem({
       onClick={() => !alreadyAdded && onAdd()}
       disabled={alreadyAdded || pending}
     >
-      <div className={styles.sheetItemIcon}>
+      <div
+        className={styles.sheetItemIcon}
+        style={{
+          background: `${color}10`,
+          border: `1px solid ${color}20`,
+        }}
+      >
         <BodyMuscleIcon muscles={[def.muscle]} variant="thumb" />
       </div>
       <div className={styles.sheetItemInfo}>
         <p className={styles.sheetItemName}>{def.name}</p>
         <p className={styles.sheetItemMeta}>
-          <span className={styles.sheetItemMuscle}>
+          <span className={styles.sheetItemMuscle} style={{ color }}>
             {def.muscle.charAt(0).toUpperCase() + def.muscle.slice(1)}
           </span>
           <span className={styles.sheetItemTypePill} data-type={def.type}>
@@ -765,16 +780,29 @@ const SheetItem = memo(function SheetItem({
       </div>
       <div className={styles.sheetItemAction}>
         {alreadyAdded ? (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M5 13l4 4L19 7" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <div style={{
+            width: 28, height: 28, borderRadius: "50%",
+            background: "rgba(212,168,67,0.12)",
+            border: "1px solid rgba(212,168,67,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <path d="M5 13l4 4L19 7" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
         ) : pending ? (
           <Spinner size={16} />
         ) : (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" fill="var(--accent)"/>
-            <path d="M12 7v10M7 12h10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
+          <div style={{
+            width: 28, height: 28, borderRadius: "50%",
+            background: "var(--accent)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(212,168,67,0.35)",
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="#05050A" strokeWidth="2.8" strokeLinecap="round"/>
+            </svg>
+          </div>
         )}
       </div>
     </button>
