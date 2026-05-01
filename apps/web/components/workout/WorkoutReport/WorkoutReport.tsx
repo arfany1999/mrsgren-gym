@@ -24,6 +24,53 @@ const GOLD = "#D4A843";
 const GOLD_LIGHT = "#E8C56D";
 const COPPER = "#CD7F32";
 
+const MUSCLE_COLOR: Record<string, string> = {
+  chest: "#e05c5c", back: "#3a9bdc", shoulders: "#9b7fe8",
+  biceps: "#e8a23a", triceps: "#e87a3a", quads: "#4caf7d",
+  hamstrings: "#059669", glutes: "#0d9488", legs: "#4caf7d",
+  abs: "#eab308", core: "#eab308", cardio: "#ec4899",
+  "upper chest": "#e05c5c",
+};
+
+const MOTIVATIONAL_QUOTES = [
+  { text: "The pain you feel today is the strength you feel tomorrow.", author: "Arnold S." },
+  { text: "No shortcuts. No excuses. Just results.", author: "Gym Code" },
+  { text: "Every rep is a vote for the person you're becoming.", author: "Gym Code" },
+  { text: "You didn't come this far to only come this far.", author: "Gym Code" },
+  { text: "Iron never lies.", author: "Henry Rollins" },
+  { text: "The only bad workout is the one that didn't happen.", author: "Gym Code" },
+  { text: "Truth is, nobody cares how sore you are. Show up anyway.", author: "Gym Code" },
+  { text: "The truth about fitness: there is no secret. Just lift.", author: "Gym Code" },
+  { text: "Truth: the bar doesn't care about your excuses.", author: "Iron Gospel" },
+  { text: "The truth is heavy. That's why so few people lift it.", author: "Gym Code" },
+  { text: "Your body tells the truth your mouth never will.", author: "Gym Code" },
+  { text: "Lifting is the answer. What was the question?", author: "Gym Code" },
+  { text: "Lift heavy. Eat. Sleep. Repeat. That's literally it.", author: "Gym Code" },
+  { text: "Lifting won't solve all your problems. But it's a solid start.", author: "Gym Code" },
+  { text: "The weight never lies. Your log book never forgets.", author: "Gym Code" },
+  { text: "A bad day lifting still beats a good day on the couch.", author: "Gym Code" },
+  { text: "Whether you think you can or you can't — pick up the bar anyway.", author: "Gym Code" },
+  { text: "You can complain about being weak, or you can fix it. Not both.", author: "Gym Code" },
+  { text: "You can start over. The gym doesn't hold grudges.", author: "Gym Code" },
+  { text: "You cannot buy discipline. You earn it one session at a time.", author: "Gym Code" },
+  { text: "You can do anything for one more rep.", author: "Gym Code" },
+  { text: "I'm not sweating. I'm leaking gains.", author: "Gym Lore" },
+  { text: "Leg day: feared by many, skipped by most.", author: "Gym Lore" },
+  { text: "Rest day? My body auto-corrected that to 'chest day'.", author: "Gym Lore" },
+  { text: "Abs are made in the kitchen. Mine are still on delivery.", author: "Gym Lore" },
+  { text: "I came. I saw. I did one more set.", author: "Julius Reps-ar" },
+  { text: "Discipline is remembering what you want most over what you want now.", author: "Gym Code" },
+  { text: "Consistency is the most underrated superpower.", author: "Gym Code" },
+  { text: "The mirror shows who you were. The bar decides who you'll be.", author: "Gym Code" },
+  { text: "Champions aren't made in gyms. They're revealed there.", author: "Gym Code" },
+  { text: "The mind gives up long before the body does. Train both.", author: "Gym Code" },
+  { text: "Momentum is built, not born. Start. Now.", author: "Gym Code" },
+  { text: "Progress is quiet. Consistency is loud.", author: "Gym Code" },
+  { text: "Strength is not given. It's extracted rep by rep.", author: "Gym Code" },
+  { text: "One day you'll wish you'd started sooner. Today is still sooner.", author: "Gym Code" },
+  { text: "Your future self is watching through the weights you chose today.", author: "Gym Code" },
+];
+
 function fmtHMS(totalSeconds: number): string {
   const safe = Math.max(0, Math.round(totalSeconds));
   const h = Math.floor(safe / 3600);
@@ -103,6 +150,59 @@ function ParticlesCanvas({ color }: { color: string }) {
   return <canvas ref={canvasRef} className={styles.particles} aria-hidden />;
 }
 
+function EditableQuote({
+  text,
+  author,
+  onChangeText,
+  onChangeAuthor,
+}: {
+  text: string;
+  author: string;
+  onChangeText: (v: string) => void;
+  onChangeAuthor: (v: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  return (
+    <div
+      className={`${styles.quoteSection} ${editing ? styles.quoteEditing : ""}`}
+      onClick={() => !editing && setEditing(true)}
+    >
+      {!editing && <span className={styles.quoteEditBadge}>EDIT</span>}
+      {editing ? (
+        <div onClick={(e) => e.stopPropagation()}>
+          <p className={styles.quoteEditTitle}>EDIT QUOTE</p>
+          <textarea
+            className={styles.quoteTextarea}
+            value={text}
+            onChange={(e) => onChangeText(e.target.value)}
+            autoFocus
+            rows={3}
+          />
+          <input
+            className={styles.quoteInput}
+            value={author}
+            onChange={(e) => onChangeAuthor(e.target.value)}
+            placeholder="Author"
+          />
+          <button
+            className={styles.quoteDoneBtn}
+            type="button"
+            onClick={() => setEditing(false)}
+          >
+            DONE ✓
+          </button>
+        </div>
+      ) : (
+        <>
+          <p className={styles.quoteText}>&ldquo;{text}&rdquo;</p>
+          <p className={styles.quoteAuthor}>— {author}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function WorkoutReport({
   title,
   exercises,
@@ -172,6 +272,57 @@ export function WorkoutReport({
     [exerciseRows],
   );
   const volume = calcVolume(exercises);
+
+  const totalReps = useMemo(
+    () =>
+      exercises.reduce(
+        (sum, e) =>
+          sum + e.sets.filter((s) => s.isSaved).reduce((r, s) => r + (parseInt(s.reps) || 0), 0),
+        0,
+      ),
+    [exercises],
+  );
+
+  const cardioCalories = useMemo(
+    () => Math.round(cardioMins * 8.5),
+    [cardioMins],
+  );
+  const hasCardio = cardioMins > 0;
+  const cardioExerciseNames = useMemo(
+    () => exerciseRows.filter((r) => r.ex.measurementType === "cardio").map((r) => r.ex.name),
+    [exerciseRows],
+  );
+
+  const muscles = useMemo(() => {
+    const map: Record<string, number> = {};
+    exercises.forEach((e) => {
+      const groups = e.muscleGroups?.length ? e.muscleGroups : [];
+      const key = groups[0]?.toLowerCase() || "";
+      if (!key) return;
+      map[key] = (map[key] || 0) + e.sets.filter((s) => s.isSaved).length;
+    });
+    return Object.entries(map)
+      .filter(([, sets]) => sets > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [exercises]);
+
+  const prs = useMemo(
+    () =>
+      exercises.flatMap((e) =>
+        e.sets
+          .filter((s) => s.isPr)
+          .map((s) => ({ name: e.name, weight: s.weightKg, reps: s.reps })),
+      ),
+    [exercises],
+  );
+
+  const randomQuote = useMemo(
+    () => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]!,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  const [quoteText, setQuoteText] = useState(randomQuote.text);
+  const [quoteAuthor, setQuoteAuthor] = useState(randomQuote.author);
 
   const trophy = useMemo(() => getTrophyProgress(workoutDays), [workoutDays]);
   const tier = trophy.nextTier ?? trophy.currentTier;
@@ -287,71 +438,97 @@ export function WorkoutReport({
       ctx.fillStyle = "#404050";
       ctx.fillText("D U R A T I O N", W / 2, H * 0.42);
 
-      // Stats row
-      const stats = [
-        { label: "VOLUME", value: Math.round(volume).toLocaleString(), unit: "KG" },
-        { label: "EXERCISES", value: String(exerciseRows.length), unit: "" },
-        { label: "CARDIO", value: String(cardioMins), unit: cardioMins > 0 ? "MIN" : "" },
+      // 4-column stats
+      const stats4 = [
+        { label: "CARDIO", value: String(cardioMins || 0), unit: "MIN" },
+        { label: "SETS", value: String(totalSets), unit: "" },
+        { label: "BURNED", value: totalCalories.toLocaleString(), unit: "KCAL" },
+        { label: "VOLUME", value: volume > 0 ? Math.round(volume).toLocaleString() : "0", unit: "KG" },
       ];
       const statsTop = H * 0.48;
-      const statsGap = W / 3;
-      ctx.strokeStyle = "rgba(255,255,255,0.04)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(W * 0.075, statsTop);
-      ctx.lineTo(W * 0.925, statsTop);
-      ctx.moveTo(W * 0.075, statsTop + 170);
-      ctx.lineTo(W * 0.925, statsTop + 170);
-      ctx.stroke();
-      stats.forEach((s, i) => {
-        const cx = statsGap * i + statsGap / 2;
-        ctx.font = "400 18px 'JetBrains Mono', monospace";
+      const colW = W / 4;
+      stats4.forEach((s, i) => {
+        const cx = colW * i + colW / 2;
+        if (i > 0) {
+          ctx.fillStyle = "rgba(255,255,255,0.06)";
+          ctx.fillRect(colW * i, statsTop, 1, 170);
+        }
+        ctx.font = "700 22px 'JetBrains Mono', monospace";
         ctx.fillStyle = "#404050";
+        ctx.textAlign = "center";
         ctx.fillText(s.label, cx, statsTop + 38);
-        ctx.font = "300 60px 'JetBrains Mono', monospace";
-        ctx.fillStyle = "#C8C8D4";
-        ctx.fillText(s.value, cx, statsTop + 110);
+        ctx.font = "300 70px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#EAEAF0";
+        ctx.fillText(s.value, cx, statsTop + 120);
         if (s.unit) {
-          ctx.font = "400 18px 'JetBrains Mono', monospace";
+          ctx.font = "400 20px 'JetBrains Mono', monospace";
           ctx.fillStyle = "#404050";
-          ctx.fillText(s.unit, cx, statsTop + 145);
+          ctx.fillText(s.unit, cx, statsTop + 155);
         }
       });
 
-      // Session summary
-      const sumTop = H * 0.62;
-      ctx.font = "400 22px 'JetBrains Mono', monospace";
+      // Gold divider
+      const divGrad2 = ctx.createLinearGradient(W * 0.1, 0, W * 0.9, 0);
+      divGrad2.addColorStop(0, "rgba(212,168,67,0)");
+      divGrad2.addColorStop(0.5, "rgba(212,168,67,0.8)");
+      divGrad2.addColorStop(1, "rgba(212,168,67,0)");
+      ctx.fillStyle = divGrad2;
+      ctx.fillRect(W * 0.1, statsTop + 180, W * 0.8, 1);
+
+      // Muscles trained bars
+      ctx.font = "800 22px 'JetBrains Mono', monospace";
       ctx.fillStyle = GOLD;
       ctx.textAlign = "left";
-      ctx.fillText("SESSION SUMMARY", W * 0.075, sumTop);
-      ctx.strokeStyle = "rgba(212,168,67,0.18)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(W * 0.075, sumTop + 22);
-      ctx.lineTo(W * 0.925, sumTop + 22);
-      ctx.moveTo(W * 0.075, sumTop + 232);
-      ctx.lineTo(W * 0.925, sumTop + 232);
-      ctx.stroke();
-      const sumStats = [
-        { value: String(exerciseRows.length), unit: "", label: "EXERCISES DONE" },
-        { value: Math.round(volume).toLocaleString(), unit: "KG", label: "TOTAL VOLUME" },
-        { value: totalCalories.toLocaleString(), unit: "KCAL", label: "CALORIES BURNED" },
-      ];
-      ctx.textAlign = "center";
-      sumStats.forEach((s, i) => {
-        const cx = statsGap * i + statsGap / 2;
-        ctx.font = "300 80px 'JetBrains Mono', monospace";
-        ctx.fillStyle = "#D0D0DC";
-        ctx.fillText(s.value, cx, sumTop + 130);
-        if (s.unit) {
-          ctx.font = "400 18px 'JetBrains Mono', monospace";
-          ctx.fillStyle = "#404050";
-          ctx.fillText(s.unit, cx, sumTop + 165);
-        }
-        ctx.font = "400 18px 'JetBrains Mono', monospace";
-        ctx.fillStyle = "#404050";
-        ctx.fillText(s.label, cx, sumTop + 210);
+      let mY = statsTop + 210;
+      ctx.fillText("MUSCLES TRAINED", 100, mY);
+      mY += 30;
+      muscles.slice(0, 4).forEach(([muscle, sets]) => {
+        const c = MUSCLE_COLOR[muscle] || "#5e6272";
+        const maxS = muscles[0]?.[1] || 1;
+        const barW = Math.round((sets / maxS) * (W - 240));
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        ctx.beginPath();
+        ctx.roundRect(100, mY, W - 200, 52, 10);
+        ctx.fill();
+        ctx.fillStyle = c + "40";
+        ctx.beginPath();
+        ctx.roundRect(100, mY, barW + 100, 52, 10);
+        ctx.fill();
+        ctx.font = "700 26px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillStyle = "#EAEAF0";
+        ctx.textAlign = "left";
+        ctx.fillText(muscle.charAt(0).toUpperCase() + muscle.slice(1), 124, mY + 34);
+        ctx.font = "700 22px 'JetBrains Mono', monospace";
+        ctx.fillStyle = c;
+        ctx.textAlign = "right";
+        ctx.fillText(`${sets} sets`, W - 110, mY + 34);
+        mY += 68;
       });
+
+      // Quote
+      const qY = mY + 40;
+      ctx.font = "italic 600 36px 'Plus Jakarta Sans', sans-serif";
+      ctx.fillStyle = "rgba(240,240,248,0.55)";
+      ctx.textAlign = "center";
+      const words = quoteText.split(" ");
+      let line = "";
+      const qLines: string[] = [];
+      for (const w of words) {
+        const test = line + w + " ";
+        if (ctx.measureText(test).width > W - 200 && line) {
+          qLines.push(line.trim());
+          line = w + " ";
+        } else {
+          line = test;
+        }
+      }
+      if (line.trim()) qLines.push(line.trim());
+      qLines.forEach((l, i) => {
+        ctx.fillText(i === 0 ? `“${l}` : i === qLines.length - 1 ? `${l}”` : l, W / 2, qY + i * 52);
+      });
+      ctx.font = "400 26px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#404050";
+      ctx.fillText(`— ${quoteAuthor}`, W / 2, qY + qLines.length * 52 + 30);
 
       // Tier ring + label (bottom)
       const tierTop = H * 0.84;
@@ -443,6 +620,9 @@ export function WorkoutReport({
     displayName,
     durationMins,
     exerciseRows.length,
+    muscles,
+    quoteAuthor,
+    quoteText,
     ringPct,
     segCurrent,
     segTotal,
@@ -515,7 +695,12 @@ export function WorkoutReport({
 
           {/* Hero zone */}
           <div className={styles.heroZone}>
-            <p className={styles.heroKicker}>WORKOUT COMPLETE</p>
+            {/* Day badge */}
+            <div className={styles.dayBadge}>
+              <span className={styles.dayBadgeLabel}>DAY</span>
+              <span className={styles.dayBadgeNum}>{dayNumber}</span>
+            </div>
+            <p className={styles.heroKicker}>✦ WORKOUT COMPLETE ✦</p>
             <div className={styles.heroNameRow}>
               <div className={styles.heroTrophyWrap}>
                 <Image
@@ -537,50 +722,135 @@ export function WorkoutReport({
             <div className={styles.duration}>{fmtHMS(Math.round(durationMins * 60))}</div>
             <p className={styles.durationLabel}>D U R A T I O N</p>
 
-            <div className={styles.statsRow}>
-              <div className={styles.statCol}>
-                <p className={styles.statLabel}>VOLUME</p>
-                <p className={styles.statValue}>{Math.round(volume).toLocaleString()}</p>
-                <p className={styles.statUnit}>KG</p>
-              </div>
-              <div className={styles.statCol}>
-                <p className={styles.statLabel}>EXERCISES</p>
-                <p className={styles.statValue}>{exerciseRows.length}</p>
-                <p className={styles.statUnitGhost}>·</p>
-              </div>
-              <div className={styles.statCol}>
-                <p className={styles.statLabel}>CARDIO</p>
-                <p className={styles.statValue}>{cardioMins}</p>
-                {cardioMins > 0 ? (
-                  <p className={styles.statUnit}>MIN</p>
-                ) : (
-                  <p className={styles.statUnitGhost}>·</p>
-                )}
-              </div>
+            <div className={styles.statsGrid}>
+              {[
+                { label: "CARDIO", value: String(cardioMins || 0), unit: "MIN" },
+                { label: "SETS", value: String(totalSets), unit: "" },
+                { label: "BURNED", value: totalCalories.toLocaleString(), unit: "KCAL" },
+                { label: "VOLUME", value: volume > 0 ? Math.round(volume).toLocaleString() : "0", unit: "KG" },
+              ].map((item, i) => (
+                <div key={i} className={styles.statsGridItem}>
+                  <p className={styles.statLabel}>{item.label}</p>
+                  <p className={styles.statValue}>{item.value}</p>
+                  {item.unit && <p className={styles.statUnit}>{item.unit}</p>}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Session summary */}
-          <div className={styles.session}>
-            <div className={styles.sessionHead}>
-              <span className={styles.sessionBar} />
-              <p className={styles.sessionTitle}>SESSION SUMMARY</p>
+          {/* Cardio summary banner */}
+          {hasCardio && (
+            <div className={styles.cardioBanner}>
+              <span className={styles.cardioIcon}>🏃</span>
+              <div className={styles.cardioInfo}>
+                <p className={styles.cardioTitle}>
+                  {cardioMins} min cardio · {cardioCalories.toLocaleString()} kcal
+                </p>
+                <p className={styles.cardioSub}>{cardioExerciseNames.join(" · ")}</p>
+              </div>
+              <span className={styles.cardioBadge}>🔥 HIGH</span>
             </div>
-            <div className={styles.sessionRow}>
-              <div className={styles.sessionCol}>
-                <p className={styles.sessionVal}>{exerciseRows.length}</p>
-                <p className={styles.sessionLbl}>EXERCISES DONE</p>
+          )}
+
+          {/* Editable quote */}
+          <EditableQuote
+            text={quoteText}
+            author={quoteAuthor}
+            onChangeText={setQuoteText}
+            onChangeAuthor={setQuoteAuthor}
+          />
+
+          {/* Muscle progress circles */}
+          {muscles.length > 0 && (
+            <div className={styles.musclesSection}>
+              <div className={styles.sectionHead}>
+                <span className={styles.sectionBar} />
+                <p className={styles.sectionTitle}>MUSCLES TRAINED</p>
               </div>
-              <div className={styles.sessionCol}>
-                <p className={styles.sessionVal}>{Math.round(volume).toLocaleString()}</p>
-                <p className={styles.sessionUnit}>KG</p>
-                <p className={styles.sessionLbl}>TOTAL VOLUME</p>
+              <div className={styles.musclesGrid}>
+                {muscles.slice(0, 6).map(([muscle, sets]) => {
+                  const color = MUSCLE_COLOR[muscle] || "#5e6272";
+                  const maxSets = muscles[0]?.[1] || 1;
+                  const pct = sets / maxSets;
+                  const size = 88;
+                  const sw = 6;
+                  const r = (size - sw) / 2;
+                  const circ = 2 * Math.PI * r;
+                  const dash = pct * circ;
+                  return (
+                    <div key={muscle} className={styles.muscleCircle}>
+                      <div className={styles.muscleRing}>
+                        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
+                          <circle cx={size / 2} cy={size / 2} r={r - 2} fill="rgba(7,7,15,0.85)" />
+                          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={sw} />
+                          <circle
+                            cx={size / 2}
+                            cy={size / 2}
+                            r={r}
+                            fill="none"
+                            stroke={color}
+                            strokeWidth={sw}
+                            strokeDasharray={`${dash.toFixed(2)} ${circ.toFixed(2)}`}
+                            strokeLinecap="round"
+                            style={{ filter: `drop-shadow(0 0 5px ${color}90)` }}
+                          />
+                        </svg>
+                        <div className={styles.muscleCenter}>
+                          <span className={styles.muscleSets} style={{ color }}>{sets}</span>
+                          <span className={styles.muscleSetsLabel}>SETS</span>
+                        </div>
+                      </div>
+                      <p className={styles.muscleLabel} style={{ color }}>{muscle}</p>
+                    </div>
+                  );
+                })}
               </div>
-              <div className={styles.sessionCol}>
-                <p className={styles.sessionVal}>{totalCalories.toLocaleString()}</p>
-                <p className={styles.sessionUnit}>KCAL</p>
-                <p className={styles.sessionLbl}>CALORIES BURNED</p>
+            </div>
+          )}
+
+          {/* Personal records */}
+          {prs.length > 0 && (
+            <div className={styles.prSection}>
+              <div className={styles.sectionHead}>
+                <span className={styles.sectionBar} />
+                <p className={styles.sectionTitle}>PERSONAL RECORDS 🏆</p>
               </div>
+              {prs.map((pr, i) => (
+                <div key={i} className={styles.prCard}>
+                  <span className={styles.prEmoji}>🏆</span>
+                  <div className={styles.prInfo}>
+                    <p className={styles.prName}>{pr.name}</p>
+                    <p className={styles.prDetail}>{pr.weight}kg × {pr.reps} reps</p>
+                  </div>
+                  <span className={styles.prBadge}>NEW PR</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Session summary — 2×2 grid */}
+          <div className={styles.summarySection}>
+            <div className={styles.sectionHead}>
+              <span className={styles.sectionBar} />
+              <p className={styles.sectionTitle}>SESSION SUMMARY</p>
+            </div>
+            <div className={styles.summaryGrid}>
+              {[
+                { val: String(totalSets), label: "Total Sets", icon: "📊" },
+                hasCardio
+                  ? { val: `${cardioMins} min`, label: "Cardio Time", icon: "🏃" }
+                  : { val: String(totalReps), label: "Total Reps", icon: "🔁" },
+                { val: `${Math.round(volume).toLocaleString()} kg`, label: "Volume Lifted", icon: "💪" },
+                { val: `${totalCalories} kcal`, label: "Est. Burned", icon: "🔥" },
+              ].map((item, i) => (
+                <div key={i} className={styles.summaryCard}>
+                  <span className={styles.summaryIcon}>{item.icon}</span>
+                  <div>
+                    <p className={styles.summaryVal}>{item.val}</p>
+                    <p className={styles.summaryLabel}>{item.label}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -701,7 +971,7 @@ export function WorkoutReport({
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
           <span className={styles.shareText}>
-            {sharing ? "GENERATING…" : "SAVE TO CAMERA ROLL"}
+            {sharing ? "GENERATING…" : "SHARE WORKOUT CARD"}
           </span>
         </button>
         <button className={styles.doneBtn} type="button" onClick={handleDone}>
