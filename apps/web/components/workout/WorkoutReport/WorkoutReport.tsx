@@ -355,37 +355,29 @@ export function WorkoutReport({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Background — deep ink
-      ctx.fillStyle = "#050508";
+      // Background
+      ctx.fillStyle = "#07070f";
       ctx.fillRect(0, 0, W, H);
 
-      // Subtle radial vignette
-      const vignette = ctx.createRadialGradient(W / 2, H * 0.32, H * 0.05, W / 2, H * 0.32, H * 0.7);
-      vignette.addColorStop(0, "rgba(212, 168, 67, 0.08)");
-      vignette.addColorStop(1, "rgba(8, 8, 14, 0)");
-      ctx.fillStyle = vignette;
+      // Radial gold glow top
+      const grd = ctx.createRadialGradient(W / 2, 300, 50, W / 2, 300, 700);
+      grd.addColorStop(0, "rgba(212,168,67,0.18)");
+      grd.addColorStop(1, "rgba(7,7,15,0)");
+      ctx.fillStyle = grd;
       ctx.fillRect(0, 0, W, H);
 
-      // Top + bottom gold edge accents
-      const edgeGrad = (y: number) => {
-        const g = ctx.createLinearGradient(W * 0.12, y, W * 0.88, y);
-        g.addColorStop(0, "rgba(212, 168, 67, 0)");
-        g.addColorStop(0.3, "rgba(232, 197, 109, 0.5)");
-        g.addColorStop(0.5, "rgba(212, 168, 67, 0.85)");
-        g.addColorStop(0.7, "rgba(232, 197, 109, 0.5)");
-        g.addColorStop(1, "rgba(212, 168, 67, 0)");
-        return g;
-      };
-      ctx.fillStyle = edgeGrad(2);
-      ctx.fillRect(W * 0.12, 0, W * 0.76, 2);
-      ctx.fillStyle = edgeGrad(H - 2);
-      ctx.fillRect(W * 0.12, H - 2, W * 0.76, 2);
+      // Radial glow bottom
+      const grd2 = ctx.createRadialGradient(W / 2, H - 200, 50, W / 2, H - 200, 500);
+      grd2.addColorStop(0, "rgba(212,168,67,0.08)");
+      grd2.addColorStop(1, "rgba(7,7,15,0)");
+      ctx.fillStyle = grd2;
+      ctx.fillRect(0, 0, W, H);
 
       // Corner brackets
-      const cb = 36;
-      const cbo = 64;
-      ctx.strokeStyle = "rgba(212, 168, 67, 0.35)";
-      ctx.lineWidth = 2;
+      const cb = 60;
+      const cbo = 80;
+      ctx.strokeStyle = "rgba(212,168,67,0.3)";
+      ctx.lineWidth = 3;
       const drawCorner = (x: number, y: number, dx: number, dy: number) => {
         ctx.beginPath();
         ctx.moveTo(x + dx * cb, y);
@@ -398,45 +390,77 @@ export function WorkoutReport({
       drawCorner(cbo, H - cbo, 1, -1);
       drawCorner(W - cbo, H - cbo, -1, -1);
 
-      // Header — site + date
-      ctx.font = "300 26px 'JetBrains Mono', monospace";
-      ctx.fillStyle = "#1A1A24";
+      // Top + bottom gold edge lines
+      const gl = ctx.createLinearGradient(W * 0.1, 0, W * 0.9, 0);
+      gl.addColorStop(0, "rgba(212,168,67,0)");
+      gl.addColorStop(0.5, "rgba(212,168,67,0.8)");
+      gl.addColorStop(1, "rgba(212,168,67,0)");
+      ctx.fillStyle = gl;
+      ctx.fillRect(W * 0.1, 3, W * 0.8, 2);
+      ctx.fillRect(W * 0.1, H - 5, W * 0.8, 2);
+
+      // Header — site label + date
+      ctx.font = "400 28px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "rgba(212,168,67,0.4)";
       ctx.textAlign = "left";
-      ctx.fillText("GYM.MRGREN.STORE", W * 0.075, H * 0.07);
+      ctx.fillText("GYM.MRGREN.STORE", 100, 160);
+
+      const fullDateStr = today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }).toUpperCase();
+      ctx.font = "400 26px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
       ctx.textAlign = "right";
-      ctx.fillStyle = "#1E1E28";
-      ctx.fillText(dayName, W * 0.925, H * 0.06);
-      ctx.fillStyle = "#14141A";
-      ctx.fillText(dateStr, W * 0.925, H * 0.087);
+      ctx.fillText(fullDateStr, W - 100, 160);
 
-      // "WORKOUT COMPLETE" kicker
-      ctx.font = "400 22px 'JetBrains Mono', monospace";
-      ctx.fillStyle = "#22222E";
+      // Day badge pill
+      ctx.fillStyle = "rgba(212,168,67,0.15)";
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 120, 200, 240, 100, 20);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(212,168,67,0.4)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 120, 200, 240, 100, 20);
+      ctx.stroke();
+      ctx.font = "800 26px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#D4A843";
       ctx.textAlign = "center";
-      ctx.fillText("W O R K O U T   C O M P L E T E", W / 2, H * 0.18);
+      ctx.fillText("DAY", W / 2 - 30, 258);
+      ctx.font = "900 72px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#D4A843";
+      ctx.fillText(String(dayNumber), W / 2 + 30, 265);
 
-      // Display name
-      ctx.font = "300 64px 'Cormorant Garamond', serif";
-      ctx.fillStyle = "#C8C8D0";
-      ctx.fillText(displayName, W / 2, H * 0.235);
+      // Kicker
+      ctx.font = "800 24px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#D4A843";
+      ctx.textAlign = "center";
+      ctx.fillText("✦  WORKOUT COMPLETE  ✦", W / 2, 350);
 
-      // Hero divider line
-      const divY = H * 0.27;
-      const divGrad = ctx.createLinearGradient(W * 0.25, divY, W * 0.75, divY);
-      divGrad.addColorStop(0, "rgba(212,168,67,0)");
-      divGrad.addColorStop(0.5, "rgba(232,197,109,0.9)");
-      divGrad.addColorStop(1, "rgba(212,168,67,0)");
-      ctx.fillStyle = divGrad;
-      ctx.fillRect(W * 0.25, divY - 1, W * 0.5, 2);
+      // Workout name (large)
+      ctx.font = "900 88px 'Plus Jakarta Sans', sans-serif";
+      ctx.fillStyle = "#F0F0F8";
+      ctx.fillText(title.toUpperCase(), W / 2, 470);
 
-      // Big duration HH:MM:SS
+      // Username (smaller)
+      ctx.font = "400 32px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.fillText(displayName, W / 2, 520);
+
+      // Big duration
       const durationText = fmtHMS(Math.round(durationMins * 60));
-      ctx.font = "300 168px 'JetBrains Mono', monospace";
+      ctx.font = "300 190px 'JetBrains Mono', monospace";
       ctx.fillStyle = "#EAEAF0";
-      ctx.fillText(durationText, W / 2, H * 0.38);
-      ctx.font = "700 22px 'JetBrains Mono', monospace";
+      ctx.fillText(durationText, W / 2, 740);
+      ctx.font = "700 26px 'JetBrains Mono', monospace";
       ctx.fillStyle = "#404050";
-      ctx.fillText("D U R A T I O N", W / 2, H * 0.42);
+      ctx.fillText("D  U  R  A  T  I  O  N", W / 2, 795);
+
+      // Gold divider before stats
+      const dv = ctx.createLinearGradient(W * 0.2, 0, W * 0.8, 0);
+      dv.addColorStop(0, "rgba(212,168,67,0)");
+      dv.addColorStop(0.5, "rgba(212,168,67,0.8)");
+      dv.addColorStop(1, "rgba(212,168,67,0)");
+      ctx.fillStyle = dv;
+      ctx.fillRect(W * 0.2, 830, W * 0.6, 2);
 
       // 4-column stats
       const stats4 = [
@@ -445,43 +469,37 @@ export function WorkoutReport({
         { label: "BURNED", value: totalCalories.toLocaleString(), unit: "KCAL" },
         { label: "VOLUME", value: volume > 0 ? Math.round(volume).toLocaleString() : "0", unit: "KG" },
       ];
-      const statsTop = H * 0.48;
       const colW = W / 4;
       stats4.forEach((s, i) => {
         const cx = colW * i + colW / 2;
         if (i > 0) {
           ctx.fillStyle = "rgba(255,255,255,0.06)";
-          ctx.fillRect(colW * i, statsTop, 1, 170);
+          ctx.fillRect(colW * i, 870, 1, 260);
         }
         ctx.font = "700 22px 'JetBrains Mono', monospace";
         ctx.fillStyle = "#404050";
         ctx.textAlign = "center";
-        ctx.fillText(s.label, cx, statsTop + 38);
+        ctx.fillText(s.label, cx, 920);
         ctx.font = "300 70px 'JetBrains Mono', monospace";
         ctx.fillStyle = "#EAEAF0";
-        ctx.fillText(s.value, cx, statsTop + 120);
+        ctx.fillText(s.value, cx, 1020);
         if (s.unit) {
           ctx.font = "400 20px 'JetBrains Mono', monospace";
           ctx.fillStyle = "#404050";
-          ctx.fillText(s.unit, cx, statsTop + 155);
+          ctx.fillText(s.unit, cx, 1058);
         }
       });
 
-      // Gold divider
-      const divGrad2 = ctx.createLinearGradient(W * 0.1, 0, W * 0.9, 0);
-      divGrad2.addColorStop(0, "rgba(212,168,67,0)");
-      divGrad2.addColorStop(0.5, "rgba(212,168,67,0.8)");
-      divGrad2.addColorStop(1, "rgba(212,168,67,0)");
-      ctx.fillStyle = divGrad2;
-      ctx.fillRect(W * 0.1, statsTop + 180, W * 0.8, 1);
+      // Gold divider after stats
+      ctx.fillStyle = dv;
+      ctx.fillRect(W * 0.1, 1090, W * 0.8, 1);
 
       // Muscles trained bars
       ctx.font = "800 22px 'JetBrains Mono', monospace";
       ctx.fillStyle = GOLD;
       ctx.textAlign = "left";
-      let mY = statsTop + 210;
-      ctx.fillText("MUSCLES TRAINED", 100, mY);
-      mY += 30;
+      ctx.fillText("MUSCLES TRAINED", 100, 1150);
+      let mY = 1180;
       muscles.slice(0, 4).forEach(([muscle, sets]) => {
         const c = MUSCLE_COLOR[muscle] || "#5e6272";
         const maxS = muscles[0]?.[1] || 1;
@@ -581,6 +599,15 @@ export function WorkoutReport({
         img.onerror = () => resolve();
         img.src = tierImage;
       });
+
+      // Bottom branding
+      ctx.font = "800 30px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "rgba(212,168,67,0.5)";
+      ctx.textAlign = "center";
+      ctx.fillText("GYM.MRGREN.STORE", W / 2, H - 120);
+      ctx.font = "400 22px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.fillText("Track your gains. Prove your progress.", W / 2, H - 78);
 
       canvas.toBlob(async (blob) => {
         if (!blob) return;

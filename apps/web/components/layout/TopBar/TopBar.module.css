@@ -22,6 +22,14 @@
   justify-content: flex-end;
 }
 
+.titleWrap {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
 .title {
   font-size: 17px;
   font-weight: 700;
@@ -30,9 +38,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 2;
+  max-width: 100%;
   letter-spacing: -0.3px;
   font-family: var(--font-sans), -apple-system, sans-serif;
+}
+
+.subtitle {
+  font-size: 9.5px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  white-space: nowrap;
 }
 
 .backBtn {

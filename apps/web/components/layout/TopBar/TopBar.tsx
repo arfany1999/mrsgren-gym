@@ -5,6 +5,7 @@ import styles from "./TopBar.module.css";
 
 interface TopBarProps {
   title: string;
+  subtitle?: string;
   leftAction?: React.ReactNode;
   rightAction?: React.ReactNode;
   showBack?: boolean;
@@ -18,7 +19,7 @@ function BackIcon() {
   );
 }
 
-export function TopBar({ title, leftAction, rightAction, showBack = false }: TopBarProps) {
+export function TopBar({ title, subtitle, leftAction, rightAction, showBack = false }: TopBarProps) {
   const router = useRouter();
 
   return (
@@ -34,7 +35,10 @@ export function TopBar({ title, leftAction, rightAction, showBack = false }: Top
         )}
       </div>
 
-      <h1 className={styles.title}>{title}</h1>
+      <div className={styles.titleWrap}>
+        <h1 className={styles.title}>{title}</h1>
+        {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+      </div>
 
       <div className={styles.right}>{rightAction}</div>
     </div>

@@ -18,6 +18,13 @@ import {
 import { haptic } from "@/lib/haptics";
 import styles from "./page.module.css";
 
+const MUSCLE_COLORS: Record<string, string> = {
+  chest: "#e05c5c", back: "#3a9bdc", shoulders: "#9b7fe8",
+  biceps: "#e8a23a", triceps: "#e87a3a", legs: "#4caf7d",
+  abs: "#eab308", cardio: "#ec4899",
+};
+function mc(muscle: string) { return MUSCLE_COLORS[muscle] ?? "#5e6272"; }
+
 // ── Draft types ───────────────────────────────────────────────
 interface DraftSet {
   reps: string;
@@ -405,16 +412,26 @@ export default function EditRoutinePage() {
     }
   }
 
+  const totalSets = exercises.reduce((s, e) => s + e.sets.length, 0);
+
   if (loading) return <div className={styles.loading}><Spinner size={32} /></div>;
 
   return (
     <div className={styles.page}>
       <TopBar
         title="Edit Routine"
+        subtitle={exercises.length > 0 ? `${exercises.length} exercise${exercises.length !== 1 ? "s" : ""} · ${totalSets} sets` : "No exercises yet"}
         showBack
         rightAction={
-          <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
+          <button
+            type="button"
+            className={`${styles.saveBtn} ${exercises.length > 0 ? styles.saveBtnActive : ""}`}
+            onClick={handleSave}
+            disabled={saving || exercises.length === 0}
+          >
+            {saving ? (
+              <span className={styles.saveSpinner} />
+            ) : "Save"}
           </button>
         }
       />
@@ -453,25 +470,46 @@ export default function EditRoutinePage() {
             const isTimed       = ex.measurementType === "timed";
             const isWeighted    = ex.measurementType === "weight_reps";
             const isRepsOnly    = ex.measurementType !== "cardio" && ex.measurementType !== "timed";
+            const muscleColor   = mc(ex.muscle);
+            const exTotalReps   = ex.sets.reduce((s, set) => s + (parseInt(set.reps) || 0), 0);
 
             return (
               <div
                 key={`${ex.exerciseId}-${exIdx}`}
                 className={styles.exBlock}
                 ref={el => { exerciseRefs.current[exIdx] = el; }}
+                style={{
+                  borderLeftColor: muscleColor,
+                  animationDelay: `${exIdx * 55}ms`,
+                  ["--muscle-color" as string]: muscleColor,
+                } as React.CSSProperties}
               >
+                <div className={styles.exShimmer} />
                 {/* Header */}
                 <div className={styles.exHeader}>
-                  <div className={styles.exIconCircle}>
+                  <div className={styles.exIconTile} style={{
+                    background: `${muscleColor}10`,
+                    borderColor: `${muscleColor}20`,
+                  }}>
                     <BodyMuscleIcon muscles={[ex.muscle]} variant="thumb" />
                   </div>
                   <div className={styles.exMeta}>
                     <p className={styles.exName}>{ex.name}</p>
-                    <p className={styles.exType}>{typeLabel(ex.measurementType)}</p>
+                    <div className={styles.exTagRow}>
+                      <span className={styles.exMusclePill} style={{
+                        color: muscleColor,
+                        background: `${muscleColor}14`,
+                      }}>
+                        {ex.muscle}
+                      </span>
+                      <span className={styles.exSetCount}>
+                        {ex.sets.length} sets · {exTotalReps} reps
+                      </span>
+                    </div>
                   </div>
                   <button type="button" className={styles.exRemoveBtn} onClick={() => removeExercise(exIdx)} aria-label="Remove">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M18 6L6 18M6 6l12 12" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="var(--accent-red)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                 </div>
@@ -488,7 +526,15 @@ export default function EditRoutinePage() {
                 {/* Set rows */}
                 {ex.sets.map((s, setIdx) => (
                   <div key={setIdx} className={styles.setRow} data-type={ex.measurementType}>
-                    {!isCardio && <span className={styles.setNumBadge}>{setIdx + 1}</span>}
+                    {!isCardio && (
+                      <span className={styles.setNumBadge} style={{
+                        background: `${muscleColor}15`,
+                        borderColor: `${muscleColor}30`,
+                        color: muscleColor,
+                      }}>
+                        {setIdx + 1}
+                      </span>
+                    )}
 
                     {/* REPS / REPS-ONLY input */}
                     {isRepsOnly && (
