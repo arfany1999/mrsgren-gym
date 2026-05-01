@@ -3,17 +3,17 @@
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
-  animation: pageIn 0.3s ease both;
+  animation: pageIn 0.35s ease both;
   position: relative;
   overflow: hidden;
 }
 
 @keyframes pageIn {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: none; }
 }
 
-/* ── Ambient background glows (proto palette) ─────────────────── */
+/* ── Ambient background glows ────────────────────────────────── */
 .blob1 {
   position: absolute; top: -80px; right: -60px;
   width: 320px; height: 320px; border-radius: 50%;
@@ -40,95 +40,162 @@
 /* ── Content area ────────────────────────────────────────────── */
 .content {
   flex: 1;
-  padding: 24px 20px 40px;
+  padding: 0 18px 40px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   position: relative;
   z-index: 1;
 }
 
-/* ── Hero block ──────────────────────────────────────────────── */
-.hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 28px 16px 8px;
+/* ── Hero glass card ─────────────────────────────────────────── */
+.heroCard {
+  background: linear-gradient(160deg, rgba(212, 168, 67, 0.07), rgba(212, 168, 67, 0.02));
+  border: 1px solid rgba(212, 168, 67, 0.2);
+  border-radius: 20px;
+  padding: 24px 20px 20px;
+  position: relative;
+  overflow: hidden;
   text-align: center;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 1px rgba(212, 168, 67, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  margin-top: 6px;
 }
-.heroRing {
-  width: 72px; height: 72px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, rgba(212, 168, 67, 0.18), rgba(139, 115, 53, 0.12));
-  border: 1px solid rgba(212, 168, 67, 0.35);
-  box-shadow: 0 0 32px rgba(212, 168, 67, 0.18), inset 0 1px 0 rgba(255,255,255,0.05);
+
+.heroShimmer {
+  position: absolute;
+  top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.5), transparent);
+  pointer-events: none;
+}
+
+.heroIconWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.heroIcon {
+  width: 64px; height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(212, 168, 67, 0.2), rgba(212, 168, 67, 0.06));
+  border: 1px solid rgba(212, 168, 67, 0.3);
   display: flex; align-items: center; justify-content: center;
-  font-size: 32px;
-  filter: drop-shadow(0 0 8px rgba(212, 168, 67, 0.25));
-  animation: ringPulse 2.5s ease-in-out infinite;
+  box-shadow:
+    0 4px 20px rgba(212, 168, 67, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: heroFloat 3s ease-in-out infinite;
 }
-@keyframes ringPulse {
-  0%,100% { box-shadow: 0 0 24px rgba(212, 168, 67, 0.18); }
-  50%     { box-shadow: 0 0 44px rgba(212, 168, 67, 0.38); }
+
+@keyframes heroFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-6px); }
 }
+
+.heroKicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
 .heroTitle {
-  font-size: 26px;
+  font-size: 25px;
   font-weight: 900;
   color: var(--text-primary);
   letter-spacing: -0.04em;
-  line-height: 1.1;
-}
-.heroSub {
-  font-size: 14px;
-  color: var(--text-tertiary);
-  font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.08;
+  margin: 0;
 }
 
-/* ── Name card ───────────────────────────────────────────────── */
+.heroHighlight {
+  color: var(--accent);
+  font-style: normal;
+}
+
+.heroSub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 8px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.heroBars {
+  position: absolute;
+  bottom: 14px; right: 18px;
+  display: flex; gap: 3px;
+  align-items: flex-end;
+  opacity: 0.2;
+}
+
+.heroBar {
+  width: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+/* ── Name input glass card ───────────────────────────────────── */
 .nameCard {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  padding: 18px 20px;
+  padding: 16px 18px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
+
 .nameCard::before {
   content: "";
   position: absolute;
-  top: 0; left: 12%; right: 12%; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.45), transparent);
+  top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
   pointer-events: none;
 }
+
 .nameLabel {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 1px;
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
 }
+
 .nameInput {
   width: 100%;
   background: none !important;
   border: none !important;
   outline: none;
   box-shadow: none !important;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 21px;
+  font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
   line-height: 1.3;
   padding: 0;
 }
+
 .nameInput:focus {
   background: none !important;
   border: none !important;
   box-shadow: none !important;
 }
+
 .nameInput::placeholder {
   color: var(--text-tertiary);
   opacity: 0.55;
@@ -136,86 +203,159 @@
   font-weight: 500;
 }
 
-/* ── Tips row ────────────────────────────────────────────────── */
-.tips {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.goldBar {
+  margin-top: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0.5;
 }
-.tip {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 7px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  white-space: nowrap;
-}
-.tip:hover, .tip:active {
-  background: var(--bg-overlay);
-  border-color: rgba(212, 168, 67, 0.35);
-  color: var(--text-primary);
-}
-.tipIcon { font-size: 14px; }
 
-/* ── Create button (GYM123 gold gradient + shimmer sweep) ─────── */
-.createCard {
-  background: linear-gradient(135deg, #8B7335 0%, #D4A843 50%, #E8C56D 100%);
-  border: none;
-  border-radius: 14px;
-  height: 56px;
-  display: flex; align-items: center; justify-content: center;
-  gap: 8px;
+/* ── Day picker ──────────────────────────────────────────────── */
+.dayPickerLabel {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
   font-family: var(--font-mono), 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  color: #05050A;
+  margin: 4px 0 0;
+}
+
+.dayGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.dayBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 13px 6px 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-  width: 100%;
+  transition: all 0.18s ease;
   -webkit-tap-highlight-color: transparent;
 }
-.createCard::after {
-  content: "";
+
+.dayBtn:active {
+  transform: scale(0.96);
+}
+
+.dayBtnInner {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  border: 1px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  transition: all 0.18s ease;
+}
+
+.dayBtnLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1.2;
+  letter-spacing: 0.1px;
+  transition: color 0.18s ease;
+}
+
+/* ── Create CTA (gold gradient + shimmer + glow) ─────────────── */
+.createCard {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 56px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #7a6228 0%, #C49B30 40%, #E8C56D 70%, #C49B30 100%);
+  color: #05050A;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 3.5px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px rgba(212, 168, 67, 0.3),
+    0 6px 24px rgba(212, 168, 67, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: all 0.2s ease;
+  animation: ctaGlow 3s ease-in-out infinite;
+  -webkit-tap-highlight-color: transparent;
+  margin-top: 6px;
+}
+
+.createCardShimmer {
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%);
   background-size: 200% 100%;
   animation: createShimmer 3s ease infinite;
-  pointer-events: none;
 }
+
 @keyframes createShimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-.createCard:active { transform: scale(0.97); }
-.createCard:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+@keyframes ctaGlow {
+  0%,100% { box-shadow: 0 0 0 1px rgba(212,168,67,0.3), 0 0 20px rgba(212,168,67,0.15), inset 0 1px 0 rgba(255,255,255,0.25); }
+  50%     { box-shadow: 0 0 0 1px rgba(212,168,67,0.3), 0 0 40px rgba(212,168,67,0.35), inset 0 1px 0 rgba(255,255,255,0.25); }
+}
+
+.createCard:active {
+  transform: scale(0.97);
+}
+
+.createCard:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  background: var(--bg-elevated);
+  color: var(--text-disabled);
+  box-shadow: none;
+  animation: none;
+}
+
+.createCard:disabled .createCardShimmer {
+  display: none;
+}
 
 /* ── TopBar create button ────────────────────────────────────── */
 .createBtn {
-  background: none;
-  border: none;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   color: var(--accent);
+  background: rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(212, 168, 67, 0.2);
+  padding: 6px 12px;
+  border-radius: 10px;
   cursor: pointer;
-  padding: 4px 0;
+  transition: all 0.2s ease;
 }
-.createBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.createBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: none;
+  border-color: transparent;
+  color: var(--text-disabled);
+}
 
 /* ── Error ───────────────────────────────────────────────────── */
 .error {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--accent-red, #ef4444);
-  padding: 10px 14px;
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.2);
-  border-radius: 12px;
+  margin-top: 8px;
+  font-weight: 600;
 }

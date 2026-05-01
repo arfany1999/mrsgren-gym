@@ -6,7 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { ExerciseBlock } from "@/components/workout/ExerciseBlock/ExerciseBlock";
 import { ExercisePicker } from "@/components/workout/ExercisePicker/ExercisePicker";
-import { WorkoutTimer } from "@/components/workout/WorkoutTimer/WorkoutTimer";
+import { CircularTimer } from "@/components/workout/CircularTimer/CircularTimer";
+import { RestOverlay } from "@/components/workout/RestOverlay/RestOverlay";
 import { PRBanner } from "@/components/workout/PRBanner/PRBanner";
 import { WorkoutReport } from "@/components/workout/WorkoutReport/WorkoutReport";
 import { Modal } from "@/components/ui/Modal/Modal";
@@ -54,6 +55,7 @@ export default function ActiveWorkoutPage() {
   const [restSecs,    setRestSecs]    = useState(-1);
   const [restExerciseName, setRestExerciseName] = useState<string | undefined>(undefined);
   const restFiredRef  = useRef(false);
+  const [restOverlayOpen, setRestOverlayOpen] = useState(false);
   const [pendingSync, setPendingSync] = useState(0);
   const [isOnline,    setIsOnline]    = useState(true);
 
@@ -152,7 +154,23 @@ export default function ActiveWorkoutPage() {
     setRestSecs(secs);
     setRestExerciseName(exerciseName);
     setRestTimer({ endsAt, totalSecs: secs, exerciseName, alerted: false });
+    setRestOverlayOpen(true);
     // Unlock audio + ask for notification permission ONCE (we're inside a user gesture)
+    unlockAudio();
+    if (!permAskedRef.current) {
+      permAskedRef.current = true;
+      void ensureNotificationPermission();
+    }
+  }, []);
+
+  const startRestPreset = useCallback((secs: number) => {
+    const endsAt = Date.now() + secs * 1000;
+    restFiredRef.current = false;
+    setRestTotal(secs);
+    setRestEndsAt(endsAt);
+    setRestSecs(secs);
+    setRestExerciseName(undefined);
+    setRestTimer({ endsAt, totalSecs: secs, exerciseName: undefined, alerted: false });
     unlockAudio();
     if (!permAskedRef.current) {
       permAskedRef.current = true;
@@ -308,7 +326,6 @@ export default function ActiveWorkoutPage() {
         </button>
         <div className={styles.titleWrapper}>
           <span className={styles.workoutName}>{activeWorkout?.title}</span>
-          <WorkoutTimer />
         </div>
         <Button variant="primary" size="sm" onClick={handleFinish} loading={finishing}>
           Finish
@@ -347,29 +364,30 @@ export default function ActiveWorkoutPage() {
         </div>
       </div>
 
-      {/* Rest Timer Banner */}
-      {restSecs > 0 && (
-        <div className={styles.restBanner}>
-          <span className={styles.restBarFill} style={{ width: `${restProgress * 100}%` }} />
-          <span className={styles.restTime}>{formatRest(restSecs)}</span>
-          <span className={styles.restLabel}>
-            Rest{restExerciseName ? ` · ${restExerciseName}` : ""}
-          </span>
-          <button
-            className={styles.restAdjust}
-            onClick={() => adjustRest(-15)}
-            type="button"
-            aria-label="Subtract 15 seconds"
-          >−15s</button>
-          <button
-            className={styles.restAdjust}
-            onClick={() => adjustRest(15)}
-            type="button"
-            aria-label="Add 15 seconds"
-          >+15s</button>
-          <button className={styles.restSkip} onClick={skipRest} type="button">Skip</button>
-        </div>
-      )}
+      {/* Circular timer + quick rest presets */}
+      <div className={styles.timerSection}>
+        <CircularTimer
+          restSecs={restSecs > 0 ? restSecs : 0}
+          restTotal={restTotal}
+          restExerciseName={restExerciseName}
+          onAdjust={adjustRest}
+          onSkip={skipRest}
+        />
+        {restSecs <= 0 && (
+          <div className={styles.restPresets}>
+            {[60, 90, 120, 180].map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => startRestPreset(s)}
+                className={styles.restPresetBtn}
+              >
+                {s < 60 ? `${s}s` : `${s / 60}m`}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Exercises */}
       <div className={styles.content}>
@@ -429,6 +447,17 @@ export default function ActiveWorkoutPage() {
           <Button variant="danger" onClick={handleDiscard} loading={discarding} fullWidth>Discard</Button>
         </div>
       </Modal>
+
+      {/* Fullscreen rest overlay (briefly shown when a set is saved) */}
+      <RestOverlay
+        open={restOverlayOpen && restSecs > 0}
+        restSecs={restSecs}
+        restTotal={restTotal}
+        exerciseName={restExerciseName}
+        onAdjust={adjustRest}
+        onSkip={skipRest}
+        onDismiss={() => setRestOverlayOpen(false)}
+      />
     </div>
   );
 }

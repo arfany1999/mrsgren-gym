@@ -239,6 +239,43 @@
 }
 .restSkip:active { transform: scale(0.94); background: var(--bg-overlay); }
 
+/* ── Circular timer section + quick presets ─────────────────── */
+.timerSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.restPresets {
+  display: flex;
+  gap: 6px;
+  padding: 0 var(--sp-4) 12px;
+  background: var(--bg-surface);
+  width: 100%;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.restPresetBtn {
+  padding: 5px 11px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.restPresetBtn:hover {
+  color: var(--accent);
+  border-color: rgba(212, 168, 67, 0.3);
+}
+.restPresetBtn:active { transform: scale(0.94); }
+
 /* ── Content ─────────────────────────────────────────────────── */
 .content {
   flex: 1;
