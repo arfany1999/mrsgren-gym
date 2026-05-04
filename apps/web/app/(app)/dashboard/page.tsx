@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { parseMuscleGroup } from "@/lib/formatters";
 import { getTrophyProgress } from "@/lib/trophies";
 import { getStreakStats } from "@/lib/streakStats";
+import { fetchMuscleVolume, type MuscleVolumeRow } from "@/lib/muscleVolume";
 import { MuscleHero } from "@/components/dashboard/MuscleHero/MuscleHero";
 import { TrophyRing } from "@/components/dashboard/TrophyRing/TrophyRing";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
@@ -164,6 +165,9 @@ export default function DashboardPage() {
   const [weekDots, setWeekDots] = useState<boolean[]>([false, false, false, false, false, false, false]);
   const [greetingHour] = useState(() => new Date().getHours());
 
+  // Weekly muscle volume
+  const [muscleVolume, setMuscleVolume] = useState<MuscleVolumeRow[]>([]);
+
   // 3-dots menu
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -176,6 +180,7 @@ export default function DashboardPage() {
     if (!user) return;
     loadRoutines();
     loadGreetingStats();
+    fetchMuscleVolume(supabase, 7).then(setMuscleVolume).catch(() => {});
   }, [user, supabase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadGreetingStats() {
@@ -409,6 +414,79 @@ export default function DashboardPage() {
           })}
         </div>
       </section>
+
+      {/* ── Weekly Muscle Volume ───────────────────────── */}
+      {muscleVolume.length > 0 && (() => {
+        const TARGET_SETS = 10;
+        const sorted = [...muscleVolume]
+          .filter((m) => m.setCount > 0)
+          .sort((a, b) => b.setCount - a.setCount)
+          .slice(0, 6);
+        if (sorted.length === 0) return null;
+        const maxSets = Math.max(...sorted.map((m) => m.setCount), TARGET_SETS);
+        return (
+          <section className={styles.volumeWidget}>
+            <div className={styles.volumeHeader}>
+              <span className={styles.volumeTitle}>This Week</span>
+              <Link href="/statistics" className={styles.volumeLink}>See All</Link>
+            </div>
+            <div className={styles.volumeBars}>
+              {sorted.map((m) => {
+                const pct = Math.min((m.setCount / maxSets) * 100, 100);
+                const zone = m.setCount >= TARGET_SETS * 1.5 ? "over" : m.setCount >= TARGET_SETS ? "optimal" : "low";
+                return (
+                  <div key={m.muscle} className={styles.volumeRow}>
+                    <span className={styles.volumeLabel}>{m.muscle}</span>
+                    <div className={styles.volumeTrack}>
+                      <div className={styles.volumeFill} data-zone={zone} style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className={styles.volumeSets}>{m.setCount}s</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ── Quick links ────────────────────────────── */}
+      <div className={styles.quickLinks}>
+        <Link href="/programs" className={styles.quickLink}>
+          <span className={styles.quickIcon}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M4 5h16M4 12h16M4 19h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
+          </span>
+          <span className={styles.quickLabel}>Programs</span>
+        </Link>
+        <Link href="/measurements" className={styles.quickLink}>
+          <span className={styles.quickIcon}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M3 3v18h18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M7 16l4-6 4 4 5-8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
+          <span className={styles.quickLabel}>Body</span>
+        </Link>
+        <Link href="/calendar" className={styles.quickLink}>
+          <span className={styles.quickIcon}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2.2"/>
+              <path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
+          </span>
+          <span className={styles.quickLabel}>Calendar</span>
+        </Link>
+        <Link href="/exercises" className={styles.quickLink}>
+          <span className={styles.quickIcon}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2.2"/>
+              <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
+          </span>
+          <span className={styles.quickLabel}>Exercises</span>
+        </Link>
+      </div>
 
       <header className={styles.header}>
         <h1 className={styles.title}>My Routines</h1>

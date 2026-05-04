@@ -214,6 +214,239 @@
 }
 .addSetBtn:active { background: var(--accent-dim); }
 
+/* ── Menu item variants ─────────────────────────────────── */
+.menuItemDefault {
+  composes: menuItem;
+  color: var(--text-primary);
+}
+.menuItemDefault svg { flex-shrink: 0; }
+
+/* ── Warmup section ─────────────────────────────────────── */
+.warmupSection {
+  margin: 0 var(--sp-3) var(--sp-2);
+  background: rgba(212, 168, 67, 0.06);
+  border: 1px solid rgba(212, 168, 67, 0.15);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: fadeIn 0.18s ease;
+}
+
+.warmupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid rgba(212, 168, 67, 0.12);
+}
+
+.warmupTitle {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.warmupDismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-full);
+  transition: background 120ms ease, color 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.warmupDismiss:hover {
+  background: rgba(212, 168, 67, 0.12);
+  color: var(--accent);
+}
+
+.warmupRow {
+  display: grid;
+  grid-template-columns: 60px 60px 44px 1fr;
+  gap: 6px;
+  align-items: center;
+  padding: 6px var(--sp-3);
+  border-bottom: 1px solid rgba(212, 168, 67, 0.06);
+}
+.warmupRow:last-child { border-bottom: none; }
+
+.warmupLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.warmupWeight {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.warmupReps {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.warmupPlates {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+
+.warmupPlatePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  background: rgba(212, 168, 67, 0.10);
+  border: 0.5px solid rgba(212, 168, 67, 0.22);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Plate calculator panel ─────────────────────────────── */
+.plateCalcPanel {
+  margin: 0 var(--sp-3) var(--sp-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3);
+  animation: fadeIn 0.18s ease;
+}
+
+.plateCalcHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+}
+
+.plateCalcTitle {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.plateCalcDismiss {
+  composes: warmupDismiss;
+}
+
+.plateInputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.plateInputLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.plateInput {
+  width: 80px;
+  padding: 5px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+.plateInput:focus {
+  border-color: var(--accent);
+}
+
+.plateInputUnit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.plateResult {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plateResultLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.plateResultLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  min-width: 56px;
+}
+
+.platePills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.platePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  background: rgba(212, 168, 67, 0.10);
+  border: 1px solid rgba(212, 168, 67, 0.25);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.plateBarInfo {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.plateRemainder {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-red, #e05555);
+}
+
+.plateNoPlates {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }

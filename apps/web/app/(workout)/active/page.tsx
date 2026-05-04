@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { getActiveWorkoutId, getRestTimer, setRestTimer } from "@/lib/storage";
 import { getProfile } from "@/lib/gymProfile";
 import {
-  REST_BY_TYPE,
+  smartRestSeconds,
   ensureNotificationPermission,
   alertRestDone,
   unlockAudio,
@@ -174,8 +174,8 @@ export default function ActiveWorkoutPage() {
   }, [restEndsAt, restExerciseName]);
 
   const permAskedRef = useRef(false);
-  const startRest = useCallback((setType: SetType = "normal", exerciseName?: string) => {
-    const secs = REST_BY_TYPE[setType] ?? 90;
+  const startRest = useCallback((setType: SetType = "normal", exerciseName?: string, muscleGroup?: string, weightKg?: number) => {
+    const secs = smartRestSeconds(setType, exerciseName, muscleGroup, weightKg);
     const endsAt = Date.now() + secs * 1000;
     restFiredRef.current = false;
     setRestTotal(secs);
@@ -448,8 +448,9 @@ export default function ActiveWorkoutPage() {
               }
               onSaveSet={async (idx) => {
                 const st = ex.sets[idx]?.setType ?? "normal";
+                const wt = parseFloat(ex.sets[idx]?.weightKg || "0") || undefined;
                 await saveSet(ex.weId, idx);
-                startRest(st, ex.name);
+                startRest(st, ex.name, ex.muscleGroups[0], wt);
               }}
               onDeleteSet={(setId) => deleteSet(ex.weId, setId)}
               onRemove={() => removeExercise(ex.weId)}

@@ -10,6 +10,35 @@ export const REST_BY_TYPE: Record<SetType, number> = {
   dropset: 30,
 };
 
+const COMPOUND_EXERCISES = new Set([
+  "squat", "deadlift", "bench press", "overhead press", "barbell row",
+  "front squat", "hip thrust", "romanian deadlift", "clean", "snatch",
+  "pendlay row", "t-bar row", "leg press",
+]);
+
+const ISOLATION_MUSCLES = new Set([
+  "biceps", "triceps", "forearms", "calves",
+]);
+
+export function smartRestSeconds(
+  setType: SetType,
+  exerciseName?: string,
+  muscleGroup?: string,
+  weightKg?: number,
+): number {
+  const base = REST_BY_TYPE[setType] ?? 90;
+  if (setType !== "normal") return base;
+
+  const nameLower = (exerciseName ?? "").toLowerCase();
+  const isCompound = [...COMPOUND_EXERCISES].some((c) => nameLower.includes(c));
+  const isIsolation = ISOLATION_MUSCLES.has((muscleGroup ?? "").toLowerCase());
+
+  if (isCompound && (weightKg ?? 0) > 80) return 180;
+  if (isCompound) return 120;
+  if (isIsolation) return 60;
+  return base;
+}
+
 const REST_PREF_KEY = "gym_rest_prefs";
 
 export interface RestPrefs {

@@ -1,0 +1,368 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--bg-primary);
+  padding-bottom: 80px;
+  animation: pageIn 0.2s ease both;
+}
+
+@keyframes pageIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-12) 0;
+}
+
+/* ── Filter section ────────────────────────────────────────── */
+.filters {
+  padding: var(--sp-3) var(--sp-4) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.filterRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.filterRow::-webkit-scrollbar {
+  display: none;
+}
+
+.filterLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
+
+.chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.chipActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ── Card list ─────────────────────────────────────────────── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: var(--sp-4);
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 18px;
+  transition: border-color 0.2s ease;
+  animation: cardIn 0.28s ease both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cardName {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.cardFreq {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+/* ── Badges ────────────────────────────────────────────────── */
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+}
+
+/* Level badges */
+.badgeBeginner {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badgeIntermediate {
+  background: rgba(212, 168, 67, 0.12);
+  color: #d4a843;
+  border: 1px solid rgba(212, 168, 67, 0.25);
+}
+
+.badgeAdvanced {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* Goal badges */
+.badgeStrength {
+  background: rgba(91, 124, 248, 0.12);
+  color: #5b7cf8;
+  border: 1px solid rgba(91, 124, 248, 0.25);
+}
+
+.badgeHypertrophy {
+  background: rgba(167, 139, 250, 0.12);
+  color: #a78bfa;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+}
+
+.badgeGeneral {
+  background: rgba(107, 114, 128, 0.12);
+  color: #6b7280;
+  border: 1px solid rgba(107, 114, 128, 0.25);
+}
+
+.badgePowerlifting {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+/* ── Description ───────────────────────────────────────────── */
+.cardDesc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+/* ── Tags ──────────────────────────────────────────────────── */
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+}
+
+/* ── Expand toggle ─────────────────────────────────────────── */
+.expandBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 8px 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  width: 100%;
+}
+
+.expandBtn:active {
+  opacity: 0.7;
+}
+
+.expandIcon {
+  display: inline-flex;
+  transition: transform 0.2s ease;
+}
+
+.expandIconOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Days section (expanded) ───────────────────────────────── */
+.daysSection {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dayCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.dayName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.exerciseList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exerciseRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.exerciseName {
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exerciseSets {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Use button ────────────────────────────────────────────── */
+.useBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px 0;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.useBtn:active {
+  transform: scale(0.97);
+}
+
+.useBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Toast ─────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 12px 24px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: toastIn 0.3s ease both;
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+}
+
+/* ── Empty state ───────────────────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: var(--sp-8) var(--sp-4);
+}
+
+.emptyText {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+/* ── Results count ─────────────────────────────────────────── */
+.resultsCount {
+  padding: var(--sp-2) var(--sp-4) 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
