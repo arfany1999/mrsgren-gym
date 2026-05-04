@@ -53,7 +53,7 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 export default function StatisticsPage() {
-  const { supabase } = useAuth();
+  const { supabase, user } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [prs, setPrs] = useState<PR[]>([]);
   const [sparklines, setSparklines] = useState<Map<string, number[]>>(new Map());
@@ -67,6 +67,7 @@ export default function StatisticsPage() {
           supabase
             .from("workouts")
             .select("duration_secs, total_volume")
+            .eq("user_id", user!.id)
             .not("finished_at", "is", null),
           supabase
             .from("personal_records")

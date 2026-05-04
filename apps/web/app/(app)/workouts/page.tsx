@@ -14,7 +14,7 @@ import styles from "./page.module.css";
 const LIMIT = 20;
 
 export default function WorkoutsPage() {
-  const { supabase } = useAuth();
+  const { supabase, user } = useAuth();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -30,6 +30,7 @@ export default function WorkoutsPage() {
       const { data, count } = await supabase
         .from("workouts")
         .select("id, title, started_at, finished_at, user_id, routine_id, notes, workout_exercises(id, workout_id, exercise_id, order_index, exercises(id, name, muscle_group), workout_sets(id, workout_exercise_id, reps, weight, set_type, rpe))", { count: "exact" })
+        .eq("user_id", user!.id)
         .not("finished_at", "is", null)
         .order("started_at", { ascending: false })
         .range(from, to);

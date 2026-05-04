@@ -56,7 +56,7 @@ function formatDuration(mins: number): string {
 }
 
 export default function CalendarPage() {
-  const { supabase } = useAuth();
+  const { supabase, user } = useAuth();
   const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -71,6 +71,7 @@ export default function CalendarPage() {
         const { data } = await supabase
           .from("workouts")
           .select("id, started_at, title, duration_secs, total_volume")
+          .eq("user_id", user!.id)
           .not("finished_at", "is", null)
           .gte("started_at", yearAgo.toISOString())
           .order("started_at", { ascending: false });

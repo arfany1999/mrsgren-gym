@@ -290,10 +290,12 @@ export default function ActiveWorkoutPage() {
             supabase
               .from("workouts")
               .select("id", { count: "exact", head: true })
+              .eq("user_id", user!.id)
               .not("finished_at", "is", null),
             supabase
               .from("workouts")
               .select("started_at")
+              .eq("user_id", user!.id)
               .not("finished_at", "is", null),
           ]);
           dayNumber = Math.max(count ?? 1, 1);

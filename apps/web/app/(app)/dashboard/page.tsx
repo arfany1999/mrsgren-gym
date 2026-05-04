@@ -185,6 +185,7 @@ export default function DashboardPage() {
       const { data } = await supabase
         .from("workouts")
         .select("started_at")
+        .eq("user_id", user!.id)
         .not("finished_at", "is", null)
         .order("started_at", { ascending: false });
 
@@ -269,6 +270,7 @@ export default function DashboardPage() {
           const { data: wData } = await supabase
             .from("workouts")
             .select("routine_id, started_at, total_volume")
+            .eq("user_id", user!.id)
             .in("routine_id", routineIds)
             .not("finished_at", "is", null)
             .order("started_at", { ascending: false });

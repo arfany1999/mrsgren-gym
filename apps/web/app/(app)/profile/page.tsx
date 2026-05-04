@@ -221,7 +221,7 @@ export default function ProfilePage() {
     setResetting(true);
     try {
       // Delete all workouts from Supabase (cascade deletes exercises + sets)
-      await supabase.from("workouts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      await supabase.from("workouts").delete().eq("user_id", user!.id).neq("id", "00000000-0000-0000-0000-000000000000");
       // Clear local reports
       if (user?.email) clearReports(user.email);
       // Reset UI state
@@ -251,6 +251,7 @@ export default function ProfilePage() {
       const { data } = await supabase
         .from("workouts")
         .select("started_at, workout_exercises(workout_sets(reps))")
+        .eq("user_id", user!.id)
         .not("finished_at", "is", null)
         .gte("started_at", from);
 
@@ -271,6 +272,7 @@ export default function ProfilePage() {
       const { data } = await supabase
         .from("workouts")
         .select("started_at, duration_secs, total_volume")
+        .eq("user_id", user!.id)
         .not("finished_at", "is", null)
         .gte("started_at", from);
 
@@ -298,10 +300,12 @@ export default function ProfilePage() {
       supabase
         .from("workouts")
         .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
         .not("finished_at", "is", null),
       supabase
         .from("workouts")
         .select("started_at, duration_secs, total_volume")
+        .eq("user_id", user!.id)
         .not("finished_at", "is", null),
     ]);
 
