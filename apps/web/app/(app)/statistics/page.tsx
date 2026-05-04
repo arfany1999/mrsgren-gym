@@ -66,7 +66,7 @@ export default function StatisticsPage() {
         const [workoutsRes, prsRes, setsRes] = await Promise.all([
           supabase
             .from("workouts")
-            .select("duration_secs, total_volume")
+            .select("started_at, finished_at")
             .eq("user_id", user!.id)
             .not("finished_at", "is", null),
           supabase
@@ -79,10 +79,13 @@ export default function StatisticsPage() {
             .select("id", { count: "exact", head: true }),
         ]);
 
-        const workouts = workoutsRes.data ?? [];
+        const workouts = (workoutsRes.data ?? []) as Array<{ started_at: string; finished_at: string }>;
         const totalWorkouts = workouts.length;
-        const totalDurationSecs = workouts.reduce((s, w) => s + (w.duration_secs ?? 0), 0);
-        const totalVolumeKg = workouts.reduce((s, w) => s + (w.total_volume ?? 0), 0);
+        const totalDurationSecs = workouts.reduce((s, w) => {
+          const d = (new Date(w.finished_at).getTime() - new Date(w.started_at).getTime()) / 1000;
+          return s + (d > 0 ? d : 0);
+        }, 0);
+        const totalVolumeKg = 0;
 
         setStats({
           totalWorkouts,

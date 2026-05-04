@@ -211,14 +211,18 @@ export default function MeasurementsPage() {
   const [saving, setSaving] = useState(false);
 
   const fetchEntries = useCallback(async () => {
-    const { data } = await supabase
-      .from("body_measurements")
-      .select("id, measured_at, weight_kg, body_fat_pct, notes")
-      .eq("user_id", user!.id)
-      .order("measured_at", { ascending: false })
-      .limit(50);
+    try {
+      const { data, error } = await supabase
+        .from("body_measurements")
+        .select("id, measured_at, weight_kg, body_fat_pct, notes")
+        .eq("user_id", user!.id)
+        .order("measured_at", { ascending: false })
+        .limit(50);
 
-    setEntries((data ?? []) as Measurement[]);
+      if (!error) setEntries((data ?? []) as Measurement[]);
+    } catch {
+      // table may not exist yet
+    }
   }, [supabase, user]);
 
   useEffect(() => {

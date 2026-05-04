@@ -70,20 +70,25 @@ export default function CalendarPage() {
         yearAgo.setFullYear(yearAgo.getFullYear() - 1);
         const { data } = await supabase
           .from("workouts")
-          .select("id, started_at, title, duration_secs, total_volume")
+          .select("id, started_at, finished_at, title")
           .eq("user_id", user!.id)
           .not("finished_at", "is", null)
           .gte("started_at", yearAgo.toISOString())
           .order("started_at", { ascending: false });
 
         setWorkouts(
-          (data ?? []).map((w: Record<string, unknown>) => ({
-            id: w.id as string,
-            dateKey: toDateKey(new Date(w.started_at as string)),
-            title: (w.title as string) || "Workout",
-            durationMins: Math.round(((w.duration_secs as number) ?? 0) / 60),
-            totalVolume: (w.total_volume as number) ?? 0,
-          }))
+          (data ?? []).map((w: Record<string, unknown>) => {
+            const start = new Date(w.started_at as string).getTime();
+            const end = new Date(w.finished_at as string).getTime();
+            const durationMins = end > start ? Math.round((end - start) / 60000) : 0;
+            return {
+              id: w.id as string,
+              dateKey: toDateKey(new Date(w.started_at as string)),
+              title: (w.title as string) || "Workout",
+              durationMins,
+              totalVolume: 0,
+            };
+          })
         );
       } finally {
         setLoading(false);
