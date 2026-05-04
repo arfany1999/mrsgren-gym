@@ -63,7 +63,7 @@ export default function StatisticsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [workoutsRes, prsRes, setsRes] = await Promise.all([
+        const [workoutsRes, prsRes] = await Promise.all([
           supabase
             .from("workouts")
             .select("started_at, finished_at")
@@ -72,11 +72,9 @@ export default function StatisticsPage() {
           supabase
             .from("personal_records")
             .select("exercise_id, weight, reps, estimated_1rm, achieved_at, exercises(name)")
+            .eq("user_id", user!.id)
             .order("estimated_1rm", { ascending: false })
             .limit(10),
-          supabase
-            .from("workout_sets")
-            .select("id", { count: "exact", head: true }),
         ]);
 
         const workouts = (workoutsRes.data ?? []) as Array<{ started_at: string; finished_at: string }>;
@@ -91,7 +89,7 @@ export default function StatisticsPage() {
           totalWorkouts,
           totalDurationHrs: totalDurationSecs / 3600,
           totalVolumeKg,
-          totalSets: setsRes.count ?? 0,
+          totalSets: 0,
           avgDurationMins: totalWorkouts > 0 ? totalDurationSecs / totalWorkouts / 60 : 0,
         });
 
