@@ -1,170 +1,275 @@
-/* ── Google OAuth divider + button (shared shape with /register) ──── */
-.dividerRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 18px 0 14px;
-}
-.dividerLine {
-  flex: 1;
-  height: 1px;
-  background: var(--border-color);
-}
-.dividerLabel {
-  font-family: var(--font-mono), 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: var(--text-tertiary);
-}
-
-.googleBtn {
-  width: 100%;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  color: var(--text-primary);
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.googleBtn:hover {
-  background: var(--bg-overlay);
-  border-color: rgba(212, 168, 67, 0.35);
-}
-.googleBtn:active { transform: scale(0.98); }
-.googleBtn:disabled { opacity: 0.55; cursor: not-allowed; }
-
+/* ── Page: split layout on desktop, stacked on mobile ── */
 .page {
-  position: relative;
-  min-height: 100dvh;
   display: flex;
-  align-items: center;
+  min-height: 100dvh;
+  background: var(--bg-primary);
+}
+
+/* ── Left hero panel (hidden on mobile) ── */
+.hero {
+  display: none;
+  position: relative;
+  flex: 0 0 420px;
+  flex-direction: column;
   justify-content: center;
-  padding: var(--sp-6);
+  align-items: center;
+  padding: 48px 40px;
   overflow: hidden;
   background:
-    radial-gradient(900px 500px at 50% -10%, var(--accent-dim), transparent 60%),
-    radial-gradient(700px 500px at 100% 110%, rgba(212, 168, 67, 0.06), transparent 60%),
-    var(--bg-primary);
+    radial-gradient(600px 400px at 30% 20%, rgba(212, 168, 67, 0.10), transparent 65%),
+    radial-gradient(500px 500px at 80% 90%, rgba(212, 168, 67, 0.06), transparent 60%),
+    linear-gradient(160deg, #0a0a12 0%, #05050a 100%);
+  border-right: 1px solid var(--border-color);
 }
 
-/* Two soft animated glows behind the form so the page feels alive without
-   pulling attention away from the inputs. They're absolute, blurred, and
-   loop with prefers-reduced-motion respected. */
+.heroGlow {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  top: -60px;
+  left: -60px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, rgba(212, 168, 67, 0.14), transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  animation: hero-float 10s ease-in-out infinite alternate;
+}
+@keyframes hero-float {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(15px, 20px, 0) scale(1.1); }
+}
+
+.heroContent {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.heroLogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.heroTitle {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 6px;
+  line-height: 1;
+}
+
+.heroTagline {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 36px;
+  align-items: flex-start;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.featureIcon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.heroFooter {
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-disabled);
+  letter-spacing: 0.3px;
+}
+
+/* ── Right form panel ── */
+.formPanel {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  overflow: hidden;
+}
+
 .glowA, .glowB {
   position: absolute;
   border-radius: 999px;
   filter: blur(70px);
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0.45;
 }
 .glowA {
-  width: 360px;
-  height: 360px;
-  top: -90px;
-  left: -90px;
+  width: 300px;
+  height: 300px;
+  top: -80px;
+  right: -60px;
   background: radial-gradient(closest-side, var(--accent-dim), transparent 70%);
   animation: glow-drift 9s ease-in-out infinite alternate;
 }
 .glowB {
-  width: 280px;
-  height: 280px;
-  bottom: -60px;
-  right: -60px;
-  background: radial-gradient(closest-side, rgba(212, 168, 67, 0.18), transparent 70%);
+  width: 240px;
+  height: 240px;
+  bottom: -50px;
+  left: -40px;
+  background: radial-gradient(closest-side, rgba(212, 168, 67, 0.12), transparent 70%);
   animation: glow-drift 11s ease-in-out -3s infinite alternate;
 }
 @keyframes glow-drift {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(20px, 12px, 0) scale(1.08); }
+  100% { transform: translate3d(18px, 10px, 0) scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .glowA, .glowB { animation: none; }
+  .glowA, .glowB, .heroGlow { animation: none; }
 }
 
-.inner {
+.formInner {
   position: relative;
   width: 100%;
   max-width: 380px;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-6);
-  animation: page-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  gap: 24px;
+  animation: form-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-@keyframes page-in {
-  from { opacity: 0; transform: translateY(10px); }
+@keyframes form-in {
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.header {
+/* ── Mobile branding (hidden on desktop) ── */
+.mobileBrand {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-3);
+  gap: 8px;
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.title {
-  font-size: var(--text-3xl);
-  font-weight: var(--fw-bold);
+.mobileTitle {
+  font-size: 32px;
+  font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: 5px;
+  line-height: 1;
 }
 
-.subtitle {
-  font-size: var(--text-base);
+/* ── Form header ── */
+.formHeader {
+  text-align: center;
+}
+
+.formTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.formSub {
+  font-size: 14px;
   color: var(--text-secondary);
 }
 
+/* ── Form card ── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: 16px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  padding: var(--sp-6);
+  padding: 24px;
   box-shadow: var(--glass-shadow);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .errorMsg {
-  font-size: var(--text-sm);
+  font-size: 13px;
   color: var(--accent-red);
   text-align: center;
-  padding: var(--sp-3);
+  padding: 10px 12px;
   background: var(--accent-red-dim);
   border-radius: var(--radius-sm);
 }
 
+/* ── Footer ── */
 .footer {
   text-align: center;
-  font-size: var(--text-sm);
+  font-size: 14px;
   color: var(--text-secondary);
 }
+.footer a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer a:hover {
+  text-decoration: underline;
+}
 
+/* ── Signature (mobile only) ── */
 .signature {
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  font-weight: var(--fw-medium);
+  font-weight: 500;
   color: var(--text-disabled);
   letter-spacing: 0.3px;
-  margin-top: var(--sp-4);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0) + 12px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+}
+
+/* ── Desktop: show hero, hide mobile branding ── */
+@media (min-width: 768px) {
+  .hero {
+    display: flex;
+  }
+  .mobileBrand {
+    display: none;
+  }
+  .signature {
+    display: none;
+  }
+  .formTitle {
+    font-size: 26px;
+  }
+  .formPanel {
+    padding: 48px 40px;
+  }
+}
+
+/* ── Large desktop: wider hero ── */
+@media (min-width: 1100px) {
+  .hero {
+    flex: 0 0 480px;
+  }
+  .heroTitle {
+    font-size: 48px;
+  }
 }
