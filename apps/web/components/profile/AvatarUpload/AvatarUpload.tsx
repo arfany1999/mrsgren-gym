@@ -67,7 +67,7 @@ export function AvatarUpload({ size = 96, onUploaded }: AvatarUploadProps) {
       }
 
       const { error: profErr } = await supabase
-        .from("profiles")
+        .from("users")
         .update({ avatar_url: publicUrl })
         .eq("id", user.id);
       if (profErr) {

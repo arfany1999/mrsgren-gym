@@ -1,4 +1,8 @@
-// ── Fitness profile stored in localStorage (keyed by email) ──────────────────
+// ── Fitness profile persistence ──────────────────────────────────────────────
+// Supabase is the source of truth; localStorage remains a fast/offline fallback
+// and keeps existing installs from losing their onboarding state.
+
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type Sex = "male" | "female";
 export type ActivityLevel = "sedentary" | "light" | "moderate" | "very_active";
@@ -34,6 +38,86 @@ export function getProfile(email: string): GymProfile | null {
 export function saveProfile(email: string, profile: GymProfile): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(key(email), JSON.stringify(profile));
+}
+
+function normalizeRemoteProfile(row: Record<string, unknown> | null): GymProfile | null {
+  if (!row?.onboarding_done) return null;
+  const sex = row.sex === "female" ? "female" : "male";
+  const activity = typeof row.activity_level === "string"
+    ? row.activity_level as ActivityLevel
+    : "moderate";
+  const age = Number(row.age);
+  const weightKg = Number(row.weight_kg);
+  const heightCm = Number(row.height_cm);
+  if (!age || !weightKg || !heightCm) return null;
+  return {
+    sex,
+    age,
+    weight_kg: Math.round(weightKg * 10) / 10,
+    height_cm: Math.round(heightCm),
+    activity_level: activity,
+    onboarding_done: true,
+  };
+}
+
+export async function loadProfile(
+  supabase: SupabaseClient,
+  userId: string,
+  email: string,
+): Promise<GymProfile | null> {
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("sex, age, weight_kg, height_cm, activity_level, onboarding_done")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!error) {
+      const remote = normalizeRemoteProfile(data as Record<string, unknown> | null);
+      if (remote) {
+        saveProfile(email, remote);
+        return remote;
+      }
+    }
+  } catch {
+    // Older deployments may not have the body-profile columns yet.
+  }
+  return getProfile(email);
+}
+
+export async function saveProfileRecord(
+  supabase: SupabaseClient,
+  user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> },
+  profile: GymProfile,
+): Promise<void> {
+  if (!user.email) return;
+  saveProfile(user.email, profile);
+  try {
+    const fallbackName =
+      (user.user_metadata?.name as string | undefined) ??
+      user.email.split("@")[0] ??
+      "Athlete";
+    const fallbackUsername =
+      (user.user_metadata?.username as string | undefined) ??
+      user.email.split("@")[0] ??
+      null;
+    await supabase
+      .from("users")
+      .upsert({
+        id: user.id,
+        email: user.email,
+        name: fallbackName,
+        username: fallbackUsername,
+        sex: profile.sex,
+        age: profile.age,
+        weight_kg: profile.weight_kg,
+        height_cm: profile.height_cm,
+        activity_level: profile.activity_level,
+        onboarding_done: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+  } catch {
+    // Local save above keeps the app usable if the remote migration is pending.
+  }
 }
 
 /** TDEE multiplier per activity level */
@@ -125,4 +209,3 @@ export function clearReports(email: string): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(reportKey(email));
 }
-

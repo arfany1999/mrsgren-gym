@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import Image from "next/image";
 import { formatDateFull } from "@/lib/formatters";
-import { getProfile, saveProfile, getReports, clearReports, type WorkoutReportEntry } from "@/lib/gymProfile";
+import { loadProfile, saveProfileRecord, getReports, clearReports, type WorkoutReportEntry } from "@/lib/gymProfile";
 import type { GymProfile } from "@/lib/gymProfile";
 import { TROPHIES, getTrophyProgress, nextTierLabel } from "@/lib/trophies";
 import { fetchStreakStats } from "@/lib/streakStats";
@@ -28,13 +28,6 @@ function formatDuration(mins: number): string {
 function formatDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-}
-
-function formatBigDuration(totalMins: number): string {
-  if (totalMins < 60) return `${Math.round(totalMins)}m`;
-  const h = Math.floor(totalMins / 60);
-  const m = Math.round(totalMins % 60);
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
 function formatVolume(kg: number): string {
@@ -146,8 +139,6 @@ export default function ProfilePage() {
   const [workoutDays,     setWorkoutDays]     = useState(0);
   const [currentStreak,   setCurrentStreak]   = useState(0);
   const [longestStreak,   setLongestStreak]   = useState(0);
-  const [totalVolumeKg,   setTotalVolumeKg]   = useState(0);
-  const [totalDurationMin,setTotalDurationMin]= useState(0);
   const [loading,         setLoading]         = useState(true);
   const [loggingOut,      setLoggingOut]      = useState(false);
   const [activeSegment,   setActiveSegment]   = useState<Segment>("Duration");
@@ -173,15 +164,14 @@ export default function ProfilePage() {
   const [bodySaving, setBodySaving] = useState(false);
   const [gymProfile, setGymProfile] = useState<GymProfile | null>(null);
 
-  // Load gym profile from localStorage
+  // Load gym profile from Supabase, with localStorage as an offline fallback.
   useEffect(() => {
-    if (user?.email) {
-      setGymProfile(getProfile(user.email));
-    }
-  }, [user?.email]);
+    if (!user?.email || !user.id) return;
+    loadProfile(supabase, user.id, user.email).then(setGymProfile);
+  }, [supabase, user?.email, user?.id]);
 
   function openBodyStats() {
-    const p = user?.email ? getProfile(user.email) : null;
+    const p = gymProfile;
     setBodyWeight(p?.weight_kg ? String(p.weight_kg) : "");
     setBodyHeight(p?.height_cm ? String(p.height_cm) : "");
     setBodyAge(p?.age ? String(p.age) : "");
@@ -190,7 +180,7 @@ export default function ProfilePage() {
     setBodyOpen(true);
   }
 
-  function saveBodyStats() {
+  async function saveBodyStats() {
     if (!user?.email) return;
     const w = parseFloat(bodyWeight);
     const h = parseFloat(bodyHeight);
@@ -199,7 +189,7 @@ export default function ProfilePage() {
     if (!h || h < 100 || h > 250) return;
     if (!a || a < 10 || a > 100) return;
     setBodySaving(true);
-    const profile: GymProfile = {
+    const bodyProfile: GymProfile = {
       sex: bodySex,
       age: a,
       weight_kg: Math.round(w * 10) / 10,
@@ -207,10 +197,13 @@ export default function ProfilePage() {
       activity_level: bodyActivity,
       onboarding_done: true,
     };
-    saveProfile(user.email, profile);
-    setGymProfile(profile);
-    setBodyOpen(false);
-    setBodySaving(false);
+    try {
+      await saveProfileRecord(supabase, user, bodyProfile);
+      setGymProfile(bodyProfile);
+      setBodyOpen(false);
+    } finally {
+      setBodySaving(false);
+    }
   }
 
   // Reset history
@@ -229,8 +222,6 @@ export default function ProfilePage() {
       setWorkoutDays(0);
       setCurrentStreak(0);
       setLongestStreak(0);
-      setTotalVolumeKg(0);
-      setTotalDurationMin(0);
       setReports([]);
       setChartValues([0, 0, 0, 0]);
       setChartLabel("0 hours this week");
@@ -292,7 +283,7 @@ export default function ProfilePage() {
         ? `${(vals[3] ?? 0).toFixed(1)} hours this week`
         : `${Math.round(vals[3] ?? 0).toLocaleString()} kg this week`);
     }
-  }, [supabase]);
+  }, [supabase, user]);
 
   // Fetch all stats (totals + day streak)
   const fetchAllStats = useCallback(async () => {
@@ -312,10 +303,6 @@ export default function ProfilePage() {
     setTotalWorkouts(count ?? 0);
 
     const rows = (allRows ?? []) as Array<{ started_at: string; duration_secs: number | null; total_volume: number | null }>;
-    const volSum = rows.reduce((a, r) => a + (r.total_volume ?? 0), 0);
-    const durMin = rows.reduce((a, r) => a + ((r.duration_secs ?? 0) / 60), 0);
-    setTotalVolumeKg(volSum);
-    setTotalDurationMin(durMin);
 
     // Prefer the SQL RPC (step 5) so the client doesn't have to dedupe in JS;
     // fall back to local compute if the migration hasn't been applied yet.
@@ -330,7 +317,7 @@ export default function ProfilePage() {
       setCurrentStreak(stats.currentStreak);
       setLongestStreak(stats.longestStreak);
     }
-  }, [supabase]);
+  }, [supabase, user]);
 
   useEffect(() => {
     async function load() {
@@ -375,9 +362,9 @@ export default function ProfilePage() {
     setEditSaving(true);
     setEditError(null);
     try {
-      // Upsert into profiles table
+      // Upsert into users table
       const { error: upErr } = await supabase
-        .from("profiles")
+        .from("users")
         .upsert({
           id: user.id,
           email: user.email ?? null,
@@ -762,6 +749,7 @@ export default function ProfilePage() {
           <div className={styles.statsInline}>
             <span><b>{totalWorkouts}</b> Workouts</span>
             <span><b>{workoutDays}</b> Days</span>
+            <span><b>{longestStreak}</b> Best Streak</span>
           </div>
         </div>
         <button

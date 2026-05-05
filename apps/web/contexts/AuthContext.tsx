@@ -20,6 +20,12 @@ interface Profile {
   name: string;
   username: string | null;
   avatar_url: string | null;
+  sex?: "male" | "female" | null;
+  age?: number | null;
+  weight_kg?: number | null;
+  height_cm?: number | null;
+  activity_level?: string | null;
+  onboarding_done?: boolean | null;
   created_at: string;
 }
 
@@ -63,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(
     async (authUser: User) => {
       const { data } = await supabase
-        .from("profiles")
+        .from("users")
         .select("*")
         .eq("id", authUser.id)
         .maybeSingle();
@@ -89,6 +95,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           (data?.avatar_url as string | null) ??
           (meta.avatar_url as string | null) ??
           null,
+        sex: (data?.sex as "male" | "female" | null) ?? null,
+        age: (data?.age as number | null) ?? null,
+        weight_kg: (data?.weight_kg as number | null) ?? null,
+        height_cm: (data?.height_cm as number | null) ?? null,
+        activity_level: (data?.activity_level as string | null) ?? null,
+        onboarding_done: (data?.onboarding_done as boolean | null) ?? null,
         created_at:
           (data?.created_at as string) ??
           authUser.created_at ??
@@ -100,23 +112,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Listen for auth state changes
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        setStatus("authenticated");
-        fetchProfile(session.user);
-      } else {
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user);
+          setStatus("authenticated");
+        } else {
+          setStatus("unauthenticated");
+        }
+      })
+      .catch(() => {
         setStatus("unauthenticated");
-      }
-    });
+      });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser(session.user);
+        await fetchProfile(session.user);
         setStatus("authenticated");
-        fetchProfile(session.user);
       } else {
         setUser(null);
         setProfile(null);
@@ -160,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = useCallback(
     async (d: RegisterData) => {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: d.email,
         password: d.password,
         options: {
