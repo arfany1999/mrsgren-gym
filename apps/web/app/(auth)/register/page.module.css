@@ -22,6 +22,21 @@
   border-right: 1px solid var(--border-color);
 }
 
+/* Decorative barbell / rings behind hero content */
+.heroDeco {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: deco-spin 90s linear infinite reverse;
+}
+@keyframes deco-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
 .heroGlow {
   position: absolute;
   width: 340px;
@@ -74,8 +89,8 @@
 .features {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-top: 36px;
+  gap: 16px;
+  margin-top: 40px;
   align-items: flex-start;
 }
 
@@ -144,7 +159,7 @@
   100% { transform: translate3d(-18px, 10px, 0) scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .glowA, .glowB, .heroGlow { animation: none; }
+  .glowA, .glowB, .heroGlow, .heroDeco { animation: none; }
 }
 
 .formInner {
@@ -195,18 +210,24 @@
   color: var(--text-secondary);
 }
 
-/* ── Form card ── */
+/* ── Form card — subtle gold border accent ── */
 .form {
   display: flex;
   flex-direction: column;
   gap: 16px;
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(212, 168, 67, 0.12);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--glass-shadow);
+  box-shadow:
+    var(--glass-shadow),
+    0 0 0 1px rgba(212, 168, 67, 0.04);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
+  transition: border-color 0.3s ease;
+}
+.form:focus-within {
+  border-color: rgba(212, 168, 67, 0.22);
 }
 
 /* Side-by-side name + username on wider screens */
@@ -252,10 +273,13 @@
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
 }
 
-/* ── Desktop: show hero, hide mobile branding ── */
+/* ═══════════════════════════════════════════════
+   Tablet: hero appears but narrower
+   ═══════════════════════════════════════════════ */
 @media (min-width: 768px) {
   .hero {
     display: flex;
+    flex: 0 0 300px;
   }
   .mobileBrand {
     display: none;
@@ -276,12 +300,57 @@
   .formRow > * {
     flex: 1;
   }
+  .heroTitle {
+    font-size: 34px;
+  }
+  .heroTagline {
+    font-size: 13px;
+  }
+  .features {
+    margin-top: 28px;
+    gap: 14px;
+  }
+  .feature {
+    font-size: 13px;
+  }
+  .heroDeco {
+    width: 260px;
+    height: 260px;
+  }
 }
 
-/* ── Large desktop: wider hero ── */
-@media (min-width: 1100px) {
+/* ═══════════════════════════════════════════════
+   Desktop: wider hero, larger type
+   ═══════════════════════════════════════════════ */
+@media (min-width: 1024px) {
   .hero {
-    flex: 0 0 480px;
+    flex: 0 0 420px;
+  }
+  .heroTitle {
+    font-size: 40px;
+  }
+  .heroTagline {
+    font-size: 15px;
+  }
+  .features {
+    margin-top: 40px;
+    gap: 16px;
+  }
+  .feature {
+    font-size: 14px;
+  }
+  .heroDeco {
+    width: 340px;
+    height: 340px;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Large desktop: even wider hero
+   ═══════════════════════════════════════════════ */
+@media (min-width: 1280px) {
+  .hero {
+    flex: 0 0 500px;
   }
   .heroTitle {
     font-size: 48px;

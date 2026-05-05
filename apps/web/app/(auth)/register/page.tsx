@@ -13,6 +13,7 @@ const FEATURES = [
   { icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2", label: "Track every set, rep & PR" },
   { icon: "M13 10V3L4 14h7v7l9-11h-7z", label: "Smart rest & warmup tools" },
   { icon: "M3 3v18h18M7 16l4-4 4 4 5-5", label: "Visual progress analytics" },
+  { icon: "M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z", label: "Workout history & calendar" },
 ];
 
 export default function RegisterPage() {
@@ -60,9 +61,20 @@ export default function RegisterPage() {
 
   return (
     <div className={styles.page}>
-      {/* ── Left hero panel (desktop only) ── */}
+      {/* ── Left hero panel (tablet + desktop) ── */}
       <div className={styles.hero}>
         <span className={styles.heroGlow} aria-hidden />
+        <svg className={styles.heroDeco} viewBox="0 0 200 200" fill="none" aria-hidden>
+          <circle cx="100" cy="100" r="90" stroke="var(--accent)" strokeWidth="0.4" opacity="0.08" />
+          <circle cx="100" cy="100" r="60" stroke="var(--accent)" strokeWidth="0.3" opacity="0.06" />
+          <circle cx="100" cy="100" r="30" stroke="var(--accent)" strokeWidth="0.3" opacity="0.04" />
+          <rect x="30" y="95" width="140" height="10" rx="5" stroke="var(--accent)" strokeWidth="0.5" opacity="0.1" />
+          <rect x="40" y="80" width="16" height="40" rx="3" stroke="var(--accent)" strokeWidth="0.5" opacity="0.08" />
+          <rect x="144" y="80" width="16" height="40" rx="3" stroke="var(--accent)" strokeWidth="0.5" opacity="0.08" />
+          <rect x="58" y="85" width="10" height="30" rx="2" stroke="var(--accent)" strokeWidth="0.4" opacity="0.06" />
+          <rect x="132" y="85" width="10" height="30" rx="2" stroke="var(--accent)" strokeWidth="0.4" opacity="0.06" />
+        </svg>
+
         <div className={styles.heroContent}>
           <div className={styles.heroLogo}>
             <HALogo size={72} />
