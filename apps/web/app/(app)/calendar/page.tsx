@@ -64,6 +64,7 @@ export default function CalendarPage() {
   const workoutRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
+    if (!user) return;
     async function load() {
       try {
         const yearAgo = new Date();
@@ -95,7 +96,7 @@ export default function CalendarPage() {
       }
     }
     load();
-  }, [supabase]);
+  }, [supabase, user]);
 
   const workoutMap = new Map<string, WorkoutEntry>();
   for (const w of workouts) {

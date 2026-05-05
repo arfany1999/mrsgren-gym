@@ -211,6 +211,7 @@ export default function MeasurementsPage() {
   const [saving, setSaving] = useState(false);
 
   const fetchEntries = useCallback(async () => {
+    if (!user) return;
     try {
       const { data, error } = await supabase
         .from("body_measurements")

@@ -61,6 +61,7 @@ export default function StatisticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     async function load() {
       try {
         const [workoutsRes, prsRes] = await Promise.all([
@@ -166,7 +167,7 @@ export default function StatisticsPage() {
     // 30-day muscle volume powers the BodyMap. Failing fetch ⇒ empty map ⇒
     // BodyMap renders an unhighlighted figure rather than blocking the page.
     fetchMuscleVolume(supabase, 30).then((rows) => setMuscleVol(muscleVolumeMap(rows)));
-  }, [supabase]);
+  }, [supabase, user]);
 
   return (
     <div className={styles.page}>
