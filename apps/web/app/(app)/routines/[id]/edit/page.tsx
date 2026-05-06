@@ -11,7 +11,6 @@ import {
   MUSCLE_GROUPS,
   resolveMeasurementType,
   getGroupedExercises,
-  EQUIPMENT_LABELS,
   type MeasurementType,
   type ExerciseDef,
 } from "@/lib/exercises-data";

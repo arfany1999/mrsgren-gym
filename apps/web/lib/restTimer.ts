@@ -102,7 +102,9 @@ export function unlockAudio() {
     o.connect(g); g.connect(ctx.destination);
     const now = ctx.currentTime;
     o.start(now); o.stop(now + 0.01);
-  } catch {}
+  } catch {
+    // Audio unlock is opportunistic; some browsers block it until later.
+  }
 }
 
 /** Play a short "ding" tone via WebAudio (no asset required). */
@@ -130,7 +132,9 @@ export function playDing() {
 /** Buzz the device if supported. Pattern: short-short-long. */
 export function vibrate() {
   if (typeof navigator === "undefined") return;
-  try { navigator.vibrate?.([120, 80, 120, 80, 260]); } catch {}
+  try { navigator.vibrate?.([120, 80, 120, 80, 260]); } catch {
+    // Vibration support varies by browser/device.
+  }
 }
 
 /** Fire a native browser notification — only works if tab is in background. */
@@ -146,8 +150,12 @@ export function fireNotification(title: string, body?: string) {
       silent: false,
       requireInteraction: false,
     });
-    setTimeout(() => { try { n.close(); } catch {} }, 8000);
-  } catch {}
+    setTimeout(() => { try { n.close(); } catch {
+      // Closing notifications can fail after browser teardown.
+    } }, 8000);
+  } catch {
+    // Notification construction can fail in restricted browser contexts.
+  }
 }
 
 /** Fire all configured alerts (sound / vibrate / notification). */

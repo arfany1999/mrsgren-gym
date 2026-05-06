@@ -32,7 +32,7 @@ function prevLabel(prevSet: { reps: string; weightKg: string } | undefined, type
   return "—";
 }
 
-function SetRowImpl({ set, index, weId, prevSet, measurementType, previousBest, onUpdateField, onSave, onDelete }: SetRowProps) {
+function SetRowImpl({ set, index, prevSet, measurementType, previousBest, onUpdateField, onSave }: SetRowProps) {
   const ref1 = useRef<HTMLInputElement>(null);
   const ref2 = useRef<HTMLInputElement>(null);
 

@@ -11,37 +11,6 @@ import type { Routine } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
 import styles from "./page.module.css";
 
-// Muscle group → accent color
-const MUSCLE_COLORS: Record<string, string> = {
-  chest: "#e05c5c",
-  back: "#3a9bdc",
-  shoulders: "#9b7fe8",
-  biceps: "#e8a23a",
-  triceps: "#e87a3a",
-  legs: "#4caf7d",
-  quads: "#4caf7d",
-  hamstrings: "#4caf7d",
-  glutes: "#4caf7d",
-  calves: "#4caf7d",
-  abs: "#f5c518",
-  core: "#f5c518",
-  cardio: "#34d399",
-  forearms: "#e8a23a",
-  traps: "#3a9bdc",
-  lats: "#3a9bdc",
-};
-
-function getMuscleColor(muscles: string[]): string {
-  if (!muscles.length) return "#5e6272";
-  const key = (muscles[0] ?? "").toLowerCase();
-  return MUSCLE_COLORS[key] ?? "#5e6272";
-}
-
-function getMuscleAbbr(muscles: string[]): string {
-  if (!muscles.length) return "?";
-  return (muscles[0] ?? "??").substring(0, 2).toUpperCase();
-}
-
 // All unique muscle groups across exercises
 function getAllMuscles(routine: Routine): string[] {
   const seen = new Set<string>();

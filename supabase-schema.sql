@@ -8,8 +8,14 @@ create table profiles (
   id uuid references auth.users on delete cascade primary key,
   email text not null,
   name text not null,
-  username text unique not null,
+  username text unique,
   avatar_url text,
+  sex text check (sex is null or sex in ('male', 'female')),
+  age int,
+  weight_kg numeric,
+  height_cm int,
+  activity_level text check (activity_level is null or activity_level in ('sedentary', 'light', 'moderate', 'very_active')),
+  onboarding_done boolean default false not null,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
@@ -33,7 +39,8 @@ create table exercises (
 create table routines (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users on delete cascade,
-  title text not null,
+  name text not null default 'Routine',
+  title text not null default 'Routine',
   description text,
   folder_id uuid,
   is_public boolean default false,
@@ -47,6 +54,7 @@ create table routine_exercises (
   routine_id uuid references routines on delete cascade not null,
   exercise_id uuid references exercises on delete cascade not null,
   "order" int default 0,
+  order_index int default 0,
   sets_config jsonb default '[]'
 );
 
@@ -59,6 +67,8 @@ create table workouts (
   notes text,
   started_at timestamptz default now() not null,
   finished_at timestamptz,
+  duration_secs int,
+  total_volume numeric,
   is_public boolean default false
 );
 
@@ -68,6 +78,7 @@ create table workout_exercises (
   workout_id uuid references workouts on delete cascade not null,
   exercise_id uuid references exercises on delete cascade not null,
   "order" int default 0,
+  order_index int default 0,
   superset_id uuid
 );
 

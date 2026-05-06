@@ -44,9 +44,11 @@ export default function WorkoutsPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [supabase]);
+  }, [supabase, user]);
 
-  useEffect(() => { fetchPage(1); }, [fetchPage]);
+  useEffect(() => {
+    if (user) fetchPage(1);
+  }, [fetchPage, user]);
 
   const hasMore = workouts.length < total;
   const workoutDates = useMemo(

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { saveProfile, getProfile, type Sex, type ActivityLevel } from "@/lib/gymProfile";
+import { saveProfileRecord, loadProfile, type Sex, type ActivityLevel } from "@/lib/gymProfile";
 import styles from "./page.module.css";
 
 const ACTIVITY_OPTIONS: { value: ActivityLevel; label: string; desc: string }[] = [
@@ -15,7 +15,7 @@ const ACTIVITY_OPTIONS: { value: ActivityLevel; label: string; desc: string }[] 
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, status } = useAuth();
+  const { user, status, supabase, refreshProfile } = useAuth();
 
   // Form state
   const [sex,           setSex]           = useState<Sex>("male");
@@ -35,12 +35,13 @@ export default function OnboardingPage() {
     if (status === "loading") return;
     if (status === "unauthenticated") { router.replace("/login"); return; }
     const email = user?.email;
-    if (email && getProfile(email)) {
-      router.replace("/dashboard");
-    }
-  }, [status, user, router]);
+    if (!email || !user?.id) return;
+    loadProfile(supabase, user.id, email).then((profile) => {
+      if (profile) router.replace("/dashboard");
+    });
+  }, [status, user, router, supabase]);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!user?.email) return;
     const ageNum = parseInt(age);
     if (!age || isNaN(ageNum) || ageNum < 10 || ageNum > 100) return;
@@ -69,7 +70,8 @@ export default function OnboardingPage() {
     };
 
     setSubmitting(true);
-    saveProfile(user.email, profileData);
+    await saveProfileRecord(supabase, user, profileData);
+    await refreshProfile();
 
     // Use sendBeacon so navigation doesn't cancel the request
     const payload = JSON.stringify({ email: user.email, ...profileData });
@@ -110,7 +112,7 @@ export default function OnboardingPage() {
             <div className={styles.heroEmoji}>🏋️</div>
             <h1 className={styles.heroTitle}>Welcome to<br />GYM Tracker</h1>
             <p className={styles.heroSub}>
-              Let's set up your profile so we can calculate your estimated calorie burn during workouts.
+              Let&apos;s set up your profile so we can calculate your estimated calorie burn during workouts.
             </p>
             <button className={styles.nextBtn} onClick={() => setStep(1)}>
               Get Started

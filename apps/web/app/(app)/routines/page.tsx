@@ -11,19 +11,6 @@ import type { Routine } from "@/types/api";
 import { parseMuscleGroup } from "@/lib/formatters";
 import styles from "./page.module.css";
 
-const MUSCLE_COLORS: Record<string, string> = {
-  chest: "#e05c5c", back: "#3a9bdc", shoulders: "#9b7fe8",
-  biceps: "#e8a23a", triceps: "#e87a3a", legs: "#4caf7d",
-  quads: "#4caf7d", hamstrings: "#4caf7d", glutes: "#4caf7d",
-  calves: "#4caf7d", abs: "#f5c518", core: "#f5c518",
-  cardio: "#34d399", forearms: "#e8a23a", traps: "#3a9bdc", lats: "#3a9bdc",
-};
-
-function getMuscleColor(muscles: string[]): string {
-  if (!muscles.length) return "#5e6272";
-  return MUSCLE_COLORS[(muscles[0] ?? "").toLowerCase()] ?? "#5e6272";
-}
-
 export default function RoutinesPage() {
   const { supabase, user } = useAuth();
   const { startWorkout } = useWorkout();

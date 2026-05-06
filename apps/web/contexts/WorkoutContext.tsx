@@ -141,10 +141,10 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Batched: 3 queries total regardless of exercise count (was 3 per exercise)
-  async function fetchAllPreviousPerformance(
+  const fetchAllPreviousPerformance = useCallback(async (
     exerciseIds: string[],
     currentWorkoutId: string
-  ): Promise<Map<string, Array<{ reps: string; weightKg: string }>>> {
+  ): Promise<Map<string, Array<{ reps: string; weightKg: string }>>> => {
     if (exerciseIds.length === 0) return new Map();
     try {
       const { data: wes } = await supabase
@@ -198,16 +198,16 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     } catch {
       return new Map();
     }
-  }
+  }, [supabase]);
 
   // Single-exercise version (used when adding an exercise mid-workout)
-  async function fetchPreviousPerformance(
+  const fetchPreviousPerformance = useCallback(async (
     exerciseId: string,
     currentWorkoutId: string
-  ): Promise<Array<{ reps: string; weightKg: string }>> {
+  ): Promise<Array<{ reps: string; weightKg: string }>> => {
     const map = await fetchAllPreviousPerformance([exerciseId], currentWorkoutId);
     return map.get(exerciseId) ?? [];
-  }
+  }, [fetchAllPreviousPerformance]);
 
   async function fetchWorkoutExercises(workoutId: string): Promise<ActiveExercise[]> {
     const { data: wes } = await supabase
@@ -611,7 +611,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         },
       ]);
     },
-    [activeWorkout, exercises.length, supabase]
+    [activeWorkout, exercises.length, fetchPreviousPerformance, supabase, user?.id]
   );
 
   const removeExercise = useCallback(
@@ -857,7 +857,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     saveSet,
     deleteSet,
     clearPrBanner,
-  }), [activeWorkout, exercises, showPrBanner, prExerciseName, router, startWorkout, loadActiveWorkout, finishWorkout, discardWorkout, updateTitle, addExercise, removeExercise, addSet, updateSetField, saveSet, deleteSet, clearPrBanner]); // eslint-disable-line react-hooks/exhaustive-deps
+  }), [activeWorkout, exercises, showPrBanner, prExerciseName, router, startWorkout, loadActiveWorkout, finishWorkout, discardWorkout, updateTitle, addExercise, removeExercise, addSet, updateSetField, saveSet, deleteSet, clearPrBanner]);
 
 
   return (

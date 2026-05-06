@@ -9,7 +9,7 @@ import { getProfile } from "@/lib/gymProfile";
 import styles from "./layout.module.css";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { status, user } = useAuth();
+  const { status, user, profile, profileReady } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -17,13 +17,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.replace("/login");
       return;
     }
-    if (status === "authenticated" && user?.email) {
-      const profile = getProfile(user.email);
-      if (!profile) {
+    if (status === "authenticated" && user?.email && profileReady) {
+      const localProfile = getProfile(user.email);
+      if (!profile?.onboarding_done && !localProfile) {
         router.replace("/onboarding");
       }
     }
-  }, [status, user, router]);
+  }, [status, user, profile, profileReady, router]);
 
   if (status === "loading") {
     return (
@@ -34,6 +34,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   if (status === "unauthenticated") return null;
+
+  if (!profileReady) {
+    return (
+      <div className={styles.loading}>
+        <Spinner size={36} />
+      </div>
+    );
+  }
 
   return <AppShell>{children}</AppShell>;
 }

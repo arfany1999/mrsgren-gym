@@ -74,12 +74,12 @@ begin
     select * from array_rows
   )
   select
-    muscle,
-    sum(load)::numeric as volume,
+    u.muscle,
+    sum(u.load)::numeric as volume,
     count(*)::int as set_count
-  from unioned
-  group by muscle
-  order by volume desc;
+  from unioned u
+  group by u.muscle
+  order by sum(u.load) desc;
 end;
 $$;
 

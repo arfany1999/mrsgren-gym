@@ -318,7 +318,6 @@ export function WorkoutReport({
 
   const randomQuote = useMemo(
     () => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]!,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
   const [quoteText, setQuoteText] = useState(randomQuote.text);
@@ -338,6 +337,9 @@ export function WorkoutReport({
   const dayName = today.toLocaleDateString(undefined, { weekday: "long" }).toUpperCase();
   const dateStr = today
     .toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })
+    .toUpperCase();
+  const fullDateStr = today
+    .toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
     .toUpperCase();
   const fallbackName = userEmail ? userEmail.split("@")[0] : "ATHLETE";
   const displayName = (userName?.trim() || fallbackName || "ATHLETE").toUpperCase();
@@ -405,7 +407,6 @@ export function WorkoutReport({
       ctx.textAlign = "left";
       ctx.fillText("GYM.MRGREN.STORE", 100, 160);
 
-      const fullDateStr = today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }).toUpperCase();
       ctx.font = "400 26px 'JetBrains Mono', monospace";
       ctx.fillStyle = "rgba(255,255,255,0.15)";
       ctx.textAlign = "right";
@@ -665,12 +666,10 @@ export function WorkoutReport({
     }
   }, [
     cardioMins,
-    dateStr,
-    dayName,
     dayNumber,
     displayName,
     durationMins,
-    exerciseRows.length,
+    fullDateStr,
     muscles,
     quoteAuthor,
     quoteText,

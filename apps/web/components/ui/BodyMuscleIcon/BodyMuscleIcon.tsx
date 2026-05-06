@@ -142,7 +142,7 @@ function ChartView({
     if (!ref.current) return;
     chart.current = new BodyChart(ref.current, {
       view,
-      bodyState: buildState(ids),
+      bodyState: buildState([]),
       enableTransitions: false,
     });
     const svg = ref.current.querySelector("svg") as SVGSVGElement | null;
@@ -156,7 +156,7 @@ function ChartView({
       chart.current?.destroy();
       chart.current = null;
     };
-  }, [view]);
+  }, [view, zoom]);
 
   useEffect(() => {
     chart.current?.update({ bodyState: buildState(ids) });

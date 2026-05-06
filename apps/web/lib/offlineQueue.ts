@@ -142,7 +142,9 @@ export function subscribeQueue(cb: Listener): () => void {
 }
 
 function notifyChange() {
-  pendingCount().then(c => listeners.forEach(l => { try { l(c); } catch {} }));
+  pendingCount().then(c => listeners.forEach(l => { try { l(c); } catch {
+    // One bad subscriber should not stop the rest of the UI from updating.
+  } }));
 }
 
 /** Start a background flush whenever the browser comes online. */

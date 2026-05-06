@@ -241,15 +241,6 @@ export default function ActiveWorkoutPage() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
-  const formatRest = (s: number) => {
-    if (s <= 0) return "0:00";
-    const m = Math.floor(s / 60);
-    const r = s % 60;
-    return `${m}:${String(r).padStart(2, "0")}`;
-  };
-
-  const restProgress = restTotal > 0 ? Math.max(0, Math.min(1, 1 - (restSecs / restTotal))) : 0;
-
   useEffect(() => {
     if (!activeWorkout && !getActiveWorkoutId() && !finishing && !done && !discarding) {
       router.replace("/");
@@ -435,7 +426,7 @@ export default function ActiveWorkoutPage() {
           <div className={styles.empty}>
             <p className={styles.emptyIcon}>🏋️</p>
             <p className={styles.emptyTitle}>No exercises yet</p>
-            <p className={styles.emptyText}>Tap "Add Exercise" to start logging</p>
+            <p className={styles.emptyText}>Tap &quot;Add Exercise&quot; to start logging</p>
           </div>
         ) : (
           exercises.map((ex) => (
