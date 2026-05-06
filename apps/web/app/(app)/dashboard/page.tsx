@@ -12,6 +12,8 @@ import { getStreakStats } from "@/lib/streakStats";
 import { fetchMuscleVolume, type MuscleVolumeRow } from "@/lib/muscleVolume";
 import { MuscleHero } from "@/components/dashboard/MuscleHero/MuscleHero";
 import { TrophyRing } from "@/components/dashboard/TrophyRing/TrophyRing";
+import { getActiveEnrollment, type ActiveEnrollment } from "@/lib/programs";
+import { PROGRAM_TEMPLATES } from "@/lib/programTemplates";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
 import styles from "./page.module.css";
 
@@ -168,6 +170,9 @@ export default function DashboardPage() {
   // Weekly muscle volume
   const [muscleVolume, setMuscleVolume] = useState<MuscleVolumeRow[]>([]);
 
+  // Active program enrollment (null = not following one)
+  const [activeProgram, setActiveProgram] = useState<ActiveEnrollment | null>(null);
+
   // 3-dots menu
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -181,6 +186,9 @@ export default function DashboardPage() {
     loadRoutines();
     loadGreetingStats();
     fetchMuscleVolume(supabase, 7).then(setMuscleVolume).catch(() => {});
+    getActiveEnrollment(supabase, user.id)
+      .then(setActiveProgram)
+      .catch(() => setActiveProgram(null));
   }, [user, supabase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadGreetingStats() {
@@ -446,6 +454,34 @@ export default function DashboardPage() {
               })}
             </div>
           </section>
+        );
+      })()}
+
+      {/* ── Active program: next workout card ────── */}
+      {activeProgram && activeProgram.nextRoutineId && (() => {
+        const tpl = PROGRAM_TEMPLATES.find((t) => t.id === activeProgram.program_id);
+        const dayName = tpl?.days[activeProgram.currentDayIndex]?.name ?? `Day ${activeProgram.currentDayIndex + 1}`;
+        return (
+          <Link
+            href={`/routines/${activeProgram.nextRoutineId}`}
+            className={styles.nextWorkoutCard}
+          >
+            <div className={styles.nextWorkoutMeta}>
+              <span className={styles.nextWorkoutLabel}>Up next</span>
+              <span className={styles.nextWorkoutProgram}>{activeProgram.program_name}</span>
+            </div>
+            <div className={styles.nextWorkoutTitle}>{dayName}</div>
+            <div className={styles.nextWorkoutFooter}>
+              <span>
+                Day {activeProgram.currentDayIndex + 1} of {activeProgram.total_days} · Week {activeProgram.weeksCompleted + 1}
+              </span>
+              <span className={styles.nextWorkoutArrow} aria-hidden>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+            </div>
+          </Link>
         );
       })()}
 

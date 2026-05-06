@@ -18,6 +18,99 @@
   padding: var(--sp-12) 0;
 }
 
+/* ── Active enrollment banner ──────────────────────────────── */
+.activeBanner {
+  margin: var(--sp-3) var(--sp-4) 0;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      color-mix(in srgb, var(--accent) 4%, transparent) 60%,
+      transparent
+    ),
+    var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: cardIn 0.28s ease both;
+}
+
+.activeBannerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.activeBannerLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.activeBannerEnd {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.activeBannerEnd:hover:not(:disabled) {
+  color: var(--text-secondary);
+  border-color: color-mix(in srgb, var(--text-secondary) 40%, transparent);
+}
+
+.activeBannerEnd:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.activeBannerName {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.activeBannerProgress {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.activeBannerCount {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.activeBannerStart {
+  margin-top: 6px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.activeBannerStart:active {
+  transform: scale(0.97);
+}
+
 /* ── Filter section ────────────────────────────────────────── */
 .filters {
   padding: var(--sp-3) var(--sp-4) 0;
@@ -94,12 +187,38 @@
   to   { opacity: 1; transform: none; }
 }
 
+.cardActive {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-color));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
 .cardHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.activePill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .cardName {
@@ -320,6 +439,17 @@
 .useBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* "Currently active" state — subdued, no green accent. */
+.useBtnActive {
+  background: var(--bg-surface);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
+}
+
+.useBtnActive:disabled {
+  opacity: 1; /* don't fade — it should look intentional, not loading */
 }
 
 /* ── Toast ─────────────────────────────────────────────────── */

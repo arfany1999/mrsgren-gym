@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
@@ -9,6 +9,12 @@ import {
   PROGRAM_TEMPLATES,
   type ProgramTemplate,
 } from "@/lib/programTemplates";
+import {
+  enrollInProgram,
+  endActiveProgram,
+  getActiveEnrollment,
+  type ActiveEnrollment,
+} from "@/lib/programs";
 import styles from "./page.module.css";
 
 // ── Filter options ──────────────────────────────────────────
@@ -36,8 +42,33 @@ export default function ProgramsPage() {
   const [levelFilter, setLevelFilter] = useState<string>("All");
   const [goalFilter, setGoalFilter] = useState<string>("All");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [copyingId, setCopyingId] = useState<string | null>(null);
+  const [actingId, setActingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Active enrollment for this user (null = not following a program).
+  const [active, setActive] = useState<ActiveEnrollment | null>(null);
+  const [activeLoading, setActiveLoading] = useState(true);
+
+  const loadActive = useCallback(async () => {
+    if (!user) {
+      setActive(null);
+      setActiveLoading(false);
+      return;
+    }
+    setActiveLoading(true);
+    try {
+      const a = await getActiveEnrollment(supabase, user.id);
+      setActive(a);
+    } catch {
+      setActive(null);
+    } finally {
+      setActiveLoading(false);
+    }
+  }, [supabase, user]);
+
+  useEffect(() => {
+    loadActive();
+  }, [loadActive]);
 
   // ── Filtering ─────────────────────────────────────────────
   const filtered = PROGRAM_TEMPLATES.filter((p) => {
@@ -52,74 +83,104 @@ export default function ProgramsPage() {
     setTimeout(() => setToast(null), 2200);
   }
 
-  // ── Copy program as routines ──────────────────────────────
-  async function handleUseProgram(program: ProgramTemplate) {
-    if (!user) return;
-    setCopyingId(program.id);
+  // ── Start (or switch to) a program ────────────────────────
+  async function handleStart(template: ProgramTemplate) {
+    if (!user || actingId) return;
 
+    // If switching, confirm first.
+    if (active && active.program_id !== template.id) {
+      const ok = window.confirm(
+        `You're currently following "${active.program_name}". Switching to "${template.name}" will end the current program. Continue?`
+      );
+      if (!ok) return;
+    }
+
+    setActingId(template.id);
     try {
-      for (const day of program.days) {
-        // 1. Create the routine
-        const { data: routine, error: rErr } = await supabase
-          .from("routines")
-          .insert({
-            user_id: user.id,
-            name: `${program.name} - ${day.name}`,
-            description: program.description,
-          })
-          .select("id")
-          .single();
-
-        if (rErr || !routine) {
-          throw new Error(rErr?.message ?? "Failed to create routine");
-        }
-
-        // 2. Look up each exercise and insert into routine_exercises
-        for (let i = 0; i < day.exercises.length; i++) {
-          const ex = day.exercises[i]!;
-
-          // Find exercise by name in exercises table
-          const { data: found } = await supabase
-            .from("exercises")
-            .select("id")
-            .ilike("name", ex.name)
-            .limit(1)
-            .maybeSingle();
-
-          if (!found) continue; // skip if exercise not in DB
-
-          // Build sets_config array
-          const setsConfig = Array.from({ length: ex.sets }, () => ({
-            reps: null,
-            weightKg: null,
-          }));
-
-          await supabase.from("routine_exercises").insert({
-            routine_id: routine.id,
-            exercise_id: found.id,
-            order_index: i,
-            sets_config: setsConfig,
-          });
-        }
-      }
-
-      showToast(`"${program.name}" added to your routines!`);
-
-      // Short delay so the user sees the toast, then navigate
-      setTimeout(() => {
-        router.push("/routines");
-      }, 1200);
+      await enrollInProgram(supabase, user.id, template);
+      showToast(`Started "${template.name}". Routines added.`);
+      await loadActive();
+      // Give the user a beat to see the toast, then take them to the active
+      // program's first workout (via the routines list).
+      setTimeout(() => router.push("/routines"), 1100);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       showToast(`Error: ${msg}`);
     } finally {
-      setCopyingId(null);
+      setActingId(null);
     }
+  }
+
+  // ── End the active program ────────────────────────────────
+  async function handleEnd() {
+    if (!user || !active) return;
+    const ok = window.confirm(
+      `End "${active.program_name}"? Your routines will stay — only the program tracking stops.`
+    );
+    if (!ok) return;
+    setActingId(`end:${active.id}`);
+    try {
+      await endActiveProgram(supabase, user.id);
+      showToast("Program ended.");
+      await loadActive();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      showToast(`Error: ${msg}`);
+    } finally {
+      setActingId(null);
+    }
+  }
+
+  // ── Active enrollment banner ──────────────────────────────
+  function ActiveBanner() {
+    if (!active) return null;
+    const dayNum = active.currentDayIndex + 1;
+    const total = active.total_days;
+    const week = active.weeksCompleted + 1;
+    const nextRoutineId = active.nextRoutineId;
+    const isEnding = actingId === `end:${active.id}`;
+
+    return (
+      <div className={styles.activeBanner}>
+        <div className={styles.activeBannerHeader}>
+          <span className={styles.activeBannerLabel}>Following</span>
+          <button
+            type="button"
+            className={styles.activeBannerEnd}
+            onClick={handleEnd}
+            disabled={isEnding}
+          >
+            {isEnding ? "Ending…" : "End program"}
+          </button>
+        </div>
+        <p className={styles.activeBannerName}>{active.program_name}</p>
+        <p className={styles.activeBannerProgress}>
+          Day {dayNum} of {total} · Week {week}
+          {active.completedCount > 0 && (
+            <span className={styles.activeBannerCount}>
+              {" "}· {active.completedCount} workout{active.completedCount === 1 ? "" : "s"} done
+            </span>
+          )}
+        </p>
+        {nextRoutineId && (
+          <button
+            type="button"
+            className={styles.activeBannerStart}
+            onClick={() => router.push(`/routines/${nextRoutineId}`)}
+          >
+            Open today&apos;s workout
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (
     <div className={styles.page}>
       <TopBar title="Programs" showBack />
+
+      {/* ── Active enrollment banner ── */}
+      {!activeLoading && <ActiveBanner />}
 
       {/* ── Filter chips ── */}
       <div className={styles.filters}>
@@ -172,13 +233,28 @@ export default function ProgramsPage() {
         <div className={styles.list}>
           {filtered.map((program) => {
             const isExpanded = expandedId === program.id;
-            const isCopying = copyingId === program.id;
+            const isActing = actingId === program.id;
+            const isActive = active?.program_id === program.id;
+            const someoneElseActing = actingId !== null && !isActing;
+
+            // Decide which CTA to show.
+            let ctaLabel: string;
+            if (isActing) ctaLabel = active && active.program_id !== program.id ? "Switching…" : "Starting…";
+            else if (isActive) ctaLabel = "Currently active";
+            else if (active) ctaLabel = "Switch to this program";
+            else ctaLabel = "Start Program";
 
             return (
-              <div key={program.id} className={styles.card}>
+              <div
+                key={program.id}
+                className={`${styles.card} ${isActive ? styles.cardActive : ""}`}
+              >
                 {/* Header row */}
                 <div className={styles.cardHeader}>
-                  <span className={styles.cardName}>{program.name}</span>
+                  <div className={styles.cardTitleRow}>
+                    <span className={styles.cardName}>{program.name}</span>
+                    {isActive && <span className={styles.activePill}>Active</span>}
+                  </div>
                   <span className={styles.cardFreq}>
                     {program.daysPerWeek} days/week
                   </span>
@@ -249,20 +325,20 @@ export default function ProgramsPage() {
                   </div>
                 )}
 
-                {/* Use button */}
+                {/* CTA */}
                 <button
                   type="button"
-                  className={styles.useBtn}
-                  onClick={() => handleUseProgram(program)}
-                  disabled={isCopying || copyingId !== null}
+                  className={`${styles.useBtn} ${isActive ? styles.useBtnActive : ""}`}
+                  onClick={() => !isActive && handleStart(program)}
+                  disabled={isActing || someoneElseActing || isActive}
                 >
-                  {isCopying ? (
+                  {isActing ? (
                     <>
                       <Spinner size={18} color="#fff" />
-                      Copying...
+                      {ctaLabel}
                     </>
                   ) : (
-                    "Use This Program"
+                    ctaLabel
                   )}
                 </button>
               </div>

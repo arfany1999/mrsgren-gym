@@ -659,6 +659,83 @@
   to   { opacity: 1; transform: none; }
 }
 
+/* ── Active program: next-workout card ─────────────────────── */
+.nextWorkoutCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 14px 20px 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      color-mix(in srgb, var(--accent) 4%, transparent) 60%,
+      transparent
+    ),
+    var(--bg-surface);
+  transition: transform 0.12s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nextWorkoutCard:active {
+  transform: scale(0.99);
+}
+
+.nextWorkoutCard:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.nextWorkoutMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nextWorkoutLabel {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.nextWorkoutProgram {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nextWorkoutTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 2px 0 4px;
+}
+
+.nextWorkoutFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.nextWorkoutArrow {
+  display: inline-flex;
+  color: var(--accent);
+}
+
 /* ── Quick Links Row ───────────────────────────────────────── */
 .quickLinks {
   display: flex;
