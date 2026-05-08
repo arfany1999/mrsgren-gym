@@ -26,6 +26,26 @@ interface Stats {
   avgDurationMins: number;
 }
 
+function formatTotalTime(hours: number): string {
+  if (hours <= 0) return "—";
+  if (hours < 1) {
+    const mins = Math.round(hours * 60);
+    return `${mins}m`;
+  }
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function formatAvg(mins: number): string {
+  if (mins <= 0) return "—";
+  if (mins < 1) return "<1m";
+  if (mins < 60) return `${Math.round(mins)}m`;
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
 function Sparkline({ values }: { values: number[] }) {
   if (values.length < 2) return null;
   const min = Math.min(...values);
@@ -203,8 +223,8 @@ export default function StatisticsPage() {
               <p className={styles.statLabel}>Workouts</p>
             </div>
             <div className={styles.statCard}>
-              <p className={styles.statValue}>{(stats?.totalDurationHrs ?? 0).toFixed(1)}</p>
-              <p className={styles.statLabel}>Hours Total</p>
+              <p className={styles.statValue}>{formatTotalTime(stats?.totalDurationHrs ?? 0)}</p>
+              <p className={styles.statLabel}>Total Time</p>
             </div>
             <div className={styles.statCard}>
               <p className={styles.statValue}>{Math.round(stats?.totalVolumeKg ?? 0).toLocaleString()}</p>
@@ -215,8 +235,8 @@ export default function StatisticsPage() {
               <p className={styles.statLabel}>Sets Logged</p>
             </div>
             <div className={styles.statCard}>
-              <p className={styles.statValue}>{Math.round(stats?.avgDurationMins ?? 0)}</p>
-              <p className={styles.statLabel}>Avg Minutes</p>
+              <p className={styles.statValue}>{formatAvg(stats?.avgDurationMins ?? 0)}</p>
+              <p className={styles.statLabel}>Avg Session</p>
             </div>
           </section>
 

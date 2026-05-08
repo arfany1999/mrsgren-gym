@@ -748,8 +748,9 @@ export default function ProfilePage() {
           <h2 className={styles.name}>{displayName}</h2>
           <div className={styles.statsInline}>
             <span><b>{totalWorkouts}</b> Workouts</span>
-            <span><b>{workoutDays}</b> Days</span>
-            <span><b>{longestStreak}</b> Best Streak</span>
+            <span><b>{workoutDays}</b> Active Days</span>
+            <span><b>{currentStreak}</b> 🔥 Streak</span>
+            <span><b>{longestStreak}</b> Best</span>
           </div>
         </div>
         <button

@@ -61,7 +61,11 @@
   border: 1px solid var(--border-gold, rgba(212, 168, 67, 0.15));
   flex-shrink: 0;
 }
-.streakEmoji { display: none; }
+.streakEmoji {
+  font-size: 13px;
+  line-height: 1;
+  filter: saturate(1.1);
+}
 .streakNum {
   font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 14px;
@@ -409,6 +413,24 @@
   letter-spacing: -0.3px;
   line-height: 1.2;
   min-width: 0;
+}
+
+/* Subtle gold pill flagging the routine that matches today's day name. */
+.todayPill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--accent);
+  background: rgba(212, 168, 67, 0.14);
+  border: 1px solid rgba(212, 168, 67, 0.32);
+  text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .cardMeta {

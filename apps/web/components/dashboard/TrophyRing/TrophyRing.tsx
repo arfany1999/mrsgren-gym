@@ -10,9 +10,13 @@ interface TrophyRingProps {
   segTotal: number;
   /** Tier image (e.g. /trophies/bronze.svg). */
   trophySrc: string;
-  /** UPPERCASE tier name (e.g. "BRONZE"). */
-  tierName: string;
-  /** Days to next tier ("50 DAYS TO SILVER") — already humanised. */
+  /**
+   * Headline text shown under the ring. Caller composes the full label,
+   * e.g. "BRONZE TIER" (earned), "EARNING BRONZE" (in progress), or
+   * "ALL TIERS UNLOCKED" (max). No automatic suffix is appended.
+   */
+  title: string;
+  /** Subtitle line below the title — short progress summary. */
   caption: string;
 }
 
@@ -21,7 +25,7 @@ interface TrophyRingProps {
  * tick-marked track, copper progress arc, and the trophy SVG floating
  * inside an inner halo. Pure presentational — caller computes progress.
  */
-export function TrophyRing({ segCurrent, segTotal, trophySrc, tierName, caption }: TrophyRingProps) {
+export function TrophyRing({ segCurrent, segTotal, trophySrc, title, caption }: TrophyRingProps) {
   const safeTotal = Math.max(1, segTotal);
   const pct = Math.min(1, Math.max(0, segCurrent / safeTotal));
   const r = 88;
@@ -134,7 +138,7 @@ export function TrophyRing({ segCurrent, segTotal, trophySrc, tierName, caption 
 
         <Image
           src={trophySrc}
-          alt={tierName}
+          alt={title}
           width={110}
           height={110}
           className={styles.trophy}
@@ -144,7 +148,7 @@ export function TrophyRing({ segCurrent, segTotal, trophySrc, tierName, caption 
       </div>
 
       <div className={styles.labels}>
-        <p className={styles.tier}>{tierName} TIER</p>
+        <p className={styles.tier}>{title}</p>
         <p className={styles.caption}>{caption}</p>
       </div>
     </div>

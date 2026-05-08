@@ -43,17 +43,54 @@ interface DraftExercise {
 }
 
 // ── Set helpers ───────────────────────────────────────────────
-function emptySet(type: MeasurementType): DraftSet {
-  switch (type) {
-    case "timed":   return { reps: "", weight: "", duration: "30", distance: "" };
-    case "cardio":  return { reps: "", weight: "", duration: "20", distance: "" };
-    default:        return { reps: "12", weight: "", duration: "", distance: "" };
+// Empty drafts must stay BLANK so a user who never edits them doesn't
+// accidentally save a routine with phantom "12 reps × 0 kg" sets. The
+// inputs use the placeholder attribute to show "12", "30", etc. as a
+// visual hint without polluting state.
+function emptySet(): DraftSet {
+  return { reps: "", weight: "", duration: "", distance: "" };
+}
+
+// Pull the most recent completed sets for an exercise so we can seed a
+// fresh routine row with the user's last-session numbers. Returns an
+// array of DraftSets ready to drop into local state, or null on miss.
+async function fetchLastSessionSets(
+  supabase: ReturnType<typeof useAuth>["supabase"],
+  exerciseId: string,
+  userId: string | undefined,
+): Promise<DraftSet[] | null> {
+  if (!exerciseId || !userId) return null;
+  try {
+    const { data: weRows } = await supabase
+      .from("workout_exercises")
+      .select("id, workouts!inner(started_at, finished_at, user_id)")
+      .eq("workouts.user_id", userId)
+      .not("workouts.finished_at", "is", null)
+      .eq("exercise_id", exerciseId)
+      .order("workouts(started_at)", { ascending: false })
+      .limit(1);
+    const weRow = weRows?.[0] as { id: string } | undefined;
+    if (!weRow?.id) return null;
+    const { data: sets } = await supabase
+      .from("workout_sets")
+      .select("reps, weight, duration_secs, distance_km, set_index")
+      .eq("workout_exercise_id", weRow.id)
+      .order("set_index", { ascending: true });
+    if (!sets || sets.length === 0) return null;
+    return (sets as Array<Record<string, unknown>>).map((s) => ({
+      reps:     s.reps          != null ? String(s.reps)          : "",
+      weight:   s.weight        != null ? String(s.weight)        : "",
+      duration: s.duration_secs != null ? String(s.duration_secs) : "",
+      distance: s.distance_km   != null ? String(s.distance_km)   : "",
+    }));
+  } catch {
+    return null;
   }
 }
 
 function defaultSets(type: MeasurementType): DraftSet[] {
   const count = type === "cardio" ? 1 : type === "weight_reps" ? 4 : 3;
-  return Array.from({ length: count }, () => emptySet(type));
+  return Array.from({ length: count }, emptySet);
 }
 
 // Labels per measurement type
@@ -158,7 +195,7 @@ export default function EditRoutinePage() {
         } else {
           // Legacy: build from flat fields
           const count = (re.sets as number) ?? 4;
-          sets = Array.from({ length: count }, () => emptySet(measurementType));
+          sets = Array.from({ length: count }, emptySet);
           if (measurementType === "weight_reps") {
             sets = sets.map(s => ({
               ...s,
@@ -232,7 +269,11 @@ export default function EditRoutinePage() {
 
     // Background: resolve exerciseId, patch local state when ready. We
     // also stash the promise in pendingPromisesRef so handleSave can
-    // explicitly await it instead of polling exercisesRef.
+    // explicitly await it instead of polling exercisesRef. Once we have
+    // the canonical exercise id we also try to pre-fill the new sets
+    // with the user's most recent completed session for that exercise —
+    // a routine with "your last numbers" is a single-tap upgrade vs
+    // typing reps/weight from scratch every time.
     const promise = (async () => {
       try {
         let exerciseId = "";
@@ -289,12 +330,20 @@ export default function EditRoutinePage() {
           }
         }
 
+        // Smart default: pull the most recent completed session for this
+        // exercise and seed the draft sets with those reps/weight. Best-
+        // effort — if the lookup fails or there's no history, we leave
+        // the empty placeholders alone.
+        const lastSets = await fetchLastSessionSets(supabase, exerciseId, user?.id);
+
         setExercises(prev =>
-          prev.map(e =>
-            e.name.toLowerCase() === lowerName && !e.exerciseId
-              ? { ...e, exerciseId }
-              : e,
-          ),
+          prev.map(e => {
+            if (e.name.toLowerCase() !== lowerName || e.exerciseId) return e;
+            if (lastSets && lastSets.length > 0) {
+              return { ...e, exerciseId, sets: lastSets };
+            }
+            return { ...e, exerciseId };
+          }),
         );
       } finally {
         setPendingNames(prev => {
@@ -318,7 +367,7 @@ export default function EditRoutinePage() {
     haptic("light");
     setExercises(prev => prev.map((ex, i) => {
       if (i !== exIdx) return ex;
-      const last = ex.sets[ex.sets.length - 1] ?? emptySet(ex.measurementType);
+      const last = ex.sets[ex.sets.length - 1] ?? emptySet();
       return { ...ex, sets: [...ex.sets, { ...last }] };
     }));
   }

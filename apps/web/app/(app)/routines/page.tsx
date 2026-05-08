@@ -55,7 +55,7 @@ export default function RoutinesPage() {
     try {
       const mine = await supabase
         .from("routines")
-        .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, \"order\", sets_config, exercises(id, name, muscle_group))")
+        .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, order_index, sets_config, exercises(id, name, muscle_group))")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       setMyRoutines((mine.data ?? []).map(mapRoutine));
@@ -67,7 +67,7 @@ export default function RoutinesPage() {
   async function loadLibrary() {
     const lib = await supabase
       .from("routines")
-      .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, \"order\", sets_config, exercises(id, name, muscle_group))")
+      .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, order_index, sets_config, exercises(id, name, muscle_group))")
       .neq("user_id", user!.id);
     setLibrary(lib.error ? [] : (lib.data ?? []).map(mapRoutine));
   }
@@ -177,7 +177,7 @@ export default function RoutinesPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Workout</h1>
+        <h1 className={styles.title}>Routines</h1>
       </header>
 
       <section className={styles.content}>

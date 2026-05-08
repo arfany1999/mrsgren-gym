@@ -107,22 +107,38 @@ function ProgressRing({ lastVolume, prevVolume }: { lastVolume: number; prevVolu
   let pct = 1;
   // Defaults use CSS var so dark theme re-maps automatically
   let color = "var(--accent)";
+  let label = "Volume change vs last session";
 
   if (lastVolume > 0 && prevVolume < 0) {
     pct = 1;
     color = "var(--accent-blue)";
+    label = "First time you've run this routine";
   } else if (lastVolume > 0 && prevVolume >= 0) {
     const ratio = prevVolume > 0 ? lastVolume / prevVolume : 1;
     pct = Math.min(ratio, 1);
-    if (ratio >= 1) color = "var(--accent-green)";
-    else if (ratio >= 0.85) color = "var(--accent-orange)";
-    else color = "var(--accent-red)";
+    const deltaPct = Math.round((ratio - 1) * 100);
+    const sign = deltaPct >= 0 ? "+" : "";
+    if (ratio >= 1) {
+      color = "var(--accent-green)";
+      label = `${sign}${deltaPct}% volume vs last session — progressing`;
+    } else if (ratio >= 0.85) {
+      color = "var(--accent-orange)";
+      label = `${deltaPct}% volume vs last session — close to last`;
+    } else {
+      color = "var(--accent-red)";
+      label = `${deltaPct}% volume vs last session — well below last`;
+    }
   }
 
   const dash = (pct * c).toFixed(1);
 
   return (
-    <svg width="34" height="34" viewBox="0 0 34 34" className={styles.ring}>
+    <svg
+      width="34" height="34" viewBox="0 0 34 34" className={styles.ring}
+      role="img"
+      aria-label={label}
+    >
+      <title>{label}</title>
       <circle cx="17" cy="17" r={r} fill="none" stroke="rgba(128,128,128,0.2)" strokeWidth="3"/>
       <circle
         cx="17" cy="17" r={r} fill="none"
@@ -358,6 +374,16 @@ export default function DashboardPage() {
   const firstName = displayName.split(" ")[0] ?? displayName;
   const trophyProgress = getTrophyProgress(workoutDays);
   const todayDow = new Date().getDay();
+  // Day name like "wednesday" so we can flag a routine titled "Wednesday"
+  // (or "Wed Push", "Wednesday — Pull", etc.) as today's pick. We only
+  // show the badge — we do NOT reorder the user's chosen list, so they
+  // still see their routines in their preferred order.
+  const todayDayName = new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+  const todayDayShort = todayDayName.slice(0, 3);
+  function isTodayRoutine(title: string): boolean {
+    const t = title.toLowerCase();
+    return t.includes(todayDayName) || new RegExp(`\\b${todayDayShort}\\b`).test(t);
+  }
 
   return (
     <div className={styles.page}>
@@ -385,23 +411,38 @@ export default function DashboardPage() {
         </div>
 
         {/* GYM123 trophy ring badge — big metallic-arc tier progress dial */}
-        {(trophyProgress.nextTier || trophyProgress.currentTier) && (
-          <TrophyRing
-            segCurrent={trophyProgress.daysIntoCurrent}
-            segTotal={
-              trophyProgress.nextTier
-                ? trophyProgress.nextTier.threshold - (trophyProgress.currentTier?.threshold ?? 0)
-                : 60
-            }
-            trophySrc={(trophyProgress.nextTier ?? trophyProgress.currentTier)!.image}
-            tierName={(trophyProgress.nextTier ?? trophyProgress.currentTier)!.label.toUpperCase()}
-            caption={
-              trophyProgress.nextTier
-                ? `DAY ${workoutDays} · ${trophyProgress.daysRemaining} DAYS TO ${trophyProgress.nextTier.label.toUpperCase()}`
-                : `DAY ${workoutDays} · ALL TIERS UNLOCKED`
-            }
-          />
-        )}
+        {(trophyProgress.nextTier || trophyProgress.currentTier) && (() => {
+          // The ring always shows what the user is working toward. When they've
+          // already earned a tier, show that tier as the title and progress
+          // toward the next one in the caption. When no tier is earned yet,
+          // make it clear this is what they're EARNING, not what they have.
+          const showsCurrent = trophyProgress.currentTier !== null;
+          const ringTier = (trophyProgress.nextTier ?? trophyProgress.currentTier)!;
+          const segmentLen = trophyProgress.nextTier
+            ? trophyProgress.nextTier.threshold - (trophyProgress.currentTier?.threshold ?? 0)
+            : 60;
+          let title: string;
+          let caption: string;
+          if (!trophyProgress.nextTier) {
+            title = "ALL TIERS UNLOCKED";
+            caption = `${workoutDays} workout days · diamond legend`;
+          } else if (showsCurrent) {
+            title = `${trophyProgress.currentTier!.label.toUpperCase()} TIER`;
+            caption = `${trophyProgress.daysRemaining} days to ${trophyProgress.nextTier.label}`;
+          } else {
+            title = `EARNING ${trophyProgress.nextTier.label.toUpperCase()}`;
+            caption = `Day ${workoutDays} of ${trophyProgress.nextTier.threshold}`;
+          }
+          return (
+            <TrophyRing
+              segCurrent={trophyProgress.daysIntoCurrent}
+              segTotal={segmentLen}
+              trophySrc={ringTier.image}
+              title={title}
+              caption={caption}
+            />
+          );
+        })()}
 
         {/* Weekly dot strip */}
         <div className={styles.weekRow} role="img" aria-label="Workouts this week">
@@ -525,24 +566,8 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <section className={styles.startPanel} aria-label="Quick start workout">
-        <div className={styles.startPanelText}>
-          <span className={styles.startPanelKicker}>Quick start</span>
-          <h2 className={styles.startPanelTitle}>Ready to train?</h2>
-          <p className={styles.startPanelSub}>Start empty, then add exercises as you go.</p>
-        </div>
-        <button
-          type="button"
-          className={styles.startEmptyBtn}
-          onClick={() => handleStart()}
-          disabled={startingId === "empty"}
-        >
-          {startingId === "empty" ? "Starting..." : "Start Empty"}
-        </button>
-      </section>
-
       <header className={styles.header}>
-        <h1 className={styles.title}>My Routines</h1>
+        <h1 className={styles.title}>Your routines</h1>
         <Link href="/routines/new" className={styles.newBtn} aria-label="New routine">+</Link>
       </header>
 
@@ -581,6 +606,11 @@ export default function DashboardPage() {
                           <MuscleHero muscles={allMuscles} size={20} />
                         </span>
                         <h2 className={styles.cardTitle}>{r.title}</h2>
+                        {isTodayRoutine(r.title) && (
+                          <span className={styles.todayPill} aria-label="Scheduled for today">
+                            TODAY
+                          </span>
+                        )}
                       </div>
                       <div className={styles.cardMeta}>
                         <span>{r.exercises.length} exercise{r.exercises.length !== 1 ? "s" : ""}</span>
