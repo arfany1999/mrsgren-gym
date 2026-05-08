@@ -349,19 +349,70 @@ export default function ActiveWorkoutPage() {
     <div className={styles.page}>
       <PRBanner />
 
-      {/* Top Bar */}
-      <div className={styles.topBar}>
-        <button className={styles.discardBtn} onClick={() => setDiscardOpen(true)} type="button">
-          Discard
-        </button>
-        <div className={styles.titleWrapper}>
-          <span className={styles.workoutName}>{activeWorkout?.title}</span>
-          <span className={styles.elapsedTime}>{fmtElapsed(elapsed)}</span>
+      {/* ── HERO ─────────────────────────────────────────────────
+          Generous header that grounds the session: workout name in
+          the brand serif, the elapsed timer in a big monospaced
+          gold readout, and a stat row with subtle icons. The two
+          actions (Discard / Finish) sit at the top corners — present
+          but not crowding the hero. */}
+      <header className={styles.hero}>
+        <div className={styles.heroActions}>
+          <button
+            className={styles.discardBtn}
+            onClick={() => setDiscardOpen(true)}
+            type="button"
+            aria-label="Discard workout"
+          >
+            Discard
+          </button>
+          <Button variant="primary" size="sm" onClick={handleFinish} loading={finishing}>
+            Finish
+          </Button>
         </div>
-        <Button variant="primary" size="sm" onClick={handleFinish} loading={finishing}>
-          Finish
-        </Button>
-      </div>
+
+        <div className={styles.heroTitleWrap}>
+          <span className={styles.heroKicker}>In session</span>
+          <h1 className={styles.heroTitle}>{activeWorkout?.title || "Workout"}</h1>
+        </div>
+
+        <div className={styles.heroTimer} role="timer" aria-live="off">
+          {fmtElapsed(elapsed)}
+        </div>
+
+        <div className={styles.heroStats}>
+          <div className={styles.heroStat}>
+            <svg className={styles.heroStatIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M5 12l5 5L19 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className={styles.heroStatVal}>{totalSets}</span>
+            <span className={styles.heroStatLbl}>sets</span>
+          </div>
+          <span className={styles.heroStatDivider} aria-hidden />
+          <div className={styles.heroStat}>
+            <svg className={styles.heroStatIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <line x1="4" y1="9" x2="4" y2="15" />
+              <line x1="6" y1="7" x2="6" y2="17" />
+              <line x1="18" y1="7" x2="18" y2="17" />
+              <line x1="20" y1="9" x2="20" y2="15" />
+            </svg>
+            <span className={styles.heroStatVal}>
+              {totalVolume > 0 ? Math.round(totalVolume).toLocaleString() : "0"}
+              <small> kg</small>
+            </span>
+            <span className={styles.heroStatLbl}>volume</span>
+          </div>
+          <span className={styles.heroStatDivider} aria-hidden />
+          <div className={styles.heroStat}>
+            <svg className={styles.heroStatIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <path d="M8 9h8M8 13h8M8 17h5"/>
+            </svg>
+            <span className={styles.heroStatVal}>{exercises.length}</span>
+            <span className={styles.heroStatLbl}>exercises</span>
+          </div>
+        </div>
+      </header>
 
       {/* Pending sync pill (or offline indicator) */}
       {(pendingSync > 0 || !isOnline) && (
@@ -375,29 +426,13 @@ export default function ActiveWorkoutPage() {
         </div>
       )}
 
-      {/* Live Stats Bar */}
-      <div className={styles.statsBar}>
-        <div className={styles.statChip}>
-          <span className={styles.chipVal}>{totalSets}</span>
-          <span className={styles.chipLbl}>Sets Done</span>
-        </div>
-        <div className={styles.statDivider} />
-        <div className={styles.statChip}>
-          <span className={styles.chipVal}>
-            {totalVolume > 0 ? `${Math.round(totalVolume).toLocaleString()} kg` : "—"}
-          </span>
-          <span className={styles.chipLbl}>Volume</span>
-        </div>
-        <div className={styles.statDivider} />
-        <div className={styles.statChip}>
-          <span className={styles.chipVal}>{exercises.length}</span>
-          <span className={styles.chipLbl}>Exercises</span>
-        </div>
-      </div>
-
       {/* Exercises */}
       <div className={styles.content}>
-        {/* Rest circle timer (only when resting) + presets (when idle) */}
+        {/* Rest circle timer (only when resting) + premium quick-rest
+            selector (when idle). The selector is no longer a strip of
+            tiny chips — it's a card with a label and substantial pill
+            buttons so it reads as a tool the user reaches for, not an
+            accidental row of buttons. */}
         {restSecs > 0 ? (
           <div className={styles.timerSection}>
             <CircularTimer
@@ -409,24 +444,53 @@ export default function ActiveWorkoutPage() {
             />
           </div>
         ) : (
-          <div className={styles.restPresets}>
-            {[60, 90, 120, 180].map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => startRestPreset(s)}
-                className={styles.restPresetBtn}
-              >
-                {s < 60 ? `${s}s` : `${s / 60}m`}
-              </button>
-            ))}
+          <div className={styles.quickRest}>
+            <span className={styles.quickRestLabel}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 9v4l2 2" />
+                <path d="M9 2h6" />
+              </svg>
+              Quick rest
+            </span>
+            <div className={styles.quickRestBtns}>
+              {[60, 90, 120, 180].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => startRestPreset(s)}
+                  className={styles.quickRestBtn}
+                >
+                  {s < 60 ? `${s}s` : s % 60 === 0 ? `${s / 60}:00` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {exercises.length === 0 ? (
           <div className={styles.empty}>
-            <p className={styles.emptyIcon}>🏋️</p>
-            <p className={styles.emptyTitle}>No exercises yet</p>
-            <p className={styles.emptyText}>Tap &quot;Add Exercise&quot; to start logging</p>
+            <div className={styles.emptyArt} aria-hidden>
+              <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="40" cy="40" r="36" opacity="0.15" />
+                <line x1="14" y1="40" x2="66" y2="40" />
+                <line x1="18" y1="34" x2="18" y2="46" />
+                <line x1="22" y1="28" x2="22" y2="52" />
+                <line x1="58" y1="28" x2="58" y2="52" />
+                <line x1="62" y1="34" x2="62" y2="46" />
+              </svg>
+            </div>
+            <h2 className={styles.emptyTitle}>Ready to lift?</h2>
+            <p className={styles.emptyText}>Add your first exercise to start logging sets.</p>
+            <button
+              className={styles.emptyCta}
+              onClick={() => setPickerOpen(true)}
+              type="button"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+              </svg>
+              Add exercise
+            </button>
           </div>
         ) : (
           exercises.map((ex) => (
@@ -449,21 +513,45 @@ export default function ActiveWorkoutPage() {
           ))
         )}
 
-        <button className={styles.addExerciseBtn} onClick={() => setPickerOpen(true)} type="button">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-          Add Exercise
-        </button>
-
         {exercises.length > 0 && (
-          <div className={styles.bottomFinish}>
-            <Button variant="primary" fullWidth size="lg" onClick={handleFinish} loading={finishing}>
-              Finish Workout
-            </Button>
-          </div>
+          <button className={styles.addExerciseBtn} onClick={() => setPickerOpen(true)} type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+            Add another exercise
+          </button>
         )}
+
+        {/* Spacer so the sticky finish bar doesn't cover the last card. */}
+        {exercises.length > 0 && <div className={styles.finishSpacer} aria-hidden />}
       </div>
+
+      {/* Sticky bottom finish bar — appears once at least one
+          exercise is on the screen. The summary line gives the user
+          a tactile preview of what they're about to commit. */}
+      {exercises.length > 0 && (
+        <div className={styles.finishBar}>
+          <div className={styles.finishSummary}>
+            <span className={styles.finishSummaryNum}>{totalSets}</span>
+            <span className={styles.finishSummaryLbl}>{totalSets === 1 ? "set" : "sets"}</span>
+            <span className={styles.finishSummarySep}>·</span>
+            <span className={styles.finishSummaryNum}>
+              {totalVolume > 0 ? Math.round(totalVolume).toLocaleString() : "0"}
+            </span>
+            <span className={styles.finishSummaryLbl}>kg</span>
+            <span className={styles.finishSummarySep}>·</span>
+            <span className={styles.finishSummaryNum}>{fmtElapsed(elapsed)}</span>
+          </div>
+          <button
+            type="button"
+            className={styles.finishBtn}
+            onClick={handleFinish}
+            disabled={finishing}
+          >
+            {finishing ? "Saving…" : "Finish workout"}
+          </button>
+        </div>
+      )}
 
       <ExercisePicker
         open={pickerOpen}
