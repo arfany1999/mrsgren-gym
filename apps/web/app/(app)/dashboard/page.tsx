@@ -315,9 +315,10 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleStart(routineId: string, routine?: Routine) {
+  async function handleStart(routineId?: string, routine?: Routine) {
     setMenuOpenId(null);
-    setStartingId(routineId);
+    const startKey = routineId ?? "empty";
+    setStartingId(startKey);
     try {
       await startWorkout(routineId, routine ? {
         title: routine.title,
@@ -524,6 +525,22 @@ export default function DashboardPage() {
         </Link>
       </div>
 
+      <section className={styles.startPanel} aria-label="Quick start workout">
+        <div className={styles.startPanelText}>
+          <span className={styles.startPanelKicker}>Quick start</span>
+          <h2 className={styles.startPanelTitle}>Ready to train?</h2>
+          <p className={styles.startPanelSub}>Start empty, then add exercises as you go.</p>
+        </div>
+        <button
+          type="button"
+          className={styles.startEmptyBtn}
+          onClick={() => handleStart()}
+          disabled={startingId === "empty"}
+        >
+          {startingId === "empty" ? "Starting..." : "Start Empty"}
+        </button>
+      </section>
+
       <header className={styles.header}>
         <h1 className={styles.title}>My Routines</h1>
         <Link href="/routines/new" className={styles.newBtn} aria-label="New routine">+</Link>
@@ -652,12 +669,23 @@ export default function DashboardPage() {
 
                   <button
                     type="button"
-                    className={styles.startBtn}
-                    onClick={() => handleStart(r.id, r)}
+                    className={[
+                      styles.startBtn,
+                      r.exercises.length === 0 ? styles.buildBtn : "",
+                    ].filter(Boolean).join(" ")}
+                    onClick={() => {
+                      if (r.exercises.length === 0) {
+                        router.push(`/routines/${r.id}/edit`);
+                        return;
+                      }
+                      void handleStart(r.id, r);
+                    }}
                     disabled={startingId === r.id}
-                    style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
+                    style={r.exercises.length > 0 ? { background: `linear-gradient(135deg, ${from}, ${to})` } : undefined}
                   >
-                    {startingId === r.id ? "Starting…" : "▶ Start"}
+                    {r.exercises.length === 0
+                      ? "Add Exercises"
+                      : startingId === r.id ? "Starting..." : "Start"}
                   </button>
                 </div>
               </div>

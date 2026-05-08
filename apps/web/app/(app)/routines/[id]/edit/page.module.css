@@ -586,12 +586,12 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 6px 10px 24px;
+  padding: 8px 12px 24px;
 }
 
 /* ── Equipment group section ─────────────────────────────────── */
 .equipGroup {
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .equipHeader {
@@ -629,20 +629,27 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 12px;
-  border-radius: 14px;
-  background: none;
-  border: none;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   text-align: left;
   width: 100%;
-  transition: background 0.1s ease;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
   -webkit-tap-highlight-color: transparent;
 }
-.sheetItem:active { background: rgba(255, 255, 255, 0.04); }
+.sheetItem:hover {
+  border-color: rgba(212, 168, 67, 0.24);
+}
+.sheetItem:active {
+  background: var(--bg-overlay);
+  transform: scale(0.98);
+}
 
 .sheetItemAdded {
-  opacity: 0.45;
+  opacity: 0.58;
   cursor: default;
 }
 
@@ -705,4 +712,7 @@
   color: #15803d;
 }
 
-.sheetItemAction { flex-shrink: 0; }
+.sheetItemAction {
+  flex-shrink: 0;
+  margin-left: 4px;
+}

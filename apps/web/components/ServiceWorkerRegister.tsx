@@ -6,6 +6,20 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    const isLocalPreview = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+    if (isLocalPreview) {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((reg) => reg.unregister())))
+        .then(() => {
+          if ("caches" in window) {
+            return caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))));
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
     let iv: ReturnType<typeof setInterval> | undefined;
 
     const onControllerChange = () => {

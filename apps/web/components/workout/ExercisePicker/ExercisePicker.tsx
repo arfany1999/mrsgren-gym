@@ -16,6 +16,7 @@ interface ExercisePickerProps {
 }
 
 const MUSCLE_CHIPS = [
+  { label: "Recent",     bodyPart: "__recent" },
   { label: "All",        bodyPart: "" },
   { label: "Chest",      bodyPart: "chest" },
   { label: "Lats",       bodyPart: "lats" },
@@ -29,17 +30,63 @@ const MUSCLE_CHIPS = [
   { label: "Calves",     bodyPart: "calves" },
 ];
 
+const RECENT_KEY = "gym_recent_exercises";
+
+function titleCase(value: string) {
+  return value
+    .split(/[_\\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function readRecent(): FreeExercise[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(RECENT_KEY) ?? "[]") as FreeExercise[];
+    return Array.isArray(parsed) ? parsed.slice(0, 12) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecent(exercise: FreeExercise) {
+  if (typeof window === "undefined") return;
+  const recent = readRecent();
+  const next = [
+    exercise,
+    ...recent.filter((item) => item.id !== exercise.id),
+  ].slice(0, 12);
+  window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+}
+
 export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps) {
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState("");
   const [exercises, setExercises] = useState<FreeExercise[]>([]);
+  const [recentExercises, setRecentExercises] = useState<FreeExercise[]>([]);
   const [loading, setLoading] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async (q: string, bodyPart: string) => {
     setLoading(true);
     try {
-      if (q) {
+      if (bodyPart === "__recent") {
+        const recent = readRecent();
+        const needle = q.trim().toLowerCase();
+        setExercises(needle
+          ? recent.filter((ex) =>
+              [
+                ex.name,
+                ex.equipment,
+                ex.category,
+                ...ex.primaryMuscles,
+                ...ex.secondaryMuscles,
+              ].filter(Boolean).join(" ").toLowerCase().includes(needle)
+            )
+          : recent
+        );
+      } else if (q) {
         const results = await searchFreeExercises(q);
         setExercises(results);
       } else {
@@ -54,7 +101,12 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
   }, []);
 
   useEffect(() => {
-    if (open) load("", "");
+    if (open) {
+      const recent = readRecent();
+      setRecentExercises(recent);
+      load("", recent.length > 0 ? "__recent" : "");
+      setMuscle(recent.length > 0 ? "__recent" : "");
+    }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -91,9 +143,11 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
       measurementType: mType,
     };
     onSelect(exercise);
+    writeRecent(freeEx);
+    setRecentExercises(readRecent());
     onClose();
     setQuery("");
-    setMuscle("");
+    setMuscle(readRecent().length > 0 ? "__recent" : "");
   }
 
   function handleClose() {
@@ -111,6 +165,18 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
     <BottomSheet open={open} onClose={handleClose} title="Add Exercise" height="90dvh">
       <div className={styles.inner}>
         {/* Search */}
+        <div className={styles.summaryRow}>
+          <div>
+            <p className={styles.summaryKicker}>
+              {muscle === "__recent" ? "Recent picks" : muscle ? `${titleCase(muscle)} library` : "Exercise library"}
+            </p>
+            <p className={styles.summaryText}>
+              {loading ? "Finding matches..." : `${exercises.length} ${exercises.length === 1 ? "exercise" : "exercises"} ready`}
+            </p>
+          </div>
+          <span className={styles.summaryBadge}>{query ? "Search" : muscle === "__recent" ? "Recent" : "Browse"}</span>
+        </div>
+
         <div className={styles.searchWrapper}>
           <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="8" stroke="var(--text-tertiary)" strokeWidth="2" />
@@ -135,7 +201,7 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
 
         {/* Muscle chips */}
         <div className={styles.chipsRow}>
-          {MUSCLE_CHIPS.map((chip) => (
+          {MUSCLE_CHIPS.filter((chip) => chip.bodyPart !== "__recent" || recentExercises.length > 0).map((chip) => (
             <button
               key={chip.bodyPart}
               type="button"
@@ -150,11 +216,13 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
         {/* List */}
         {loading ? (
           <div className={styles.empty}>
-            <p className={styles.emptyText}>Loading...</p>
+            <p className={styles.emptyTitle}>Loading exercises</p>
+            <p className={styles.emptyText}>Building the list for this filter.</p>
           </div>
         ) : exercises.length === 0 ? (
           <div className={styles.empty}>
-            <p className={styles.emptyText}>No exercises found</p>
+            <p className={styles.emptyTitle}>No exercises found</p>
+            <p className={styles.emptyText}>Try another muscle group or clear the search.</p>
           </div>
         ) : (
           <ul className={styles.list}>
@@ -171,7 +239,12 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
                         {ex.primaryMuscles.slice(0, 3).map((m) => m.charAt(0).toUpperCase() + m.slice(1)).join(" · ")}
                       </p>
                     )}
+                    <div className={styles.itemMeta}>
+                      {ex.equipment && <span>{titleCase(ex.equipment)}</span>}
+                      <span>{titleCase(ex.category || getMeasurementType(ex.name))}</span>
+                    </div>
                   </div>
+                  <span className={styles.addCue} aria-hidden>+</span>
                 </button>
               </li>
             ))}

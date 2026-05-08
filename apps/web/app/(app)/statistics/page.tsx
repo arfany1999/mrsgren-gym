@@ -67,7 +67,7 @@ export default function StatisticsPage() {
         const [workoutsRes, prsRes] = await Promise.all([
           supabase
             .from("workouts")
-            .select("started_at, finished_at")
+            .select("started_at, finished_at, workout_exercises(workout_sets(reps, weight, is_completed))")
             .eq("user_id", user!.id)
             .not("finished_at", "is", null),
           supabase
@@ -78,19 +78,39 @@ export default function StatisticsPage() {
             .limit(10),
         ]);
 
-        const workouts = (workoutsRes.data ?? []) as Array<{ started_at: string; finished_at: string }>;
+        const workouts = (workoutsRes.data ?? []) as Array<{
+          started_at: string;
+          finished_at: string;
+          workout_exercises?: Array<{
+            workout_sets?: Array<{
+              reps: number | null;
+              weight: number | null;
+              is_completed: boolean | null;
+            }>;
+          }>;
+        }>;
         const totalWorkouts = workouts.length;
         const totalDurationSecs = workouts.reduce((s, w) => {
           const d = (new Date(w.finished_at).getTime() - new Date(w.started_at).getTime()) / 1000;
           return s + (d > 0 ? d : 0);
         }, 0);
-        const totalVolumeKg = 0;
+        const allCompletedSets = workouts.flatMap((w) =>
+          (w.workout_exercises ?? []).flatMap((we) =>
+            (we.workout_sets ?? []).filter((set) => set.is_completed !== false)
+          )
+        );
+        const totalSets = allCompletedSets.length;
+        const totalVolumeKg = allCompletedSets.reduce((sum, set) => {
+          const reps = set.reps ?? 0;
+          const weight = set.weight ?? 0;
+          return sum + reps * weight;
+        }, 0);
 
         setStats({
           totalWorkouts,
           totalDurationHrs: totalDurationSecs / 3600,
           totalVolumeKg,
-          totalSets: 0,
+          totalSets,
           avgDurationMins: totalWorkouts > 0 ? totalDurationSecs / totalWorkouts / 60 : 0,
         });
 

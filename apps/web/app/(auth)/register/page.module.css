@@ -1,8 +1,15 @@
 /* ── Page: split layout on desktop, stacked on mobile ── */
 .page {
   display: flex;
+  height: 100dvh;
   min-height: 100dvh;
-  background: var(--bg-primary);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background:
+    radial-gradient(circle at 50% -12%, rgba(212, 168, 67, 0.14), transparent 34%),
+    radial-gradient(circle at 110% 22%, rgba(91, 156, 245, 0.10), transparent 28%),
+    var(--bg-primary);
 }
 
 /* ── Left hero panel (hidden on mobile) ── */
@@ -108,6 +115,72 @@
   opacity: 0.85;
 }
 
+.heroPreview {
+  width: min(100%, 260px);
+  margin-top: 34px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(212, 168, 67, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 18px 60px rgba(0, 0, 0, 0.24);
+}
+
+.previewHeader,
+.previewMetric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.previewHeader span {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+.previewHeader strong {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.previewMetric {
+  margin: 16px 0 12px;
+}
+
+.previewValue {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+.previewDelta {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(61, 214, 140, 0.12);
+  color: var(--accent-green);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.previewBars {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  gap: 7px;
+  height: 62px;
+}
+
+.previewBars span {
+  display: block;
+  min-height: 16px;
+  border-radius: 999px 999px 6px 6px;
+  background: linear-gradient(180deg, var(--accent), rgba(212, 168, 67, 0.28));
+}
+
 .heroFooter {
   position: absolute;
   bottom: 28px;
@@ -125,10 +198,11 @@
   position: relative;
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 32px 24px;
-  overflow: hidden;
+  min-height: 100dvh;
+  padding: 24px 24px calc(env(safe-area-inset-bottom, 0px) + 28px);
+  overflow: visible;
 }
 
 .glowA, .glowB {
@@ -168,7 +242,7 @@
   max-width: 420px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   animation: form-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -210,6 +284,41 @@
   color: var(--text-secondary);
 }
 
+.quickStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.quickStat {
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.quickStat strong,
+.quickStat span {
+  display: block;
+}
+
+.quickStat strong {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.quickStat span {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
 /* ── Form card — subtle gold border accent ── */
 .form {
   display: flex;
@@ -218,7 +327,7 @@
   background: var(--glass-bg);
   border: 1px solid rgba(212, 168, 67, 0.12);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 20px;
   box-shadow:
     var(--glass-shadow),
     0 0 0 1px rgba(212, 168, 67, 0.04);
@@ -228,6 +337,66 @@
 }
 .form:focus-within {
   border-color: rgba(212, 168, 67, 0.22);
+}
+
+.googleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 50px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 800;
+  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+}
+
+.googleBtn:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  border-color: rgba(212, 168, 67, 0.32);
+}
+
+.googleBtn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.googleBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--separator);
+}
+
+.passwordToggle {
+  min-width: 44px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
 }
 
 /* Side-by-side name + username on wider screens */
@@ -277,6 +446,9 @@
    Tablet: hero appears but narrower
    ═══════════════════════════════════════════════ */
 @media (min-width: 768px) {
+  .page {
+    overflow: hidden;
+  }
   .hero {
     display: flex;
     flex: 0 0 300px;
@@ -287,11 +459,22 @@
   .signature {
     display: none;
   }
+  .quickStats {
+    display: none;
+  }
   .formTitle {
     font-size: 26px;
   }
   .formPanel {
+    align-items: center;
+    overflow: hidden;
     padding: 48px 40px;
+  }
+  .formInner {
+    gap: 24px;
+  }
+  .form {
+    padding: 24px;
   }
   .formRow {
     flex-direction: row;
@@ -354,5 +537,8 @@
   }
   .heroTitle {
     font-size: 48px;
+  }
+  .heroPreview {
+    width: 300px;
   }
 }
