@@ -12,6 +12,7 @@ import { listMyRoutines, deleteRoutine, type RoutineSummary } from "@/lib/api/ro
 import { getRoutineWorkoutInfo, listCompletedStartedAt, type WorkoutInfo } from "@/lib/api/workouts";
 import { MuscleHero } from "@/components/dashboard/MuscleHero/MuscleHero";
 import { TrophyRing } from "@/components/dashboard/TrophyRing/TrophyRing";
+import { TodayCard } from "@/components/dashboard/TodayCard/TodayCard";
 import { getActiveEnrollment, type ActiveEnrollment } from "@/lib/programs";
 import { PROGRAM_TEMPLATES } from "@/lib/programTemplates";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
@@ -477,6 +478,15 @@ export default function DashboardPage() {
           <span className={styles.quickLabel}>Exercises</span>
         </Link>
       </div>
+
+      {!loading && routines.length > 0 && (
+        <TodayCard
+          routines={routines}
+          workoutInfoMap={workoutInfoMap}
+          onStart={(r) => handleStart(r.id, r)}
+          startingId={startingId}
+        />
+      )}
 
       <header className={styles.header}>
         <h1 className={styles.title}>Your routines</h1>

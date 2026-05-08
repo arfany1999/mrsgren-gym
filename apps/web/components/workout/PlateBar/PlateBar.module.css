@@ -1,0 +1,93 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 4px;
+}
+
+/* The horizontal "bar with plates" rendering. Plates flank the bar shaft;
+   the shaft itself is a thin gold-tinted strip so the gold theme reads
+   even when the plates are loud colours. */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 64px;
+}
+
+.stackLeft,
+.stackRight {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.stackLeft { justify-content: flex-end; flex: 1; }
+.stackRight { justify-content: flex-start; flex: 1; }
+
+.plate {
+  display: inline-block;
+  width: 9px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+  transition: height 160ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.barShaft {
+  width: 90px;
+  height: 6px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #d8d8de 0%, #909096 50%, #5a5a60 100%);
+  border-radius: 1px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+.barShaft::before,
+.barShaft::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 4px;
+  background: linear-gradient(180deg, #c0c0c8 0%, #6a6a72 100%);
+  border-radius: 1px;
+}
+.barShaft::before { left: -2px; }
+.barShaft::after  { right: -2px; }
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.captionMain {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.4px;
+}
+.captionMeta {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.remainder {
+  color: var(--accent-red, #ef4444);
+  font-style: normal;
+  font-weight: 800;
+}

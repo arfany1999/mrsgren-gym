@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { SetRow } from "@/components/workout/SetRow/SetRow";
+import { PlateBar } from "@/components/workout/PlateBar/PlateBar";
 import { progressiveOverloadHint } from "@/lib/exerciseHistory";
 import { generateWarmupSets } from "@/lib/warmupGenerator";
 import { calculatePlates, formatPlates } from "@/lib/plateCalculator";
@@ -98,6 +99,21 @@ export function ExerciseBlock({
     });
   }
 
+  // One-tap "apply the suggested progression" — fills every unsaved set
+  // with the new weight and the same rep target as last session. Lifters
+  // who train RPE-style can still tweak each set; this is the fast path
+  // for "I'm doing what the algorithm says".
+  function applyOverloadHint() {
+    if (!nudge || !lastTopSet) return;
+    const w = String(nudge.suggestWeight);
+    const r = String(lastTopSet.reps);
+    exercise.sets.forEach((s, idx) => {
+      if (s.isSaved) return;
+      onUpdateField(idx, "weightKg", w);
+      if (!s.reps) onUpdateField(idx, "reps", r);
+    });
+  }
+
   return (
     <div className={styles.block}>
       {/* Header */}
@@ -120,9 +136,21 @@ export function ExerciseBlock({
             )}
           </div>
           {nudge && (
-            <p className={styles.nudge}>
-              💡 Try <b>{nudge.suggestWeight}kg</b> — {nudge.reason}
-            </p>
+            <div className={styles.nudgeRow}>
+              <p className={styles.nudge}>
+                💡 Try <b>{nudge.suggestWeight}kg</b> — {nudge.reason}
+              </p>
+              {hasEmptyUnsavedSet && (
+                <button
+                  type="button"
+                  className={styles.applyHintBtn}
+                  onClick={applyOverloadHint}
+                  aria-label={`Apply ${nudge.suggestWeight}kg to all sets`}
+                >
+                  Apply →
+                </button>
+              )}
+            </div>
           )}
           {hasEmptyUnsavedSet && (
             <button type="button" className={styles.useLastBtn} onClick={useLastWeights}>
@@ -338,6 +366,13 @@ export function ExerciseBlock({
           </div>
         );
       })()}
+
+      {/* Plate visualization — auto-shown for barbell-style lifts the
+          moment any set has a weight entered. Per-side breakdown lets the
+          user load the bar without doing math in their head between sets. */}
+      {isWeightReps && workingWeight > 0 && (
+        <PlateBar weightKg={workingWeight} />
+      )}
 
       {/* Sets */}
       {exercise.sets.map((set, idx) => (
