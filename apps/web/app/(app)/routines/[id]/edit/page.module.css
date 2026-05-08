@@ -95,11 +95,13 @@
   border: none !important;
   outline: none;
   box-shadow: none !important;
-  font-size: 21px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.03em;
-  line-height: 1.3;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
   padding: 0;
 }
 .titleInput:focus {
@@ -107,7 +109,14 @@
   border: none !important;
   box-shadow: none !important;
 }
-.titleInput::placeholder { color: var(--text-tertiary); opacity: 0.55; font-size: 15px; font-weight: 500; }
+.titleInput::placeholder {
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  color: var(--text-tertiary);
+  opacity: 0.45;
+  font-size: 18px;
+  font-weight: 500;
+  font-style: italic;
+}
 
 /* ── Error ───────────────────────────────────────────────────── */
 .error {
@@ -153,17 +162,24 @@
 }
 
 .emptyTitle {
-  font-size: 15px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 
 .emptySub {
-  font-size: 12px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-tertiary);
   text-align: center;
-  line-height: 1.6;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  line-height: 1.5;
 }
 
 /* ── Exercise block ──────────────────────────────────────────── */
@@ -205,11 +221,13 @@
 }
 
 .exName {
-  font-size: 15px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 
 .exMeta { flex: 1; min-width: 0; }
@@ -222,12 +240,13 @@
 }
 
 .exMusclePill {
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 800;
   border-radius: 999px;
   padding: 2px 8px;
-  text-transform: capitalize;
-  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
 }
 
 .exSetCount {
@@ -477,10 +496,13 @@
 }
 
 .sheetTitle {
-  font-size: 17px;
-  font-weight: 900;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 
 .sheetSubtitle {
@@ -575,8 +597,11 @@
 }
 
 .chipLabel {
-  font-size: 12px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
   white-space: nowrap;
 }
 
@@ -602,11 +627,12 @@
 }
 
 .equipLabel {
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
   font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 1.4px;
   white-space: nowrap;
 }
 
@@ -664,13 +690,13 @@
 .sheetItemInfo { flex: 1; min-width: 0; }
 
 .sheetItemName {
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-  /* Allow 2-line wrap so long names like "Flat Barbell Bench Press"
-     read fully on mobile widths instead of being clipped to "Flat Bar…". */
+  letter-spacing: -0.1px;
+  line-height: 1.1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -682,13 +708,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .sheetItemMuscle {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: capitalize;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
   opacity: 0.85;
 }
 

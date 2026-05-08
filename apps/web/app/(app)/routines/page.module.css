@@ -10,10 +10,13 @@
 }
 
 .title {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 34px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.4px;
   color: var(--text-primary);
+  line-height: 1.05;
 }
 
 /* ── Content ─────────────────────────────────────────────────── */
@@ -62,10 +65,13 @@
 }
 
 .sectionHead h2 {
-  font-size: 20px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   letter-spacing: -0.3px;
   color: var(--text-primary);
+  line-height: 1.05;
 }
 
 .addBtn {
@@ -105,8 +111,10 @@
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--glass-shadow);
   border-radius: var(--card-radius);
-  font-size: 14px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   text-decoration: none;
   text-align: center;
@@ -115,7 +123,7 @@
   align-items: center;
   justify-content: center;
   transition: background 150ms ease, transform 150ms ease;
-  letter-spacing: -0.1px;
+  letter-spacing: -0.2px;
   -webkit-tap-highlight-color: transparent;
 }
 .quickCard:hover  { background: var(--bg-elevated); }
@@ -123,20 +131,25 @@
 
 /* ── Mine head ───────────────────────────────────────────────── */
 .mineHead {
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-tertiary);
   margin-bottom: 10px;
-  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
 }
 
 .backMineInline {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 13px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 700;
   color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
 }
 
 /* ── States ──────────────────────────────────────────────────── */
@@ -156,14 +169,21 @@
 }
 
 .emptyTitle {
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.3px;
   color: var(--text-primary);
 }
 
 .emptySub {
-  font-size: 14px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
 }
 
 /* ── Card list ───────────────────────────────────────────────── */
@@ -200,20 +220,27 @@
 }
 
 .cardTitle {
-  font-size: 16px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   letter-spacing: -0.2px;
+  line-height: 1.1;
   margin-bottom: 4px;
 }
 
 .cardDesc {
-  font-size: 12px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 600;
   color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 /* ── Dropdown menu ───────────────────────────────────────────── */
@@ -349,11 +376,14 @@
 }
 
 .modalTitle {
-  font-size: 17px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   margin-bottom: 16px;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 
 .modalText {

@@ -44,11 +44,12 @@
 }
 
 .summaryTitle {
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.6px;
   margin-bottom: 16px;
 }
 
@@ -67,18 +68,21 @@
 }
 
 .summaryVal {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
 }
 
 .summaryLbl {
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1.2px;
 }
 
 .summaryDivider {
@@ -91,11 +95,12 @@
 .muscleHeader {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.4px;
   margin-bottom: 10px;
   padding-top: 16px;
   border-top: 0.5px solid var(--separator);
@@ -114,12 +119,14 @@
 }
 
 .muscleName {
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-secondary);
   width: 80px;
   flex-shrink: 0;
-  text-transform: capitalize;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
 }
 
 .muscleBarWrap {
@@ -138,12 +145,14 @@
 }
 
 .musclePct {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
   color: var(--text-tertiary);
   width: 32px;
   text-align: right;
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Exercise List Card ──────────────────────────────────────── */
@@ -197,18 +206,23 @@
 }
 
 .exName {
-  font-size: 15px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   letter-spacing: -0.2px;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .exMeta {
-  font-size: 13px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-secondary);
-  margin-top: 2px;
-  font-weight: 500;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
 }
 
 .exMuscles {
