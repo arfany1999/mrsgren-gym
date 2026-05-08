@@ -12,6 +12,7 @@ import {
   getSubRegions,
   matchesSubRegion,
 } from "@/lib/exerciseSubRegions";
+import { MyExercisesSection } from "@/components/exercise/MyExercisesSection/MyExercisesSection";
 import styles from "./page.module.css";
 
 const MUSCLE_GROUPS = [
@@ -139,6 +140,12 @@ export default function ExercisesPage() {
           </Link>
         }
       />
+
+      {/* User's actually-trained exercises — surfaces the data behind the
+          per-exercise progression view. Lives ABOVE the FreeExerciseDb
+          library so the user always sees their own context first. Hides
+          itself when there's no history. */}
+      <MyExercisesSection />
 
       {/* Search */}
       <div className={styles.searchWrapper}>

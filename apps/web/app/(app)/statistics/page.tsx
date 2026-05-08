@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
@@ -259,7 +260,16 @@ export default function StatisticsPage() {
             ) : (
               <div className={styles.prList}>
                 {prs.map((pr, i) => (
-                  <div key={i} className={styles.prCard} style={{ animationDelay: `${i * 40}ms` }}>
+                  // PR cards link to the per-exercise progression view —
+                  // tap to drill into the full session history + 1RM
+                  // chart for that lift. URL-encode the name so it
+                  // round-trips through the [id] route's resolver.
+                  <Link
+                    key={i}
+                    href={`/exercises/${encodeURIComponent(pr.exercise)}`}
+                    className={styles.prCard}
+                    style={{ animationDelay: `${i * 40}ms` }}
+                  >
                     <div className={styles.prLeft}>
                       <p className={styles.prExercise}>{pr.exercise}</p>
                       <p className={styles.prMeta}>{pr.weight} kg × {pr.reps} reps</p>
@@ -269,7 +279,7 @@ export default function StatisticsPage() {
                       <p className={styles.pr1rm}>{pr.estimated1rm.toFixed(1)}</p>
                       <p className={styles.pr1rmLabel}>est. 1RM kg</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

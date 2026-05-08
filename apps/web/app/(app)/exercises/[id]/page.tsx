@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { BodyMuscleIcon } from "@/components/ui/BodyMuscleIcon/BodyMuscleIcon";
@@ -12,19 +12,15 @@ import styles from "./page.module.css";
 
 export default function ExerciseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
+  const decodedId = decodeURIComponent(id);
   const [exercise, setExercise] = useState<FreeExercise | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const decodedId = decodeURIComponent(id);
     findById(decodedId)
-      .then((ex) => {
-        if (!ex) router.replace("/exercises");
-        else setExercise(ex);
-      })
+      .then((ex) => setExercise(ex))
       .finally(() => setLoading(false));
-  }, [id, router]);
+  }, [decodedId]);
 
   if (loading) {
     return (
@@ -34,36 +30,48 @@ export default function ExerciseDetailPage() {
       </div>
     );
   }
-  if (!exercise) return null;
 
-  const allMuscles = [...exercise.primaryMuscles, ...exercise.secondaryMuscles];
+  // Two render paths:
+  //   1. URL is a FreeExerciseDb id ("Barbell_Bench_Press_-_Medium_Grip"):
+  //      render the full library card (name, muscle diagram, instructions)
+  //      AND the user's progression for that name.
+  //   2. URL is a custom exercise name ("Flat Barbell Bench Press"): the
+  //      FreeDb lookup returns null, so we render a minimal header (just
+  //      the name) and the progression — no instructions exist for
+  //      user-defined exercises. This is the path "My Exercises" cards
+  //      take.
+  // Either way we always show ExerciseProgress so the page never feels
+  // empty for a real lift.
+  const displayName = exercise?.name ?? decodedId;
+  const allMuscles = exercise
+    ? [...exercise.primaryMuscles, ...exercise.secondaryMuscles]
+    : [];
 
   return (
     <div className={styles.page}>
       <TopBar title="" showBack />
 
       <div className={styles.content}>
-        {/* Name */}
-        <h1 className={styles.name}>{exercise.name}</h1>
+        <h1 className={styles.name}>{displayName}</h1>
 
-        {/* Target muscles hero */}
-        <div className={styles.diagramCard}>
-          <p className={styles.cardLabel}>Target Muscles</p>
-          <BodyMuscleIcon muscles={exercise.primaryMuscles} variant="full" />
-          <div className={styles.tagsRow}>
-            {allMuscles.map((m) => (
-              <span key={m} className={styles.muscleTag}>
-                {m.charAt(0).toUpperCase() + m.slice(1)}
-              </span>
-            ))}
-            {exercise.equipment && (
-              <span className={styles.equipTag}>{exercise.equipment}</span>
-            )}
+        {exercise && (
+          <div className={styles.diagramCard}>
+            <p className={styles.cardLabel}>Target Muscles</p>
+            <BodyMuscleIcon muscles={exercise.primaryMuscles} variant="full" />
+            <div className={styles.tagsRow}>
+              {allMuscles.map((m) => (
+                <span key={m} className={styles.muscleTag}>
+                  {m.charAt(0).toUpperCase() + m.slice(1)}
+                </span>
+              ))}
+              {exercise.equipment && (
+                <span className={styles.equipTag}>{exercise.equipment}</span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Instructions */}
-        {exercise.instructions.length > 0 && (
+        {exercise && exercise.instructions.length > 0 && (
           <div className={styles.instructionsCard}>
             <p className={styles.cardLabel}>Instructions</p>
             <ol className={styles.steps}>
@@ -78,11 +86,9 @@ export default function ExerciseDetailPage() {
         )}
       </div>
 
-      {/* Per-exercise progression: lifetime bests, 1RM trend, and the
-          full session history. Lives here rather than on a sub-route so
-          the user always lands on a page that includes their personal
-          context, not just the exercise definition. */}
-      <ExerciseProgress exerciseName={exercise.name} />
+      {/* Always render progression — works for both FreeDb-named and
+          user-named exercises since the resolver matches by name. */}
+      <ExerciseProgress exerciseName={displayName} />
     </div>
   );
 }
