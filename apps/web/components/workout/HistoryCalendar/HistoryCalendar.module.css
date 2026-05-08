@@ -26,10 +26,13 @@
 .navBtn:hover { color: var(--text-primary); }
 
 .title {
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: 0.2px;
+  letter-spacing: -0.1px;
+  line-height: 1.1;
 }
 
 .grid {

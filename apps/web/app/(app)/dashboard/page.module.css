@@ -666,7 +666,7 @@
   from { transform: translateY(60px); opacity: 0; }
   to   { transform: none; opacity: 1; }
 }
-.modalTitle { font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+.modalTitle { font-family: var(--font-display), 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; font-style: italic; color: var(--text-primary); margin-bottom: 6px; letter-spacing: -0.2px; line-height: 1.05; }
 .modalText  { font-size: 14px; color: var(--text-tertiary); margin-bottom: 20px; }
 .modalActions { display: flex; gap: 10px; }
 .modalCancel {
@@ -850,11 +850,13 @@
 }
 
 .startPanelTitle {
-  font-size: 18px;
-  font-weight: 900;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  font-style: italic;
   line-height: 1.1;
   color: var(--text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.2px;
 }
 
 .startPanelSub {
