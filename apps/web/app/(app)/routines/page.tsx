@@ -8,8 +8,48 @@ import { useWorkout } from "@/contexts/WorkoutContext";
 import { Button } from "@/components/ui/Button/Button";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import type { Routine } from "@/types/api";
-import { parseMuscleGroup } from "@/lib/formatters";
+import {
+  listMyRoutines as listMyRoutinesApi,
+  listLibraryRoutines as listLibraryRoutinesApi,
+  copyRoutine as copyRoutineApi,
+  renameRoutine as renameRoutineApi,
+  deleteRoutine as deleteRoutineApi,
+  type RoutineSummary,
+} from "@/lib/api/routines";
 import styles from "./page.module.css";
+
+// Adapt the data-layer summary into the shape this page already uses.
+// One-line glue lives here so the data layer stays clean of UI concerns.
+function summaryToRoutine(r: RoutineSummary): Routine {
+  return {
+    id: r.id,
+    userId: null,
+    title: r.title,
+    description: r.description,
+    folderId: null,
+    isPublic: false,
+    createdAt: "",
+    updatedAt: "",
+    folder: null,
+    routineExercises: r.exercises.map((ex, i) => ({
+      id: `${r.id}-${i}`,
+      routineId: r.id,
+      exerciseId: ex.id,
+      order: i,
+      setsConfig: [],
+      exercise: {
+        id: ex.id,
+        name: ex.name,
+        muscleGroups: ex.muscleGroups,
+        equipment: null,
+        instructions: null,
+        videoUrl: null,
+        isCustom: false,
+        createdByUserId: null,
+      },
+    })),
+  };
+}
 
 export default function RoutinesPage() {
   const { supabase, user } = useAuth();
@@ -53,23 +93,16 @@ export default function RoutinesPage() {
   async function load() {
     setLoading(true);
     try {
-      const mine = await supabase
-        .from("routines")
-        .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, order_index, sets_config, exercises(id, name, muscle_group))")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
-      setMyRoutines((mine.data ?? []).map(mapRoutine));
+      const mine = await listMyRoutinesApi(supabase, user!.id);
+      setMyRoutines(mine.map(summaryToRoutine));
     } finally {
       setLoading(false);
     }
   }
 
   async function loadLibrary() {
-    const lib = await supabase
-      .from("routines")
-      .select("id, name, description, user_id, created_at, folder_id, routine_exercises(id, exercise_id, order_index, sets_config, exercises(id, name, muscle_group))")
-      .neq("user_id", user!.id);
-    setLibrary(lib.error ? [] : (lib.data ?? []).map(mapRoutine));
+    const lib = await listLibraryRoutinesApi(supabase, user!.id);
+    setLibrary(lib.map(summaryToRoutine));
   }
 
   async function handleStart(routineId: string, routine?: Routine) {
@@ -105,33 +138,8 @@ export default function RoutinesPage() {
 
   async function handleCopy(routineId: string) {
     try {
-      const { data: src } = await supabase
-        .from("routines")
-        .select("*, routine_exercises(*, exercises(*))")
-        .eq("id", routineId)
-        .single();
-      if (!src) return;
-
-      const { data: newRoutine, error } = await supabase
-        .from("routines")
-        .insert({ user_id: user?.id, name: ((src.name as string) ?? "Routine"), description: src.description ?? null })
-        .select()
-        .single();
-
-      if (error || !newRoutine) throw new Error(error?.message ?? "Failed to copy");
-
-      const res = (src.routine_exercises as Record<string, unknown>[]) ?? [];
-      if (res.length > 0) {
-        await supabase.from("routine_exercises").insert(
-          res.map((re, i) => ({
-            routine_id: newRoutine.id,
-            exercise_id: re.exercise_id,
-            order_index: ((re.order_index ?? re["order"]) ?? i) as number,
-            sets_config: (re.sets_config ?? []) as unknown[],
-          }))
-        );
-      }
-
+      if (!user?.id) return;
+      await copyRoutineApi(supabase, user.id, routineId);
       await load();
       setShowLibrary(false);
     } catch {
@@ -143,10 +151,7 @@ export default function RoutinesPage() {
     if (!renameId || !renameDraft.trim()) return;
     setRenameLoading(true);
     try {
-      await supabase
-        .from("routines")
-        .update({ name: renameDraft.trim() })
-        .eq("id", renameId);
+      await renameRoutineApi(supabase, renameId, renameDraft.trim());
       setMyRoutines((prev) =>
         prev.map((r) => (r.id === renameId ? { ...r, title: renameDraft.trim() } : r))
       );
@@ -160,9 +165,7 @@ export default function RoutinesPage() {
     if (!deleteId) return;
     setDeleteLoading(true);
     try {
-      await supabase.from("routine_exercises").delete().eq("routine_id", deleteId);
-      const { error } = await supabase.from("routines").delete().eq("id", deleteId);
-      if (error) throw error;
+      await deleteRoutineApi(supabase, deleteId);
       setMyRoutines((prev) => prev.filter((r) => r.id !== deleteId));
     } catch {
       alert("Failed to delete routine. Please try again.");
@@ -367,37 +370,3 @@ export default function RoutinesPage() {
   );
 }
 
-function mapRoutine(row: Record<string, unknown>): Routine {
-  const res = (row.routine_exercises as Record<string, unknown>[]) ?? [];
-  return {
-    id: row.id as string,
-    userId: (row.user_id as string) ?? null,
-    title: ((row.name as string) ?? (row.title as string) ?? "Routine"),
-    description: (row.description as string) ?? null,
-    folderId: (row.folder_id as string) ?? null,
-    isPublic: false,
-    createdAt: row.created_at as string,
-    updatedAt: "",
-    folder: null,
-    routineExercises: res.map((re) => {
-      const ex = (re.exercises as Record<string, unknown>) ?? {};
-      return {
-        id: re.id as string,
-        routineId: re.routine_id as string,
-        exerciseId: re.exercise_id as string,
-        order: (re.order_index ?? re.order ?? 0) as number,
-        setsConfig: [],
-        exercise: {
-          id: ex.id as string,
-          name: ex.name as string,
-          muscleGroups: parseMuscleGroup(ex.muscle_group),
-          equipment: (ex.equipment as string) ?? null,
-          instructions: (ex.instructions as string) ?? null,
-          videoUrl: null,
-          isCustom: (ex.is_custom as boolean) ?? false,
-          createdByUserId: (ex.user_id as string) ?? null,
-        },
-      };
-    }),
-  };
-}

@@ -7,6 +7,8 @@ import { browseExercises, searchFreeExercises } from "@/lib/freeExerciseDb";
 import type { FreeExercise } from "@/lib/freeExerciseDb";
 import type { Exercise } from "@/types/api";
 import { getMeasurementType, type MeasurementType } from "@/lib/exercises-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { hydrateRecent, pushRecent, readRecentLocal } from "@/lib/recentExercises";
 import styles from "./ExercisePicker.module.css";
 
 interface ExercisePickerProps {
@@ -30,8 +32,6 @@ const MUSCLE_CHIPS = [
   { label: "Calves",     bodyPart: "calves" },
 ];
 
-const RECENT_KEY = "gym_recent_exercises";
-
 function titleCase(value: string) {
   return value
     .split(/[_\\s-]+/)
@@ -40,27 +40,8 @@ function titleCase(value: string) {
     .join(" ");
 }
 
-function readRecent(): FreeExercise[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(RECENT_KEY) ?? "[]") as FreeExercise[];
-    return Array.isArray(parsed) ? parsed.slice(0, 12) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeRecent(exercise: FreeExercise) {
-  if (typeof window === "undefined") return;
-  const recent = readRecent();
-  const next = [
-    exercise,
-    ...recent.filter((item) => item.id !== exercise.id),
-  ].slice(0, 12);
-  window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-}
-
 export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps) {
+  const { supabase, user } = useAuth();
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState("");
   const [exercises, setExercises] = useState<FreeExercise[]>([]);
@@ -72,7 +53,7 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
     setLoading(true);
     try {
       if (bodyPart === "__recent") {
-        const recent = readRecent();
+        const recent = readRecentLocal();
         const needle = q.trim().toLowerCase();
         setExercises(needle
           ? recent.filter((ex) =>
@@ -101,12 +82,21 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
   }, []);
 
   useEffect(() => {
-    if (open) {
-      const recent = readRecent();
-      setRecentExercises(recent);
-      load("", recent.length > 0 ? "__recent" : "");
-      setMuscle(recent.length > 0 ? "__recent" : "");
-    }
+    if (!open) return;
+    // hydrateRecent returns the localStorage list synchronously and then
+    // re-fires our callback once it's merged the server-side copy in.
+    const initial = hydrateRecent(supabase, user, (merged) => {
+      setRecentExercises(merged);
+      // If the active filter is "__recent" and we got new entries from
+      // the server, refresh the visible list too.
+      setExercises((prev) => {
+        if (muscle !== "__recent") return prev;
+        return query ? prev : merged;
+      });
+    });
+    setRecentExercises(initial);
+    load("", initial.length > 0 ? "__recent" : "");
+    setMuscle(initial.length > 0 ? "__recent" : "");
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -143,11 +133,11 @@ export function ExercisePicker({ open, onClose, onSelect }: ExercisePickerProps)
       measurementType: mType,
     };
     onSelect(exercise);
-    writeRecent(freeEx);
-    setRecentExercises(readRecent());
+    const updated = pushRecent(supabase, user, freeEx);
+    setRecentExercises(updated);
     onClose();
     setQuery("");
-    setMuscle(readRecent().length > 0 ? "__recent" : "");
+    setMuscle(updated.length > 0 ? "__recent" : "");
   }
 
   function handleClose() {

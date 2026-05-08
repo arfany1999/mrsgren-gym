@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkout } from "@/contexts/WorkoutContext";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { parseMuscleGroup } from "@/lib/formatters";
 import { getTrophyProgress } from "@/lib/trophies";
 import { getStreakStats } from "@/lib/streakStats";
 import { fetchMuscleVolume, type MuscleVolumeRow } from "@/lib/muscleVolume";
+import { listMyRoutines, deleteRoutine, type RoutineSummary } from "@/lib/api/routines";
+import { getRoutineWorkoutInfo, listCompletedStartedAt, type WorkoutInfo } from "@/lib/api/workouts";
 import { MuscleHero } from "@/components/dashboard/MuscleHero/MuscleHero";
 import { TrophyRing } from "@/components/dashboard/TrophyRing/TrophyRing";
 import { getActiveEnrollment, type ActiveEnrollment } from "@/lib/programs";
@@ -17,25 +17,7 @@ import { PROGRAM_TEMPLATES } from "@/lib/programTemplates";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
 import styles from "./page.module.css";
 
-interface RoutineExercise {
-  id: string;
-  name: string;
-  muscleGroups: string[];
-  setsConfig: Array<{ reps: number | null; weightKg: number | null }>;
-}
-
-interface Routine {
-  id: string;
-  title: string;
-  exercises: RoutineExercise[];
-  totalSets: number;
-}
-
-interface WorkoutInfo {
-  lastDate: string | null;
-  lastVolume: number;
-  prevVolume: number; // -1 = no previous workout
-}
+type Routine = RoutineSummary;
 
 const MUSCLE_GRADIENTS: Record<string, [string, string]> = {
   chest:      ["#e05c5c", "#f97316"],
@@ -209,17 +191,7 @@ export default function DashboardPage() {
 
   async function loadGreetingStats() {
     try {
-      // Fetch the workout-day list once; we need it for the week-dot strip
-      // and as a local fallback if the RPC is unavailable.
-      const { data } = await supabase
-        .from("workouts")
-        .select("started_at")
-        .eq("user_id", user!.id)
-        .not("finished_at", "is", null)
-        .order("started_at", { ascending: false });
-
-      const rows = (data ?? []) as Array<{ started_at: string }>;
-      const dates = rows.map((r) => r.started_at).filter(Boolean);
+      const dates = await listCompletedStartedAt(supabase, user!.id);
 
       // Single source of truth for workoutDays + currentStreak: the
       // get_user_streak_stats RPC. Falls back to the local list above so
@@ -231,7 +203,7 @@ export default function DashboardPage() {
       // Last 7 days (Sun..Sat relative to today). Local-only because the
       // visual dot strip needs per-day flags that aren't in the RPC.
       const dayKeys = new Set<string>();
-      rows.forEach((r) => dayKeys.add(dayKey(new Date(r.started_at))));
+      dates.forEach((d) => dayKeys.add(dayKey(new Date(d))));
       const msPerDay = 86400000;
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const todayDow = today.getDay();
@@ -260,71 +232,13 @@ export default function DashboardPage() {
 
   async function loadRoutines() {
     try {
-      const { data } = await supabase
-        .from("routines")
-        .select("id, name, routine_exercises(id, sets_config, exercises(id, name, muscle_group))")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
+      const mine = await listMyRoutines(supabase, user!.id);
+      setRoutines(mine);
 
-      if (data) {
-        const mapped = data.map((r: Record<string, unknown>) => {
-          const res = (r.routine_exercises as Record<string, unknown>[]) ?? [];
-          return {
-            id: r.id as string,
-            title: (r.name as string) ?? "Routine",
-            exercises: res.map((re) => {
-              const ex = (re.exercises as Record<string, unknown>) ?? {};
-              const cfg = re.sets_config as Array<Record<string, unknown>> | null;
-              return {
-                id: ex.id as string,
-                name: ex.name as string,
-                muscleGroups: parseMuscleGroup(ex.muscle_group as string),
-                setsConfig: Array.isArray(cfg) && cfg.length > 0
-                  ? cfg.map(s => ({ reps: (s.reps as number) ?? null, weightKg: (s.weight as number) ?? null }))
-                  : Array.from({ length: 3 }, () => ({ reps: null, weightKg: null })),
-              };
-            }),
-            totalSets: res.reduce((sum, re) => {
-              const cfg = re.sets_config as unknown[] | null;
-              return sum + (Array.isArray(cfg) ? cfg.length : 0);
-            }, 0),
-          };
-        });
-
-        setRoutines(mapped);
-
-        // Fetch last 2 workouts per routine for last-performed + progress ring
-        const routineIds = mapped.map((r) => r.id);
-        if (routineIds.length > 0) {
-          const { data: wData } = await supabase
-            .from("workouts")
-            .select("routine_id, started_at, total_volume")
-            .eq("user_id", user!.id)
-            .in("routine_id", routineIds)
-            .not("finished_at", "is", null)
-            .order("started_at", { ascending: false });
-
-          const byRoutine = new Map<string, Array<{ date: string; volume: number }>>();
-          for (const w of (wData ?? []) as Record<string, unknown>[]) {
-            const rid = w.routine_id as string;
-            if (!rid) continue;
-            if (!byRoutine.has(rid)) byRoutine.set(rid, []);
-            byRoutine.get(rid)!.push({
-              date: w.started_at as string,
-              volume: (w.total_volume as number) ?? 0,
-            });
-          }
-
-          const infoMap = new Map<string, WorkoutInfo>();
-          for (const [rid, list] of byRoutine) {
-            infoMap.set(rid, {
-              lastDate: list[0]?.date ?? null,
-              lastVolume: list[0]?.volume ?? 0,
-              prevVolume: list.length > 1 ? (list[1]?.volume ?? 0) : -1,
-            });
-          }
-          setWorkoutInfoMap(infoMap);
-        }
+      const routineIds = mine.map((r) => r.id);
+      if (routineIds.length > 0) {
+        const infoMap = await getRoutineWorkoutInfo(supabase, user!.id, routineIds);
+        setWorkoutInfoMap(infoMap);
       }
     } finally {
       setLoading(false);
@@ -355,9 +269,7 @@ export default function DashboardPage() {
     if (!deleteId) return;
     setDeleteLoading(true);
     try {
-      await supabase.from("routine_exercises").delete().eq("routine_id", deleteId);
-      const { error } = await supabase.from("routines").delete().eq("id", deleteId);
-      if (error) throw error;
+      await deleteRoutine(supabase, deleteId);
       setRoutines((prev) => prev.filter((r) => r.id !== deleteId));
     } catch {
       alert("Failed to delete routine. Please try again.");
@@ -572,7 +484,31 @@ export default function DashboardPage() {
       </header>
 
       {loading ? (
-        <div className={styles.loading}><Spinner size={28} /></div>
+        // Skeleton cards instead of a spinner — keeps the page silhouette
+        // stable while data lands so the eye doesn't see a layout jump
+        // when real cards swap in.
+        <div className={styles.grid} aria-busy="true" aria-live="polite">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className={[styles.card, styles.cardSkeleton].join(" ")}
+              style={{ animationDelay: `${i * 90}ms` } as React.CSSProperties}
+              aria-hidden
+            >
+              <div className={styles.cardBody}>
+                <div className={styles.skelTitleRow}>
+                  <div className={styles.skelIcon} />
+                  <div className={styles.skelTitle} />
+                </div>
+                <div className={styles.skelMeta} />
+                <div className={styles.skelPills}>
+                  <span /><span /><span />
+                </div>
+                <div className={styles.skelBtn} />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : routines.length === 0 ? (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>No routines yet</p>

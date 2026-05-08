@@ -973,3 +973,102 @@
 :global(html[data-theme="dark"]) .volumeFill[data-zone="over"] {
   background: var(--accent-red, #ef4444);
 }
+
+/* ── Routine card skeletons (loading state) ─────────────────── */
+/* Keeps the routines section silhouette stable while data lands so
+   real cards swap in without a layout jump. */
+.cardSkeleton {
+  pointer-events: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+}
+.cardSkeleton .cardBody {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skelTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.skelIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.skelTitle {
+  height: 18px;
+  width: 55%;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.skelMeta {
+  height: 12px;
+  width: 70%;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.skelPills {
+  display: flex;
+  gap: 6px;
+}
+.skelPills span {
+  flex: 1;
+  height: 18px;
+  max-width: 80px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.skelBtn {
+  margin-top: 6px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.cardSkeleton .skelTitleRow,
+.cardSkeleton .skelTitle,
+.cardSkeleton .skelMeta,
+.cardSkeleton .skelIcon,
+.cardSkeleton .skelPills span,
+.cardSkeleton .skelBtn {
+  position: relative;
+  overflow: hidden;
+}
+.cardSkeleton .skelTitleRow::after,
+.cardSkeleton .skelTitle::after,
+.cardSkeleton .skelMeta::after,
+.cardSkeleton .skelIcon::after,
+.cardSkeleton .skelPills span::after,
+.cardSkeleton .skelBtn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.045) 40%,
+    rgba(255, 255, 255, 0.085) 50%,
+    rgba(255, 255, 255, 0.045) 60%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: skelShimmer 1.4s ease-in-out infinite;
+}
+@keyframes skelShimmer {
+  to { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cardSkeleton .skelTitleRow::after,
+  .cardSkeleton .skelTitle::after,
+  .cardSkeleton .skelMeta::after,
+  .cardSkeleton .skelIcon::after,
+  .cardSkeleton .skelPills span::after,
+  .cardSkeleton .skelBtn::after {
+    animation: none;
+    opacity: 0.6;
+    transform: none;
+  }
+}

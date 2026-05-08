@@ -1,10 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ActiveExercise } from "@/contexts/WorkoutContext";
 import { estimateCalories, saveReport, type WorkoutReportExercise } from "@/lib/gymProfile";
 import { getTrophyProgress } from "@/lib/trophies";
+import { MOTIVATIONAL_QUOTES } from "@/lib/workoutReportQuotes";
+import { ParticlesCanvas } from "./ParticlesCanvas";
+import { EditableQuote } from "./EditableQuote";
 import styles from "./WorkoutReport.module.css";
 
 interface WorkoutReportProps {
@@ -32,45 +35,6 @@ const MUSCLE_COLOR: Record<string, string> = {
   "upper chest": "#e05c5c",
 };
 
-const MOTIVATIONAL_QUOTES = [
-  { text: "The pain you feel today is the strength you feel tomorrow.", author: "Arnold S." },
-  { text: "No shortcuts. No excuses. Just results.", author: "Gym Code" },
-  { text: "Every rep is a vote for the person you're becoming.", author: "Gym Code" },
-  { text: "You didn't come this far to only come this far.", author: "Gym Code" },
-  { text: "Iron never lies.", author: "Henry Rollins" },
-  { text: "The only bad workout is the one that didn't happen.", author: "Gym Code" },
-  { text: "Truth is, nobody cares how sore you are. Show up anyway.", author: "Gym Code" },
-  { text: "The truth about fitness: there is no secret. Just lift.", author: "Gym Code" },
-  { text: "Truth: the bar doesn't care about your excuses.", author: "Iron Gospel" },
-  { text: "The truth is heavy. That's why so few people lift it.", author: "Gym Code" },
-  { text: "Your body tells the truth your mouth never will.", author: "Gym Code" },
-  { text: "Lifting is the answer. What was the question?", author: "Gym Code" },
-  { text: "Lift heavy. Eat. Sleep. Repeat. That's literally it.", author: "Gym Code" },
-  { text: "Lifting won't solve all your problems. But it's a solid start.", author: "Gym Code" },
-  { text: "The weight never lies. Your log book never forgets.", author: "Gym Code" },
-  { text: "A bad day lifting still beats a good day on the couch.", author: "Gym Code" },
-  { text: "Whether you think you can or you can't — pick up the bar anyway.", author: "Gym Code" },
-  { text: "You can complain about being weak, or you can fix it. Not both.", author: "Gym Code" },
-  { text: "You can start over. The gym doesn't hold grudges.", author: "Gym Code" },
-  { text: "You cannot buy discipline. You earn it one session at a time.", author: "Gym Code" },
-  { text: "You can do anything for one more rep.", author: "Gym Code" },
-  { text: "I'm not sweating. I'm leaking gains.", author: "Gym Lore" },
-  { text: "Leg day: feared by many, skipped by most.", author: "Gym Lore" },
-  { text: "Rest day? My body auto-corrected that to 'chest day'.", author: "Gym Lore" },
-  { text: "Abs are made in the kitchen. Mine are still on delivery.", author: "Gym Lore" },
-  { text: "I came. I saw. I did one more set.", author: "Julius Reps-ar" },
-  { text: "Discipline is remembering what you want most over what you want now.", author: "Gym Code" },
-  { text: "Consistency is the most underrated superpower.", author: "Gym Code" },
-  { text: "The mirror shows who you were. The bar decides who you'll be.", author: "Gym Code" },
-  { text: "Champions aren't made in gyms. They're revealed there.", author: "Gym Code" },
-  { text: "The mind gives up long before the body does. Train both.", author: "Gym Code" },
-  { text: "Momentum is built, not born. Start. Now.", author: "Gym Code" },
-  { text: "Progress is quiet. Consistency is loud.", author: "Gym Code" },
-  { text: "Strength is not given. It's extracted rep by rep.", author: "Gym Code" },
-  { text: "One day you'll wish you'd started sooner. Today is still sooner.", author: "Gym Code" },
-  { text: "Your future self is watching through the weights you chose today.", author: "Gym Code" },
-];
-
 function fmtHMS(totalSeconds: number): string {
   const safe = Math.max(0, Math.round(totalSeconds));
   const h = Math.floor(safe / 3600);
@@ -88,118 +52,6 @@ function calcVolume(exercises: ActiveExercise[]): number {
         .filter((s) => s.isSaved)
         .reduce((v, s) => v + (parseFloat(s.weightKg) || 0) * (parseInt(s.reps) || 0), 0),
     0,
-  );
-}
-
-function ParticlesCanvas({ color }: { color: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const setSize = () => {
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    setSize();
-
-    const W = () => canvas.offsetWidth;
-    const H = () => canvas.offsetHeight;
-    const particles = Array.from({ length: 55 }, () => ({
-      x: Math.random() * W(),
-      y: Math.random() * H(),
-      s: 0.4 + Math.random() * 1.4,
-      vx: (Math.random() - 0.5) * 0.12,
-      vy: -0.08 - Math.random() * 0.25,
-      o: 0.04 + Math.random() * 0.14,
-      ph: Math.random() * Math.PI * 2,
-    }));
-
-    let frame = 0;
-    const draw = () => {
-      ctx.clearRect(0, 0, W(), H());
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.ph += 0.008;
-        if (p.y < -4) {
-          p.y = H() + 4;
-          p.x = Math.random() * W();
-        }
-        ctx.globalAlpha = p.o * (0.35 + 0.65 * Math.sin(p.ph));
-        ctx.fillStyle = color;
-        ctx.fillRect(p.x, p.y, p.s, p.s);
-      });
-      frame = requestAnimationFrame(draw);
-    };
-    frame = requestAnimationFrame(draw);
-
-    const onResize = () => setSize();
-    window.addEventListener("resize", onResize);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [color]);
-
-  return <canvas ref={canvasRef} className={styles.particles} aria-hidden />;
-}
-
-function EditableQuote({
-  text,
-  author,
-  onChangeText,
-  onChangeAuthor,
-}: {
-  text: string;
-  author: string;
-  onChangeText: (v: string) => void;
-  onChangeAuthor: (v: string) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-
-  return (
-    <div
-      className={`${styles.quoteSection} ${editing ? styles.quoteEditing : ""}`}
-      onClick={() => !editing && setEditing(true)}
-    >
-      {!editing && <span className={styles.quoteEditBadge}>EDIT</span>}
-      {editing ? (
-        <div onClick={(e) => e.stopPropagation()}>
-          <p className={styles.quoteEditTitle}>EDIT QUOTE</p>
-          <textarea
-            className={styles.quoteTextarea}
-            value={text}
-            onChange={(e) => onChangeText(e.target.value)}
-            autoFocus
-            rows={3}
-          />
-          <input
-            className={styles.quoteInput}
-            value={author}
-            onChange={(e) => onChangeAuthor(e.target.value)}
-            placeholder="Author"
-          />
-          <button
-            className={styles.quoteDoneBtn}
-            type="button"
-            onClick={() => setEditing(false)}
-          >
-            DONE ✓
-          </button>
-        </div>
-      ) : (
-        <>
-          <p className={styles.quoteText}>&ldquo;{text}&rdquo;</p>
-          <p className={styles.quoteAuthor}>— {author}</p>
-        </>
-      )}
-    </div>
   );
 }
 
