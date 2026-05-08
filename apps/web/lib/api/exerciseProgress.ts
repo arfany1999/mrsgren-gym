@@ -68,7 +68,7 @@ export async function getExerciseProgression(
   const { data: rows } = await supabase
     .from("workout_sets")
     .select(
-      "reps, weight, is_completed, set_index, set_type, " +
+      "reps, weight, is_completed, order_index, set_type, " +
       "workout_exercises!inner(exercise_id, " +
       "exercises!inner(id, name), " +
       "workouts!inner(id, user_id, started_at, finished_at))",
@@ -89,7 +89,7 @@ export async function getExerciseProgression(
     reps: number | null;
     weight: number | null;
     is_completed: boolean | null;
-    set_index: number | null;
+    order_index: number | null;
     set_type: string | null;
     workout_exercises: {
       exercise_id: string;
@@ -107,7 +107,7 @@ export async function getExerciseProgression(
     const reps = r.reps ?? 0;
     const weight = r.weight ?? 0;
     const isCompleted = r.is_completed !== false;
-    const setIndex = r.set_index ?? 0;
+    const setIndex = r.order_index ?? 0;
 
     let session = byWorkout.get(w.id);
     if (!session) {
