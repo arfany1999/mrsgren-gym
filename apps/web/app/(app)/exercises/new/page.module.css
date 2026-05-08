@@ -1,69 +1,427 @@
-.page { padding-bottom: var(--sp-8); }
+.page {
+  min-height: 100dvh;
+  background: var(--bg-primary);
+  padding-bottom: calc(var(--bottom-nav-height) + 110px);
+}
 
 .form {
-  padding: var(--sp-4);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: 16px;
+  padding: 14px 20px 0;
 }
 
-.fieldGroup {
+/* ─────────────────────────────────────────────────────────────
+   Hero preview card — the centerpiece. Live-updates as the user
+   fills the form. Gold-bordered glass with a soft inner glow,
+   and an ambient backlight behind the body diagram so the figure
+   feels lit rather than just placed on a flat surface.
+   ───────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 14px;
+  padding: 18px 18px 18px 14px;
+  border-radius: 22px;
+  background:
+    linear-gradient(160deg, rgba(212, 168, 67, 0.12) 0%, rgba(212, 168, 67, 0.02) 60%),
+    var(--bg-surface);
+  border: 1px solid rgba(212, 168, 67, 0.32);
+  overflow: hidden;
+  isolation: isolate;
+  animation: heroIn 0.45s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14%;
+  right: 14%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.6), transparent);
+  pointer-events: none;
+}
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.heroGlow {
+  position: absolute;
+  z-index: 0;
+  top: -25%;
+  left: -10%;
+  width: 60%;
+  height: 130%;
+  background: radial-gradient(closest-side, rgba(212, 168, 67, 0.18), transparent 70%);
+  pointer-events: none;
+  filter: blur(8px);
+}
+
+.heroBody {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.4));
+}
+.heroBody svg {
+  width: 100%;
+  height: auto;
+  max-height: 130px;
+}
+
+.heroMeta {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: 8px;
+  min-width: 0;
 }
 
-.fieldLabel {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-  color: var(--text-secondary);
+.heroBadge {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(212, 168, 67, 0.32);
+  padding: 3px 9px;
+  border-radius: 999px;
+  align-self: flex-start;
 }
 
-.chips {
+/* The display name uses the brand serif — Cormorant Garamond — so
+   the user's exercise reads like a title rather than a form value.
+   Italic when un-set so the placeholder doesn't masquerade as data. */
+.heroName {
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.4px;
+  line-height: 1.05;
+  color: var(--text-tertiary);
+  word-break: break-word;
+  /* clamp to 3 lines so wild inputs don't blow up the layout */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.heroNameSet {
+  font-style: normal;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.heroTags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
+  gap: 4px;
+  margin-top: 2px;
+}
+.heroTag {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(212, 168, 67, 0.10);
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(212, 168, 67, 0.22);
+}
+.heroTagMore {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--text-tertiary);
+  padding: 3px 6px;
+}
+.heroTagPlaceholder {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-tertiary);
 }
 
-.chip {
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
+.heroEquip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  align-self: flex-start;
+}
+.heroEquipIcon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  align-items: center;
+  justify-content: center;
+}
+.heroEquipIcon svg {
+  width: 100%;
+  height: 100%;
+}
+.heroEquipLabel {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
   color: var(--text-secondary);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section card — used for Name / Muscles / Equipment / Notes.
+   Glass surface with a subtle top hairline so the content reads
+   as crafted rather than form-rendered.
+   ───────────────────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  position: relative;
 }
 
-.chipActive {
-  background: var(--accent);
-  color: #000;
-  border-color: var(--accent);
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sectionLabel {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.sectionCount {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 0.4px;
+}
+.sectionHint {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  line-height: 1.45;
+  margin-top: 2px;
 }
 
-.textarea {
+/* ── Name input ── */
+.nameInput {
   width: 100%;
-  padding: var(--sp-3) var(--sp-4);
-  font-size: var(--text-base);
+  padding: 12px 14px;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  border-radius: 12px;
   outline: none;
-  resize: vertical;
-  min-height: 100px;
-  line-height: 1.5;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.nameInput::placeholder {
+  font-style: italic;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.nameInput:focus {
+  border-color: rgba(212, 168, 67, 0.55);
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.18);
 }
 
-.textarea:focus { border-color: var(--accent); }
-.textarea::placeholder { color: var(--text-tertiary); }
+/* ── Muscle chips ── */
+.muscleGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.muscleChip {
+  appearance: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: var(--font-sans), -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.05px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms ease;
+}
+.muscleChip:hover {
+  border-color: rgba(212, 168, 67, 0.3);
+}
+.muscleChip:active { transform: scale(0.97); }
+.muscleChipActive {
+  background: linear-gradient(135deg, rgba(212, 168, 67, 0.22), rgba(212, 168, 67, 0.08));
+  color: var(--accent);
+  border-color: rgba(212, 168, 67, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
+/* ── Equipment grid ── */
+.equipGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.equipTile {
+  appearance: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 8px 10px;
+  border-radius: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms ease;
+}
+.equipTile:hover {
+  border-color: rgba(212, 168, 67, 0.3);
+}
+.equipTile:active { transform: scale(0.97); }
+.equipTileActive {
+  background: linear-gradient(135deg, rgba(212, 168, 67, 0.20), rgba(212, 168, 67, 0.05));
+  color: var(--accent);
+  border-color: rgba(212, 168, 67, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(212, 168, 67, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.equipIcon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+}
+.equipIcon svg {
+  width: 100%;
+  height: 100%;
+}
+.equipLabel {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* ── Notes ── */
+.textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: var(--font-sans), -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  outline: none;
+  resize: vertical;
+  min-height: 110px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.textarea::placeholder {
+  color: var(--text-tertiary);
+  font-style: italic;
+  white-space: pre-line;
+}
+.textarea:focus {
+  border-color: rgba(212, 168, 67, 0.55);
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.18);
+}
+
+/* ── Error ── */
 .error {
-  font-size: var(--text-sm);
-  color: var(--accent-red);
-  padding: var(--sp-3);
-  background: var(--accent-red-dim);
-  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-red, #ef4444);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Sticky bottom action bar — gradient blur background so the
+   button always reads against the form behind it. The button
+   itself uses the gold gradient + tactile press.
+   ───────────────────────────────────────────────────────────── */
+.actionsSpacer { height: 8px; }
+
+.actionsBar {
+  position: fixed;
+  bottom: var(--bottom-nav-height);
+  left: 0;
+  right: 0;
+  z-index: 9;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--bg-primary) 60%, transparent) 30%,
+    var(--bg-primary) 100%
+  );
+  pointer-events: none;
+}
+.actionsBar > * { pointer-events: auto; }
+
+.submitBtn {
+  width: 100%;
+  height: 52px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans), -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.1px;
+  background: linear-gradient(135deg, #8B7335 0%, #D4A843 50%, #E8C56D 100%);
+  color: #1a1408;
+  box-shadow:
+    0 6px 18px -2px rgba(212, 168, 67, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.submitBtn:active { transform: scale(0.98); }
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero, .submitBtn { animation: none; transition: none; }
 }
