@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { BodyMuscleIcon } from "@/components/ui/BodyMuscleIcon/BodyMuscleIcon";
 import { findById } from "@/lib/freeExerciseDb";
 import type { FreeExercise } from "@/lib/freeExerciseDb";
+import { ExerciseProgress } from "@/components/exercise/ExerciseProgress/ExerciseProgress";
 import styles from "./page.module.css";
 
 export default function ExerciseDetailPage() {
@@ -76,6 +77,12 @@ export default function ExerciseDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Per-exercise progression: lifetime bests, 1RM trend, and the
+          full session history. Lives here rather than on a sub-route so
+          the user always lands on a page that includes their personal
+          context, not just the exercise definition. */}
+      <ExerciseProgress exerciseName={exercise.name} />
     </div>
   );
 }
