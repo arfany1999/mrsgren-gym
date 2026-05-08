@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
@@ -61,7 +62,9 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
-  const workoutRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  // Cards are now <Link> (anchor), not <div>. Widen the element type so
+  // the ref callback type-checks against the rendered tag.
+  const workoutRefs = useRef<Map<string, HTMLElement>>(new Map());
 
   useEffect(() => {
     if (!user) return;
@@ -124,12 +127,18 @@ export default function CalendarPage() {
   const weeks: Date[][] = [];
   for (let i = 0; i < grid.length; i += 7) weeks.push(grid.slice(i, i + 7));
 
-  const monthLabels: { label: string; col: number }[] = [];
+  // Only label the first week of each month, AND skip every-other label
+  // when there are too many to fit (the heatmap grid is ~14px/column on
+  // mobile, but "Apr"/"Sep" want at least 24px — without skipping, labels
+  // overlap into a smear like "MJJASOND...").
+  const allMonthLabels: { label: string; col: number }[] = [];
   weeks.forEach((week, col) => {
     const first = week[0];
     const name = first ? MONTHS[first.getMonth()] : undefined;
-    if (first && name && first.getDate() <= 7) monthLabels.push({ label: name, col });
+    if (first && name && first.getDate() <= 7) allMonthLabels.push({ label: name, col });
   });
+  // Show every other month label so the row reads cleanly on phones.
+  const monthLabels = allMonthLabels.filter((_, i) => i % 2 === 0);
 
   function handleCellClick(key: string) {
     if (!workoutDays.has(key)) return;
@@ -255,8 +264,12 @@ export default function CalendarPage() {
                 {workouts.map((w) => {
                   const isSelected = w.dateKey === selectedDate;
                   return (
-                    <div
+                    // Cards now navigate to the workout-detail view —
+                    // before they were dead <div>s, which left the
+                    // entire feed unreachable from this page.
+                    <Link
                       key={w.id}
+                      href={`/workouts/${w.id}`}
                       ref={(el) => { if (el) workoutRefs.current.set(w.dateKey, el); }}
                       className={[styles.feedCard, isSelected ? styles.feedCardSelected : ""].filter(Boolean).join(" ")}
                     >
@@ -272,7 +285,7 @@ export default function CalendarPage() {
                           <span className={styles.feedChip}>{Math.round(w.totalVolume).toLocaleString()} kg</span>
                         )}
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>

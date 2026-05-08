@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { TopBar } from "@/components/layout/TopBar/TopBar";
@@ -9,11 +10,103 @@ import { Modal } from "@/components/ui/Modal/Modal";
 import { Spinner } from "@/components/ui/Spinner/Spinner";
 import type { Workout, SetType } from "@/types/api";
 import { formatDateFull, formatTime, workoutDuration, calcVolume, parseMuscleGroup } from "@/lib/formatters";
+import { estimate1RM } from "@/lib/exerciseHistory";
 import styles from "./page.module.css";
+
+// Pull the user's lifetime best weight per exercise (from their other
+// completed workouts, NOT this one) so we can flag any set that beats
+// it as a PR with a small gold dot. Best-weight is the simplest signal
+// most lifters parse instantly; multi-category PR detection lives in
+// the live workout flow already.
+async function fetchLifetimeBestWeights(
+  supabase: ReturnType<typeof useAuth>["supabase"],
+  userId: string,
+  exerciseIds: string[],
+  excludeWorkoutId: string,
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (exerciseIds.length === 0) return out;
+  const { data } = await supabase
+    .from("workout_sets")
+    .select(
+      "weight, workout_exercises!inner(exercise_id, " +
+      "workouts!inner(id, user_id, finished_at))",
+    )
+    .in("workout_exercises.exercise_id", exerciseIds)
+    .eq("workout_exercises.workouts.user_id", userId)
+    .not("workout_exercises.workouts.finished_at", "is", null)
+    .neq("workout_exercises.workouts.id", excludeWorkoutId)
+    .gt("weight", 0);
+  for (const r of (data ?? []) as unknown as Array<{
+    weight: number | null;
+    workout_exercises: { exercise_id: string } | null;
+  }>) {
+    const exId = r.workout_exercises?.exercise_id;
+    const w = r.weight ?? 0;
+    if (!exId || w <= 0) continue;
+    const cur = out.get(exId) ?? 0;
+    if (w > cur) out.set(exId, w);
+  }
+  return out;
+}
+
+// Pull each exercise's most recent prior session's top-set volume so we
+// can show a "vs last session" delta on the per-exercise block.
+async function fetchPrevSessionVolumes(
+  supabase: ReturnType<typeof useAuth>["supabase"],
+  userId: string,
+  exerciseIds: string[],
+  excludeWorkoutId: string,
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (exerciseIds.length === 0) return out;
+  const { data } = await supabase
+    .from("workout_sets")
+    .select(
+      "reps, weight, workout_exercises!inner(exercise_id, " +
+      "workouts!inner(id, user_id, started_at, finished_at))",
+    )
+    .in("workout_exercises.exercise_id", exerciseIds)
+    .eq("workout_exercises.workouts.user_id", userId)
+    .not("workout_exercises.workouts.finished_at", "is", null)
+    .neq("workout_exercises.workouts.id", excludeWorkoutId);
+
+  // Group sets by (exerciseId, workoutId), pick the most-recent workout
+  // per exercise, sum its volume.
+  const byExercise = new Map<string, Map<string, { date: string; volume: number }>>();
+  for (const r of (data ?? []) as unknown as Array<{
+    reps: number | null;
+    weight: number | null;
+    workout_exercises: {
+      exercise_id: string;
+      workouts: { id: string; started_at: string } | null;
+    } | null;
+  }>) {
+    const exId = r.workout_exercises?.exercise_id;
+    const w = r.workout_exercises?.workouts;
+    if (!exId || !w?.id) continue;
+    const reps = r.reps ?? 0;
+    const weight = r.weight ?? 0;
+    const vol = reps * weight;
+    let exMap = byExercise.get(exId);
+    if (!exMap) { exMap = new Map(); byExercise.set(exId, exMap); }
+    let session = exMap.get(w.id);
+    if (!session) { session = { date: w.started_at, volume: 0 }; exMap.set(w.id, session); }
+    session.volume += vol;
+  }
+  for (const [exId, sessions] of byExercise) {
+    const sorted = Array.from(sessions.values()).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+    const latest = sorted[0];
+    if (latest && latest.volume > 0) out.set(exId, latest.volume);
+  }
+  return out;
+}
 
 export default function WorkoutDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { supabase, profile } = useAuth();
+  const { supabase, profile, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -22,6 +115,9 @@ export default function WorkoutDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  // PR + delta context loaded lazily after the workout itself.
+  const [bestWeights, setBestWeights] = useState<Map<string, number>>(new Map());
+  const [prevVolumes, setPrevVolumes] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (searchParams.get("new") === "1") setShowReport(true);
@@ -39,13 +135,28 @@ export default function WorkoutDetailPage() {
           router.replace("/workouts");
           return;
         }
-        setWorkout(mapWorkout(data));
+        const mapped = mapWorkout(data);
+        setWorkout(mapped);
+
+        // Best-weight + prev-session-volume lookups in parallel after
+        // the page paints. Failures are silent (PR badges and delta
+        // chips just don't render) — the rest of the page still works.
+        if (user?.id) {
+          const exIds = mapped.workoutExercises.map((we) => we.exerciseId).filter(Boolean);
+          void Promise.all([
+            fetchLifetimeBestWeights(supabase, user.id, exIds, mapped.id),
+            fetchPrevSessionVolumes(supabase, user.id, exIds, mapped.id),
+          ]).then(([bw, pv]) => {
+            setBestWeights(bw);
+            setPrevVolumes(pv);
+          }).catch(() => {});
+        }
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [id, supabase, router]);
+  }, [id, supabase, router, user?.id]);
 
   async function handleDelete() {
     setDeleting(true);
@@ -126,39 +237,91 @@ export default function WorkoutDetailPage() {
 
         {/* Exercises */}
         <div className={styles.exercises}>
-          {workout.workoutExercises.map((we) => (
-            <div key={we.id} className={styles.exerciseBlock}>
-              <h3 className={styles.exName}>{we.exercise.name}</h3>
-              {we.exercise.muscleGroups.length > 0 && (
-                <p className={styles.exMuscles}>{we.exercise.muscleGroups.join(", ")}</p>
-              )}
-              <div className={styles.setsTable}>
-                <div className={styles.setsHeader}>
-                  <span>SET</span>
-                  <span>WEIGHT &amp; REPS</span>
-                  <span>TYPE</span>
+          {workout.workoutExercises.map((we) => {
+            // Per-exercise volume in this session for the delta chip.
+            const thisVolume = we.sets.reduce(
+              (s, set) => s + ((set.weightKg ?? 0) * (set.reps ?? 0)),
+              0,
+            );
+            const prevVolume = prevVolumes.get(we.exerciseId) ?? 0;
+            const delta =
+              prevVolume > 0 && thisVolume > 0
+                ? Math.round(((thisVolume - prevVolume) / prevVolume) * 100)
+                : null;
+            const lifetimeBest = bestWeights.get(we.exerciseId) ?? 0;
+            return (
+              <div key={we.id} className={styles.exerciseBlock}>
+                {/* Tappable exercise header → drills into the per-exercise
+                    progression view (Phase 5). */}
+                <Link
+                  href={`/exercises/${encodeURIComponent(we.exercise.name)}`}
+                  className={styles.exNameLink}
+                >
+                  <h3 className={styles.exName}>{we.exercise.name}</h3>
+                </Link>
+                <div className={styles.exMetaRow}>
+                  {we.exercise.muscleGroups.length > 0 && (
+                    <p className={styles.exMuscles}>{we.exercise.muscleGroups.join(", ")}</p>
+                  )}
+                  {delta !== null && delta !== 0 && (
+                    <span
+                      className={[
+                        styles.deltaChip,
+                        delta > 0 ? styles.deltaUp : styles.deltaDown,
+                      ].join(" ")}
+                      title={`Volume vs last session: ${prevVolume.toLocaleString()} kg → ${thisVolume.toLocaleString()} kg`}
+                    >
+                      {delta > 0 ? "▲" : "▼"} {Math.abs(delta)}% vol
+                    </span>
+                  )}
                 </div>
-                {we.sets.map((s, i) => {
-                  const weightReps = s.weightKg != null && s.reps != null
-                    ? `${s.weightKg}kg × ${s.reps} reps`
-                    : s.weightKg != null
-                    ? `${s.weightKg}kg`
-                    : s.reps != null
-                    ? `${s.reps} reps`
-                    : "—";
-                  return (
-                    <div key={s.id} className={styles.setRow}>
-                      <span className={styles.setNum}>{i + 1}</span>
-                      <span className={styles.setWeightReps}>{weightReps}</span>
-                      <span className={[styles.setType, styles[s.setType]].join(" ")}>
-                        {s.setType === "normal" ? "" : (s.setType[0] ?? "").toUpperCase()}
-                      </span>
-                    </div>
-                  );
-                })}
+                <div className={styles.setsTable}>
+                  <div className={styles.setsHeader}>
+                    <span>SET</span>
+                    <span>WEIGHT &amp; REPS</span>
+                    <span>1RM</span>
+                  </div>
+                  {we.sets.map((s, i) => {
+                    const weightReps = s.weightKg != null && s.reps != null
+                      ? `${s.weightKg}kg × ${s.reps} reps`
+                      : s.weightKg != null
+                      ? `${s.weightKg}kg`
+                      : s.reps != null
+                      ? `${s.reps} reps`
+                      : "—";
+                    const e1 =
+                      s.weightKg != null && s.reps != null && s.weightKg > 0 && s.reps > 0
+                        ? estimate1RM(s.weightKg, s.reps)
+                        : 0;
+                    // PR if this set's weight beats the user's best
+                    // weight on this exercise from any OTHER session.
+                    const isPr = lifetimeBest > 0 && (s.weightKg ?? 0) > lifetimeBest;
+                    return (
+                      <div key={s.id} className={styles.setRow}>
+                        <span className={styles.setNum}>{i + 1}</span>
+                        <span className={styles.setWeightReps}>
+                          {weightReps}
+                          {isPr && (
+                            <span className={styles.prDot} title="Personal record on this set" aria-label="PR">
+                              🏆
+                            </span>
+                          )}
+                          {s.setType !== "normal" && (
+                            <span className={[styles.setType, styles[s.setType]].join(" ")}>
+                              {(s.setType[0] ?? "").toUpperCase()}
+                            </span>
+                          )}
+                        </span>
+                        <span className={styles.setE1rm}>
+                          {e1 > 0 ? `${e1.toFixed(1)}kg` : "—"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

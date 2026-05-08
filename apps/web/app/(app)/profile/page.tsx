@@ -9,7 +9,7 @@ import { formatDateFull } from "@/lib/formatters";
 import { loadProfile, saveProfileRecord, getReports, clearReports, type WorkoutReportEntry } from "@/lib/gymProfile";
 import type { GymProfile } from "@/lib/gymProfile";
 import { TROPHIES, getTrophyProgress, nextTierLabel } from "@/lib/trophies";
-import { fetchStreakStats } from "@/lib/streakStats";
+import { computeStreakStatsLocal } from "@/lib/streakStats";
 import { TierProgression } from "@/components/profile/TierProgression/TierProgression";
 import { Avatar } from "@/components/ui/Avatar/Avatar";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -72,64 +72,6 @@ function isToday(iso: string): boolean {
   return d.getFullYear() === now.getFullYear()
       && d.getMonth()    === now.getMonth()
       && d.getDate()     === now.getDate();
-}
-
-/** Compute unique workout days + current streak from ISO timestamps */
-function computeDayStats(dates: string[]): { days: number; currentStreak: number; longestStreak: number } {
-  if (dates.length === 0) return { days: 0, currentStreak: 0, longestStreak: 0 };
-
-  // Build set of YYYY-MM-DD in local time
-  const dayKeys = new Set<string>();
-  dates.forEach(iso => {
-    const d = new Date(iso);
-    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    dayKeys.add(k);
-  });
-
-  const sortedDays = Array.from(dayKeys).sort();
-  const days = sortedDays.length;
-
-  // Current streak: walk back from today
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const yesterday = new Date(today.getTime() - msPerDay);
-
-  function keyFor(d: Date) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }
-
-  let currentStreak = 0;
-  const todayKey = keyFor(today);
-  const yestKey = keyFor(yesterday);
-  if (dayKeys.has(todayKey) || dayKeys.has(yestKey)) {
-    const startRef = dayKeys.has(todayKey) ? today : yesterday;
-    const cursor = new Date(startRef);
-    while (dayKeys.has(keyFor(cursor))) {
-      currentStreak++;
-      cursor.setTime(cursor.getTime() - msPerDay);
-    }
-  }
-
-  // Longest streak: walk sorted days checking for consecutive
-  let longestStreak = 0;
-  let run = 0;
-  let prev: Date | null = null;
-  sortedDays.forEach(k => {
-    const parts = k.split("-").map(Number);
-    const y = parts[0] ?? 1970;
-    const m = parts[1] ?? 1;
-    const dNum = parts[2] ?? 1;
-    const cur = new Date(y, m - 1, dNum);
-    if (prev && cur.getTime() - prev.getTime() === msPerDay) {
-      run++;
-    } else {
-      run = 1;
-    }
-    if (run > longestStreak) longestStreak = run;
-    prev = cur;
-  });
-
-  return { days, currentStreak, longestStreak };
 }
 
 export default function ProfilePage() {
@@ -304,19 +246,14 @@ export default function ProfilePage() {
 
     const rows = (allRows ?? []) as Array<{ started_at: string; duration_secs: number | null; total_volume: number | null }>;
 
-    // Prefer the SQL RPC (step 5) so the client doesn't have to dedupe in JS;
-    // fall back to local compute if the migration hasn't been applied yet.
-    const remote = await fetchStreakStats(supabase);
-    if (remote) {
-      setWorkoutDays(remote.workoutDays);
-      setCurrentStreak(remote.currentStreak);
-      setLongestStreak(remote.longestStreak);
-    } else {
-      const stats = computeDayStats(rows.map(r => r.started_at));
-      setWorkoutDays(stats.days);
-      setCurrentStreak(stats.currentStreak);
-      setLongestStreak(stats.longestStreak);
-    }
+    // Always use the local day-walk computation. The earlier RPC-first
+    // path produced a different currentStreak than the calendar's
+    // straight day-walk (1 vs 4 for the same data) — see the comment
+    // in lib/streakStats.ts. One source of truth across all surfaces.
+    const stats = computeStreakStatsLocal(rows.map(r => r.started_at));
+    setWorkoutDays(stats.workoutDays);
+    setCurrentStreak(stats.currentStreak);
+    setLongestStreak(stats.longestStreak);
   }, [supabase, user]);
 
   useEffect(() => {

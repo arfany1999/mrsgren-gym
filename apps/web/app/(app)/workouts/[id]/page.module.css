@@ -326,3 +326,71 @@
   flex-direction: column;
   gap: var(--sp-2);
 }
+
+/* ── Workout-detail per-exercise enhancements (P7) ──────────── */
+/* Exercise header is now a link to the per-exercise progression view. */
+.exNameLink {
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.exNameLink:hover .exName { color: var(--accent); }
+.exNameLink:active .exName { transform: translateX(1px); }
+.exName {
+  transition: color 140ms ease;
+}
+
+.exMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* "+18% vol" / "−12% vol" chip vs the previous session for this lift */
+.deltaChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.deltaUp {
+  color: var(--accent-green, #10b981);
+  background: rgba(16, 185, 129, 0.10);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+.deltaDown {
+  color: var(--text-tertiary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+}
+
+/* Trophy dot inline with the set's weight × reps when this set beats
+   the user's lifetime best on this exercise. */
+.prDot {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 12px;
+  filter: saturate(1.1);
+}
+
+/* New 1RM column on each set row replaces the old TYPE column. The
+   type indicator (W/D/F) inlines with the weight×reps text instead. */
+.setE1rm {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.1px;
+}

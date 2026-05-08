@@ -76,13 +76,23 @@ export function computeStreakStatsLocal(startedAtIsoList: string[]): StreakStats
   return { workoutDays: days, currentStreak, longestStreak };
 }
 
-/** RPC-first with a graceful local fallback. */
+/**
+ * Compute streak stats from the caller-supplied date list.
+ *
+ * Originally this preferred the `get_user_streak_stats` RPC and fell back
+ * to local. In practice the RPC has been returning a smaller current-
+ * streak number than the calendar's straight day-walk does (1 vs 4 for
+ * the same data), and the visible inconsistency between dashboard and
+ * calendar is a worse UX problem than the trivial CPU cost of doing the
+ * walk on the client. Two surfaces, one source of truth.
+ *
+ * The `supabase` parameter is kept for signature stability across
+ * callers (and for the eventual fix-the-RPC path), but is unused.
+ */
 export async function getStreakStats(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   fallbackDates: () => Promise<string[]>,
 ): Promise<StreakStats> {
-  const remote = await fetchStreakStats(supabase);
-  if (remote) return remote;
   const dates = await fallbackDates();
   return computeStreakStatsLocal(dates);
 }
