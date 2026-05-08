@@ -33,17 +33,20 @@
 }
 
 .statValue {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 28px;
   font-weight: 800;
   color: var(--accent);
   letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1.2px;
   font-weight: 700;
   margin-top: 2px;
 }
@@ -65,11 +68,12 @@
 }
 
 .weekDayLabel {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 10px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1px;
 }
 
 .weekCircle {
@@ -137,11 +141,12 @@
 }
 
 .monthLabel {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 9px;
   color: var(--text-tertiary);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
   overflow: hidden;
 }
 
@@ -232,8 +237,12 @@
 }
 
 .legendLabel {
-  font-size: 10px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9px;
   color: var(--text-tertiary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
 
 /* ── Recent workouts feed ───────────────────────────────────── */
@@ -242,9 +251,12 @@
 }
 
 .feedTitle {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
   color: var(--text-primary);
   margin-bottom: var(--sp-3);
 }
@@ -294,18 +306,23 @@
 }
 
 .feedDate {
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1.2px;
   margin-bottom: 3px;
 }
 
 .feedTitle2 {
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
+  letter-spacing: -0.2px;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

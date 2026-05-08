@@ -13,9 +13,12 @@
   padding: 20px 20px 16px;
 }
 .headerName {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.4px;
+  line-height: 1.05;
   color: var(--text-primary);
 }
 .headerActions { display: flex; gap: 10px; }
@@ -57,10 +60,13 @@
 }
 .heroMeta { min-width: 0; }
 .name {
-  font-size: 19px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 .statsInline {
   margin-top: 4px;
@@ -91,7 +97,7 @@
   justify-content: space-between;
   margin-bottom: 16px;
 }
-.chartLabel { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; color: var(--text-primary); }
+.chartLabel { font-family: var(--font-display), 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; font-style: italic; letter-spacing: -0.2px; color: var(--text-primary); line-height: 1.1; }
 .chartRange { font-size: 14px; font-weight: 600; color: var(--accent); }
 .bars {
   height: 100px;
@@ -159,18 +165,22 @@
 }
 .trophyProgressKicker {
   display: block;
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 1.2px;
   color: var(--text-tertiary);
 }
 .trophyProgressTierName {
   display: block;
-  font-size: 16px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 .trophyProgressDays {
   display: flex;
@@ -179,16 +189,19 @@
   line-height: 1.1;
 }
 .trophyProgressDaysNum {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 22px;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
 }
 .trophyProgressDaysLbl {
-  font-size: 10px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
   font-weight: 700;
 }
 
@@ -366,10 +379,11 @@
 /* Account */
 .section { padding: 0 20px 0; margin-bottom: 16px; }
 .sectionLabel {
-  font-size: 12px; font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 1.4px;
   margin-bottom: 8px;
 }
 .card {
@@ -467,7 +481,8 @@
   color: var(--text-primary); cursor: pointer;
 }
 .historyTitle {
-  font-size: 18px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600; font-style: italic; color: var(--text-primary); letter-spacing: -0.2px; line-height: 1.1;
 }
 
 .historyList {
@@ -482,7 +497,7 @@
   padding: 80px 24px; text-align: center; gap: 8px;
 }
 .historyEmptyEmoji { font-size: 48px; }
-.historyEmptyText  { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.historyEmptyText  { font-family: var(--font-display), 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; font-style: italic; color: var(--text-primary); letter-spacing: -0.2px; }
 .historyEmptyHint  { font-size: 14px; color: var(--text-tertiary); }
 
 /* ── History card ────────────────────────────────────────────── */
@@ -557,12 +572,12 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
 }
-.hTitle { font-size: 16px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
-.hDate  { font-size: 12px; color: var(--text-tertiary); font-weight: 600; }
+.hTitle { font-family: var(--font-display), 'Cormorant Garamond', serif; font-size: 19px; font-weight: 600; font-style: italic; color: var(--text-primary); letter-spacing: -0.2px; line-height: 1.15; }
+.hDate  { font-family: var(--font-mono), 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-tertiary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
 .hCalsBig   { display: flex; flex-direction: column; align-items: flex-end; }
-.hCalsNum   { font-size: 28px; font-weight: 900; color: var(--accent); letter-spacing: -0.03em; line-height: 1; }
-.hCalsUnit  { font-size: 10px; font-weight: 700; color: var(--accent); opacity: 0.65; text-transform: uppercase; letter-spacing: 0.5px; }
+.hCalsNum   { font-family: var(--font-mono), 'JetBrains Mono', monospace; font-size: 28px; font-weight: 900; color: var(--accent); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.hCalsUnit  { font-family: var(--font-mono), 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: var(--accent); opacity: 0.65; text-transform: uppercase; letter-spacing: 1.2px; }
 
 /* Stats row */
 .hStats {
@@ -571,8 +586,8 @@
   margin-bottom: 12px;
 }
 .hStat  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.hStatVal  { font-size: 14px; font-weight: 800; color: var(--text-primary); }
-.hStatLbl  { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; }
+.hStatVal  { font-family: var(--font-mono), 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.hStatLbl  { font-family: var(--font-mono), 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; }
 .hStatDivider { width: 1px; height: 26px; background: var(--separator); flex-shrink: 0; }
 
 /* Exercise rows */
@@ -723,18 +738,22 @@
 }
 .reportTitleWrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .reportKicker {
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
   color: var(--accent);
   opacity: 0.85;
 }
 .reportTitle {
-  font-size: 20px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.4px;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -873,18 +892,21 @@
 }
 .reportStatEmoji { font-size: 18px; line-height: 1; margin-bottom: 2px; }
 .reportStatVal {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 18px;
   font-weight: 900;
   color: var(--text-primary);
   letter-spacing: -0.4px;
   line-height: 1.05;
+  font-variant-numeric: tabular-nums;
 }
 .reportStatLbl {
-  font-size: 10px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
   margin-top: 1px;
 }
 
@@ -938,19 +960,23 @@
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 .modalTitle {
-  font-size: 18px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   margin-bottom: 16px;
   letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 .modalLabel {
   display: block;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
   margin-bottom: 6px;
   margin-top: 4px;
 }

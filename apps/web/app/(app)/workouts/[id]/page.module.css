@@ -48,10 +48,13 @@
 }
 
 .summaryDate {
-  font-size: var(--text-md);
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 
 .summaryTime {
@@ -73,18 +76,21 @@
 }
 
 .statVal {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: var(--text-lg);
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
-  font-size: var(--text-xs);
-  font-weight: 600;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1.2px;
 }
 
 .notes {
@@ -94,11 +100,12 @@
 }
 
 .notesLabel {
-  font-size: var(--text-xs);
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
   margin-bottom: var(--sp-1);
 }
 
@@ -124,11 +131,14 @@
 }
 
 .exName {
-  font-size: var(--text-base);
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--accent);
   margin-bottom: 2px;
   letter-spacing: -0.2px;
+  line-height: 1.15;
 }
 
 .exMuscles {
@@ -251,16 +261,21 @@
 }
 
 .reportTitle {
-  font-size: 28px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
+  line-height: 1.05;
   margin: 0;
 }
 
 .reportName {
-  font-size: 16px;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
   font-weight: 600;
+  font-style: italic;
   color: var(--text-secondary);
   margin: 0;
 }
@@ -296,19 +311,22 @@
 }
 
 .reportStatVal {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 18px;
   font-weight: 800;
   color: var(--accent-green);
   letter-spacing: -0.3px;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .reportStatLbl {
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1.2px;
   margin-top: 3px;
   text-align: center;
 }

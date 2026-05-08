@@ -49,13 +49,21 @@
   opacity: 0.5;
 }
 .emptyTitle {
-  font-size: 18px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
+  letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 .emptySub {
-  font-size: 14px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
 }
 
 /* ── Chart card ─────────────────────────────────────────────── */
@@ -67,11 +75,14 @@
   padding: 18px 16px 14px;
 }
 .chartTitle {
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-secondary);
   margin-bottom: 12px;
-  letter-spacing: -0.1px;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 .chartSvg {
   display: block;
@@ -90,11 +101,12 @@
   padding: 20px 16px 0;
 }
 .listTitle {
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 1.4px;
   margin-bottom: 10px;
 }
 .entryList {
@@ -161,18 +173,21 @@
   flex-shrink: 0;
 }
 .entryWeightBig {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 22px;
   font-weight: 800;
   color: var(--accent);
   letter-spacing: -0.03em;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .entryWeightUnit {
-  font-size: 10px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 1.2px;
 }
 .deleteBtn {
   position: absolute;
@@ -229,22 +244,26 @@
   to   { transform: none; opacity: 1; }
 }
 .modalTitle {
-  font-size: 18px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   margin-bottom: 18px;
   letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 .formGroup {
   margin-bottom: 14px;
 }
 .formLabel {
   display: block;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
   margin-bottom: 6px;
 }
 .formInput {

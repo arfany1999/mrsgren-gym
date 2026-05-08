@@ -33,11 +33,13 @@
 }
 
 .pageTitle {
-  font-size: 30px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 34px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.03em;
-  line-height: 1;
+  letter-spacing: -0.4px;
+  line-height: 1.05;
 }
 
 .page {
@@ -47,7 +49,7 @@
 }
 
 .pageTitle {
-  font-family: var(--font-sans), -apple-system, sans-serif;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
 }
 
 .loadingCenter {
@@ -97,14 +99,22 @@
 }
 
 .emptyTitle {
-  font-size: var(--text-md);
-  font-weight: var(--fw-semibold);
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
+  letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 
 .emptySub {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
   max-width: 220px;
   line-height: 1.4;
 }

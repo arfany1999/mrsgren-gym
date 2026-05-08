@@ -18,17 +18,22 @@
   border-radius: 18px; padding: 18px 16px 14px;
 }
 .statValue {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 30px; font-weight: 800; letter-spacing: -0.04em; color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 .statLabel {
-  font-size: 11px; color: var(--text-tertiary); margin-top: 4px;
-  font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-tertiary); margin-top: 4px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;
 }
 
 /* ── PR section ─────────────────────────────────────────────── */
 .section { padding: var(--sp-5) var(--sp-4) 0; }
 .sectionTitle {
-  font-size: 20px; font-weight: 800; letter-spacing: -0.02em;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px; font-weight: 600; font-style: italic;
+  letter-spacing: -0.3px; line-height: 1.05;
   margin-bottom: var(--sp-3); color: var(--text-primary);
 }
 .empty { color: var(--text-secondary); font-size: 15px; text-align: center; padding: var(--sp-6) 0; }
@@ -48,14 +53,16 @@
 
 .prLeft { flex: 1; min-width: 0; }
 .prExercise {
-  font-size: 16px; font-weight: 700; color: var(--text-primary);
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px; font-weight: 600; font-style: italic; color: var(--text-primary);
+  letter-spacing: -0.2px; line-height: 1.15;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .prMeta { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
 
 .prRight { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
-.pr1rm { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; line-height: 1; }
-.pr1rmLabel { font-size: 10px; color: var(--text-tertiary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.pr1rm { font-family: var(--font-mono), 'JetBrains Mono', monospace; font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.pr1rmLabel { font-family: var(--font-mono), 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--text-tertiary); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
 .sparkline { display: block; margin-top: 6px; }
 
 /* ── Donut card wrapper ────────────────────────────────────── */

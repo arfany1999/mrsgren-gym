@@ -20,11 +20,13 @@
 }
 
 .name {
-  font-size: 22px;
-  font-weight: 750;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
   text-transform: capitalize;
   padding: 4px 0 2px;
 }
@@ -46,11 +48,12 @@
 }
 
 .cardLabel {
-  font-size: 11px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.4px;
 }
 
 /* ── Tags ──────────────────────────────────────────────────────── */

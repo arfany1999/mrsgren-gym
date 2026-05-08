@@ -46,9 +46,10 @@
 }
 
 .activeBannerLabel {
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.6px;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -76,11 +77,13 @@
 }
 
 .activeBannerName {
-  font-size: 18px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 
 .activeBannerProgress {
@@ -133,11 +136,12 @@
 }
 
 .filterLabel {
-  font-size: 11px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1.2px;
   margin-bottom: 2px;
 }
 
@@ -222,16 +226,19 @@
 }
 
 .cardName {
-  font-size: 17px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 
 .cardFreq {
   flex-shrink: 0;
-  font-size: 12px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-tertiary);
   background: rgba(255, 255, 255, 0.05);
@@ -239,6 +246,8 @@
   border-radius: 10px;
   padding: 4px 10px;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
 
 /* ── Badges ────────────────────────────────────────────────── */
@@ -375,9 +384,13 @@
 }
 
 .dayName {
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
+  letter-spacing: -0.1px;
+  line-height: 1.1;
   margin-bottom: 8px;
 }
 
@@ -492,7 +505,10 @@
 /* ── Results count ─────────────────────────────────────────── */
 .resultsCount {
   padding: var(--sp-2) var(--sp-4) 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
