@@ -31,8 +31,10 @@
 }
 
 .title {
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   text-align: center;
   white-space: nowrap;
@@ -40,7 +42,7 @@
   text-overflow: ellipsis;
   max-width: 100%;
   letter-spacing: -0.3px;
-  font-family: var(--font-sans), -apple-system, sans-serif;
+  line-height: 1;
 }
 
 .subtitle {
