@@ -38,18 +38,22 @@
   flex-shrink: 0;
 }
 .greetKicker {
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-tertiary);
-  letter-spacing: -0.1px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
 }
 .greetName {
-  font-size: 26px;
-  font-weight: 900;
-  letter-spacing: -0.6px;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.4px;
   color: var(--text-primary);
-  line-height: 1.1;
-  margin-top: 2px;
+  line-height: 1.05;
+  margin-top: 4px;
 }
 .streakChip {
   display: inline-flex;
@@ -275,10 +279,13 @@
 }
 
 .title {
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -0.6px;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 34px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.4px;
   color: var(--text-primary);
+  line-height: 1.05;
 }
 
 .newBtn {
@@ -315,8 +322,22 @@
   gap: 8px;
   text-align: center;
 }
-.emptyTitle { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-.emptySub   { font-size: 14px; color: var(--text-tertiary); }
+.emptyTitle {
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.4px;
+  color: var(--text-primary);
+}
+.emptySub {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+}
 .createLink {
   margin-top: 8px;
   padding: 14px 32px;
@@ -407,11 +428,13 @@
   filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.1));
 }
 .cardTitle {
-  font-size: 19px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.3px;
-  line-height: 1.2;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
   min-width: 0;
 }
 
@@ -437,9 +460,12 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 13px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   color: var(--text-tertiary);
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
   margin-bottom: 12px;
 }
 
@@ -700,29 +726,35 @@
 }
 
 .nextWorkoutLabel {
-  font-size: 10px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
   font-weight: 800;
-  letter-spacing: 0.6px;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
   color: var(--accent);
 }
 
 .nextWorkoutProgram {
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
   font-weight: 600;
   color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .nextWorkoutTitle {
-  font-size: 18px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin: 2px 0 4px;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
+  margin: 4px 0 4px;
 }
 
 .nextWorkoutFooter {
@@ -778,10 +810,12 @@
   color: var(--accent);
 }
 .quickLabel {
-  font-size: 11px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 800;
   color: var(--text-secondary);
-  letter-spacing: -0.1px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
 }
 
 /* ── Quick Start Panel ─────────────────────────────────────── */
@@ -884,17 +918,21 @@
   margin-bottom: 12px;
 }
 .volumeTitle {
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.6px;
 }
 .volumeLink {
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 800;
   color: var(--accent);
   text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
 }
 .volumeBars {
   display: flex;
@@ -908,10 +946,12 @@
 }
 .volumeLabel {
   width: 70px;
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-secondary);
-  text-transform: capitalize;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -943,7 +983,8 @@
 }
 .volumeSets {
   width: 36px;
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-align: right;

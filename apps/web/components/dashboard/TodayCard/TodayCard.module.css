@@ -52,12 +52,14 @@
 }
 
 .title {
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.4px;
   color: var(--text-primary);
   margin-bottom: 12px;
-  line-height: 1.15;
+  line-height: 1.05;
 }
 
 .metaRow {
