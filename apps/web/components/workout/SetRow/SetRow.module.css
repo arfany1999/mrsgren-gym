@@ -69,11 +69,12 @@
 }
 
 .inputLabel {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 9px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1px;
 }
 
 .numInput {

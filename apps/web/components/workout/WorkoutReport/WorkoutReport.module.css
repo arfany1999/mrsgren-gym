@@ -505,12 +505,16 @@
   min-width: 0;
 }
 .bdName {
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 600;
+  font-style: italic;
   color: #C8C8D4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.1px;
+  line-height: 1.1;
 }
 .bdMeta {
   font-family: var(--font-mono), 'JetBrains Mono', monospace;
@@ -920,9 +924,13 @@
 .prEmoji { font-size: 20px; flex-shrink: 0; }
 .prInfo { flex: 1; min-width: 0; }
 .prName {
-  font-size: 13px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 600;
+  font-style: italic;
   color: #EAEAF0;
+  letter-spacing: -0.1px;
+  line-height: 1.1;
 }
 .prDetail {
   font-family: var(--font-mono), 'JetBrains Mono', monospace;

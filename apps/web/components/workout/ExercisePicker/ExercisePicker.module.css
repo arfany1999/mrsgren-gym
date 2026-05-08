@@ -14,10 +14,12 @@
 }
 
 .summaryKicker {
-  font-size: 17px;
-  font-weight: 900;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.2px;
   line-height: 1.1;
 }
 
@@ -179,9 +181,13 @@
 .info { flex: 1; min-width: 0; text-align: left; }
 
 .itemName {
-  font-size: var(--text-base);
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
+  letter-spacing: -0.1px;
+  line-height: 1.1;
 }
 
 .itemMuscles {
@@ -248,9 +254,13 @@
 }
 
 .emptyTitle {
-  font-size: 16px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
+  letter-spacing: -0.2px;
+  line-height: 1.05;
 }
 
 .emptyText {

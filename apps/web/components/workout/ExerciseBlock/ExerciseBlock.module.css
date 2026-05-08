@@ -33,10 +33,13 @@
 .info { flex: 1; }
 
 .name {
-  font-size: var(--text-base);
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 
 .muscles {
@@ -208,11 +211,12 @@
   grid-template-columns: 40px 52px 1fr 1fr 48px;
   gap: 6px;
   padding: 4px 12px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: 10px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-align: center;
-  letter-spacing: 0.4px;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 .colLabels[data-type="bodyweight_reps"],
@@ -270,11 +274,12 @@
 }
 
 .warmupTitle {
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 800;
   color: var(--accent);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
 }
 
 .warmupDismiss {
@@ -368,11 +373,12 @@
 }
 
 .plateCalcTitle {
-  font-size: 11px;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 800;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
 }
 
 .plateCalcDismiss {

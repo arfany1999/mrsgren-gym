@@ -1,6 +1,7 @@
 .timer {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
   font-size: var(--text-xl);
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.5px;

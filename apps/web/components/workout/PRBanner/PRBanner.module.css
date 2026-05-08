@@ -23,9 +23,13 @@
 }
 
 .title {
-  font-size: var(--text-base);
-  font-weight: var(--fw-semibold);
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--accent-yellow);
+  letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 
 .sub {

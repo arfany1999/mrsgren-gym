@@ -97,12 +97,14 @@
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
 }
 .heroTitle {
-  font-size: 32px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 34px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
   text-align: center;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
+  line-height: 1.05;
+  letter-spacing: -0.4px;
 }
 .heroSub {
   font-size: 15px;
@@ -113,10 +115,13 @@
 
 /* ── Step headings ───────────────────────────────────────────── */
 .stepTitle {
-  font-size: 22px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.3px;
+  line-height: 1.05;
 }
 .stepSub {
   font-size: 13px;
@@ -131,11 +136,12 @@
   gap: 8px;
 }
 .fieldLabel {
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
 }
 
 .inputRow {
