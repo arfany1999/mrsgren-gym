@@ -169,27 +169,64 @@ export default function NewExercisePage() {
 
     setLoading(true);
     try {
-      const { error: dbError } = await supabase.from("exercises").insert({
+      // Schema reality: `exercises.muscle_group` is `text` (singular —
+      // legacy column read everywhere via parseMuscleGroup) and
+      // `exercises.muscle_groups` is `text[]` (added by migration
+      // 20260428_exercises_columns.sql). Both forms are populated so
+      // legacy readers keep working AND new readers get a real array.
+      // The lowercase serialization matches the seed file's convention.
+      const lowered = muscleGroups.map((m) => m.toLowerCase());
+      const baseRow = {
         name: name.trim(),
-        muscle_group: muscleGroups,
+        muscle_group: lowered.join(","),     // text — comma-joined
+        muscle_groups: lowered,              // text[] — actual array
+        measurement_type: "weight_reps",
         equipment: equipment || null,
         instructions: instructions || null,
         is_custom: true,
         created_by_user_id: user?.id ?? null,
-      });
-      // Schema-cache rename hedge: if the migration moved the column to
-      // `muscle_groups` in flight, drop the join data and just save the
-      // name so the user isn't blocked.
-      const missingMuscleGroupsColumn = Boolean(
-        dbError?.message?.includes("muscle_groups") && dbError?.message?.includes("schema cache"),
-      );
-      if (dbError && !missingMuscleGroupsColumn) throw new Error(dbError.message);
-      if (missingMuscleGroupsColumn) {
-        const { error: fallbackErr } = await supabase.from("exercises").insert({
-          name: name.trim(),
-        });
-        if (fallbackErr) throw new Error(fallbackErr.message);
+      };
+
+      let { error: dbError } = await supabase.from("exercises").insert(baseRow);
+
+      // Fallback ladder for older / partially-migrated databases. Each
+      // step strips the column the previous error complained about so a
+      // clean prod (no migrations) and a fully-migrated prod both work.
+      if (dbError) {
+        const msg = dbError.message ?? "";
+        if (msg.includes("measurement_type")) {
+          const noMeasure = { ...baseRow } as Partial<typeof baseRow>;
+          delete noMeasure.measurement_type;
+          ({ error: dbError } = await supabase.from("exercises").insert(noMeasure));
+        }
       }
+      if (dbError) {
+        const msg = dbError.message ?? "";
+        if (msg.includes("muscle_groups")) {
+          const noPlural = {
+            name: baseRow.name,
+            muscle_group: baseRow.muscle_group,
+            equipment: baseRow.equipment,
+            instructions: baseRow.instructions,
+            is_custom: baseRow.is_custom,
+            created_by_user_id: baseRow.created_by_user_id,
+          };
+          ({ error: dbError } = await supabase.from("exercises").insert(noPlural));
+        }
+      }
+      if (dbError) {
+        const msg = dbError.message ?? "";
+        if (msg.includes("is_custom") || msg.includes("created_by_user_id")) {
+          // Last-resort minimal row — name only — so the user isn't
+          // blocked on a fresh DB that hasn't run any of the 2026
+          // migrations.
+          ({ error: dbError } = await supabase.from("exercises").insert({
+            name: baseRow.name,
+          }));
+        }
+      }
+      if (dbError) throw new Error(dbError.message);
+
       router.back();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create exercise");

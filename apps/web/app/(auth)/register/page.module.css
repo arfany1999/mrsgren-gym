@@ -77,20 +77,31 @@
   margin-bottom: 4px;
 }
 
+/* Match the login page's brand-tier serif treatment: italic Cormorant
+   Garamond with a gold gradient + soft drop-shadow. */
 .heroTitle {
-  font-size: 40px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 56px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: 6px;
+  letter-spacing: 4px;
   line-height: 1;
+  background: linear-gradient(135deg, #E8C56D 0%, #D4A843 50%, #8B7335 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 24px rgba(212, 168, 67, 0.25));
 }
 
 .heroTagline {
-  font-size: 15px;
-  font-weight: 500;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 800;
   color: var(--text-secondary);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
+  margin-top: 4px;
 }
 
 .features {
@@ -260,11 +271,18 @@
 }
 
 .mobileTitle {
-  font-size: 32px;
-  font-weight: 800;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 44px;
+  font-weight: 600;
+  font-style: italic;
   color: var(--text-primary);
-  letter-spacing: 5px;
+  letter-spacing: 3px;
   line-height: 1;
+  background: linear-gradient(135deg, #E8C56D 0%, #D4A843 50%, #8B7335 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 18px rgba(212, 168, 67, 0.2));
 }
 
 /* ── Form header ── */
@@ -273,15 +291,23 @@
 }
 
 .formTitle {
-  font-size: 22px;
-  font-weight: 700;
+  font-family: var(--font-display), 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -0.4px;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  line-height: 1.05;
 }
 
 .formSub {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
 }
 
 .quickStats {
