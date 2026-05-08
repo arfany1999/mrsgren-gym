@@ -227,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // user_metadata).
   const loginWithGoogle = useCallback(async () => {
     const redirectTo = typeof window !== "undefined"
-      ? `${window.location.origin}/dashboard`
+      ? `${window.location.origin}/auth/callback`
       : undefined;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
