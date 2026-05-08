@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SetRow } from "@/components/workout/SetRow/SetRow";
 import { PlateBar } from "@/components/workout/PlateBar/PlateBar";
 import { progressiveOverloadHint } from "@/lib/exerciseHistory";
 import { generateWarmupSets } from "@/lib/warmupGenerator";
 import { calculatePlates, formatPlates } from "@/lib/plateCalculator";
+import { fetchCoachSuggestion, type CoachSuggestion } from "@/lib/coach";
 import type { ActiveExercise, ActiveSet } from "@/contexts/WorkoutContext";
 import type { SetType } from "@/types/api";
 import styles from "./ExerciseBlock.module.css";
@@ -52,6 +53,44 @@ export function ExerciseBlock({
       lastTopSet: { weight: topW, reps: topR },
     };
   }, [exercise.previousSets, exercise.measurementType]);
+
+  // ── AI coach (P4) ─────────────────────────────────────────────
+  // The heuristic above runs locally and is always available. When the
+  // ANTHROPIC_API_KEY env var is configured server-side, we ALSO ask
+  // Claude for a tailored suggestion that takes the user's full recent
+  // history into account. If the AI returns one, we render that instead
+  // of the heuristic — same UI surface, smarter content. If the API is
+  // disabled or errors out, the heuristic stays.
+  const [aiSuggestion, setAiSuggestion] = useState<CoachSuggestion | null>(null);
+  useEffect(() => {
+    if (exercise.measurementType !== "weight_reps") return;
+    if (!exercise.previousSets.length) return;
+    const history = [
+      {
+        // Most recent session — exact date isn't critical for the model;
+        // it cares about the rep×weight pattern.
+        date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        sets: exercise.previousSets.map((s) => ({
+          reps: parseInt(s.reps) || null,
+          weightKg: parseFloat(s.weightKg) || null,
+        })),
+      },
+    ];
+    let cancelled = false;
+    void fetchCoachSuggestion({
+      exerciseId: exercise.exerciseId,
+      exerciseName: exercise.name,
+      muscleGroups: exercise.muscleGroups,
+      // weId scopes the cache to "this exercise in this session" — once
+      // the user finishes the session, the next visit gets a fresh call.
+      lastWorkoutId: exercise.weId ?? null,
+      history,
+    }).then((result) => {
+      if (cancelled) return;
+      if (result.status === "ok") setAiSuggestion(result.suggestion);
+    });
+    return () => { cancelled = true; };
+  }, [exercise.exerciseId, exercise.weId, exercise.measurementType, exercise.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pr = exercise.personalRecord;
   const isWeightReps = exercise.measurementType === "weight_reps";
@@ -100,19 +139,47 @@ export function ExerciseBlock({
   }
 
   // One-tap "apply the suggested progression" — fills every unsaved set
-  // with the new weight and the same rep target as last session. Lifters
-  // who train RPE-style can still tweak each set; this is the fast path
-  // for "I'm doing what the algorithm says".
+  // with the recommended weight and reps. Prefers the AI suggestion when
+  // present, falls back to the heuristic. Lifters who train RPE-style
+  // can still tweak each set; this is the fast path for "I'm doing what
+  // the coach says".
   function applyOverloadHint() {
-    if (!nudge || !lastTopSet) return;
-    const w = String(nudge.suggestWeight);
-    const r = String(lastTopSet.reps);
+    let w: string | null = null;
+    let r: string | null = null;
+    if (aiSuggestion) {
+      w = String(aiSuggestion.weightKg);
+      r = String(aiSuggestion.reps);
+    } else if (nudge && lastTopSet) {
+      w = String(nudge.suggestWeight);
+      r = String(lastTopSet.reps);
+    }
+    if (!w) return;
     exercise.sets.forEach((s, idx) => {
       if (s.isSaved) return;
-      onUpdateField(idx, "weightKg", w);
-      if (!s.reps) onUpdateField(idx, "reps", r);
+      onUpdateField(idx, "weightKg", w!);
+      if (!s.reps && r) onUpdateField(idx, "reps", r);
     });
   }
+
+  // Composed view of "what to show in the nudge row" — AI takes precedence,
+  // heuristic is the fallback. Both produce the same shape for rendering.
+  const displayedHint = useMemo(() => {
+    if (aiSuggestion) {
+      return {
+        weight: aiSuggestion.weightKg,
+        reason: aiSuggestion.reasoning,
+        source: "ai" as const,
+      };
+    }
+    if (nudge) {
+      return {
+        weight: nudge.suggestWeight,
+        reason: nudge.reason,
+        source: "heuristic" as const,
+      };
+    }
+    return null;
+  }, [aiSuggestion, nudge]);
 
   return (
     <div className={styles.block}>
@@ -135,17 +202,17 @@ export function ExerciseBlock({
               </span>
             )}
           </div>
-          {nudge && (
+          {displayedHint && (
             <div className={styles.nudgeRow}>
               <p className={styles.nudge}>
-                💡 Try <b>{nudge.suggestWeight}kg</b> — {nudge.reason}
+                {displayedHint.source === "ai" ? "🧠" : "💡"} Try <b>{displayedHint.weight}kg</b> — {displayedHint.reason}
               </p>
               {hasEmptyUnsavedSet && (
                 <button
                   type="button"
                   className={styles.applyHintBtn}
                   onClick={applyOverloadHint}
-                  aria-label={`Apply ${nudge.suggestWeight}kg to all sets`}
+                  aria-label={`Apply ${displayedHint.weight}kg to all sets`}
                 >
                   Apply →
                 </button>
