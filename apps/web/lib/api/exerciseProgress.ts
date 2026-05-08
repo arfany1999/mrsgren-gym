@@ -52,50 +52,38 @@ const EMPTY_BESTS: LifetimeBests = {
 
 /**
  * Find the user's progression for an exercise by NAME. Case-insensitive
- * name match — the canonical library has one row per exercise, but a
- * user may also have a custom row with the same display name; both are
- * unioned so we don't miss anything.
+ * name match — joined through workout_sets so it works even when RLS
+ * on the `exercises` table blocks direct reads (the same nested-join
+ * pattern listMyExercises uses, and the reason the previous direct
+ * `SELECT FROM exercises` version returned empty for real users).
  */
 export async function getExerciseProgression(
   supabase: SupabaseClient,
   userId: string,
   exerciseName: string,
 ): Promise<ExerciseProgression> {
-  // 1. Resolve the exercise UUID(s) — match library (any user) or this
-  //    user's own custom rows.
-  const { data: matches } = await supabase
-    .from("exercises")
-    .select("id, user_id, is_custom")
-    .ilike("name", exerciseName);
-  const exerciseIds = (matches ?? [])
-    .filter((row: Record<string, unknown>) => {
-      const isCustom = (row.is_custom as boolean) ?? false;
-      const ownerId = (row.user_id as string) ?? null;
-      return !isCustom || ownerId === userId;
-    })
-    .map((row: Record<string, unknown>) => row.id as string);
-  if (exerciseIds.length === 0) {
-    return { exerciseDbId: null, sessions: [], bests: EMPTY_BESTS };
-  }
-
-  // 2. Pull every completed session for this user that includes this
-  //    exercise. We over-fetch slightly (per-set rows + workout join)
-  //    rather than firing N queries.
+  // Pull every completed set for this user where the joined exercise
+  // name matches. `inner` joins act as filters and project the matched
+  // exercise id so we don't have to do a second lookup.
   const { data: rows } = await supabase
     .from("workout_sets")
     .select(
       "reps, weight, is_completed, set_index, set_type, " +
-      "workout_exercises!inner(exercise_id, workouts!inner(id, user_id, started_at, finished_at))",
+      "workout_exercises!inner(exercise_id, " +
+      "exercises!inner(id, name), " +
+      "workouts!inner(id, user_id, started_at, finished_at))",
     )
-    .in("workout_exercises.exercise_id", exerciseIds)
     .eq("workout_exercises.workouts.user_id", userId)
+    .ilike("workout_exercises.exercises.name", exerciseName)
     .not("workout_exercises.workouts.finished_at", "is", null);
 
   if (!rows || rows.length === 0) {
-    return { exerciseDbId: exerciseIds[0] ?? null, sessions: [], bests: EMPTY_BESTS };
+    return { exerciseDbId: null, sessions: [], bests: EMPTY_BESTS };
   }
 
-  // 3. Bucket sets by workout_id and compute per-session metrics.
+  let exerciseDbId: string | null = null;
+
+  // Bucket sets by workout_id and compute per-session metrics.
   const byWorkout = new Map<string, ProgressionSession>();
   for (const r of rows as unknown as Array<{
     reps: number | null;
@@ -104,11 +92,18 @@ export async function getExerciseProgression(
     set_index: number | null;
     set_type: string | null;
     workout_exercises: {
+      exercise_id: string;
+      exercises: { id: string; name: string } | null;
       workouts: { id: string; started_at: string; finished_at: string | null } | null;
     } | null;
   }>) {
     const w = r.workout_exercises?.workouts;
     if (!w?.id) continue;
+    if (!exerciseDbId) {
+      exerciseDbId = r.workout_exercises?.exercises?.id
+        ?? r.workout_exercises?.exercise_id
+        ?? null;
+    }
     const reps = r.reps ?? 0;
     const weight = r.weight ?? 0;
     const isCompleted = r.is_completed !== false;
@@ -184,7 +179,7 @@ export async function getExerciseProgression(
   }
 
   return {
-    exerciseDbId: exerciseIds[0] ?? null,
+    exerciseDbId,
     sessions,
     bests,
   };
